@@ -1,3 +1,4 @@
+from decimal import Decimal, InvalidOperation # Add this import
 from rest_framework import serializers
 from .models import User, UserRole, Manufacturer # Added Manufacturer import
 from django.contrib.auth.password_validation import validate_password
@@ -56,7 +57,7 @@ class ManufacturerProfileSerializer(serializers.ModelSerializer):
     company_name = serializers.CharField(source='user.company_name', read_only=True) # Assuming company name is on User model
 
     class Meta:
-        model = Manufacturer # Corrected this line
+        model = Manufacturer
         fields = [
             'user_id', # This is user.pk
             'email',
@@ -83,86 +84,70 @@ class ManufacturerProfileSerializer(serializers.ModelSerializer):
             if not isinstance(value, dict):
                 raise serializers.ValidationError("Capabilities must be a JSON object.")
 
-            # Example structure for pricing_factors within capabilities:
-            # {
-            #   "cnc": true, "materials_supported": ["Al-6061"],
-            #   "pricing_factors": {
-            #     "material_properties": { "Al-6061": {"density_g_cm3": 2.7, "cost_usd_kg": 5.0} },
-            #     "machining": { "base_time_hours": 0.5, "time_multiplier_complexity": 2.0 },
-            #     "estimated_lead_time_base_days": 7
-            #   }
-            # }
-            pricing_factors = value.get('pricing_factors')
-            pricing_factors = value.get('pricing_factors', {}) # Default to empty dict if not present
-
-            if not isinstance(pricing_factors, dict): # Should not happen if default is used, but good check
+            pricing_factors = value.get('pricing_factors', {})
+            if not isinstance(pricing_factors, dict):
                 raise serializers.ValidationError("`pricing_factors` within capabilities must be a JSON object.")
 
-            materials_supported = value.get("materials_supported", []) # Get this first for cross-validation
-            if not isinstance(materials_supported, list): # Ensure materials_supported itself is a list
-                 raise serializers.ValidationError("`materials_supported` must be a list of material names (strings).")
-            if not all(isinstance(item, str) for item in materials_supported):
-                raise serializers.ValidationError("All items in `materials_supported` must be strings.")
-
-            # --- pricing_factors validation ---
-            material_properties_map = pricing_factors.get('material_properties', {})
-            if not isinstance(material_properties_map, dict):
-                raise serializers.ValidationError("`material_properties` in pricing_factors must be a JSON object.")
-
-            # Ensure all 'materials_supported' have entries in 'material_properties'
-            for supported_material in materials_supported:
-                if supported_material not in material_properties_map:
-                    raise serializers.ValidationError(
-                        f"Material '{supported_material}' is listed in 'materials_supported' but lacks pricing data in 'pricing_factors.material_properties'."
-                    )
-
-            for material, props in material_properties_map.items():
-                if not isinstance(props, dict):
-                    raise serializers.ValidationError(f"Properties for material '{material}' must be an object.")
-
-                density = props.get("density_g_cm3")
-                cost_kg = props.get("cost_usd_kg")
-
-                if density is None or not isinstance(density, (int, float)) or density <= 0:
-                    raise serializers.ValidationError(f"Density for material '{material}' must be a positive number.")
-                if cost_kg is None or not isinstance(cost_kg, (int, float)) or cost_kg < 0:
-                    raise serializers.ValidationError(f"Cost per kg for material '{material}' must be a non-negative number.")
-
-            machining_factors = pricing_factors.get('machining', {})
-            if not isinstance(machining_factors, dict):
-                raise serializers.ValidationError("`machining` factors in pricing_factors must be an object.")
-
-            base_time = machining_factors.get("base_time_cost_unit")
-            time_multiplier = machining_factors.get("time_multiplier_complexity_cost_unit")
-
-            if base_time is None or not isinstance(base_time, (int, float)) or base_time < 0:
-                raise serializers.ValidationError("`base_time_cost_unit` in machining factors must be a non-negative number.")
-            if time_multiplier is None or not isinstance(time_multiplier, (int, float)) or time_multiplier < 0:
-                raise serializers.ValidationError("`time_multiplier_complexity_cost_unit` in machining factors must be a non-negative number.")
-
-            lead_time = pricing_factors.get('estimated_lead_time_base_days')
-            if lead_time is not None and (not isinstance(lead_time, int) or lead_time < 0):
-                raise serializers.ValidationError("`estimated_lead_time_base_days` must be a non-negative integer.")
-
-        # Validate 'materials_supported' structure (already done above for cross-check)
-        # materials_supported = value.get("materials_supported")
-        if materials_supported is not None: # It's an optional part of capabilities
+            materials_supported = value.get("materials_supported", [])
             if not isinstance(materials_supported, list):
                 raise serializers.ValidationError("`materials_supported` must be a list of material names (strings).")
             if not all(isinstance(item, str) for item in materials_supported):
                 raise serializers.ValidationError("All items in `materials_supported` must be strings.")
 
+            # --- Updated pricing_factors validation ---
+            material_properties = pricing_factors.get('material_properties', {})
+            if not isinstance(material_properties, dict):
+                raise serializers.ValidationError("`material_properties` in pricing_factors must be a JSON object.")
+
+            # Ensure all 'materials_supported' have entries in 'material_properties'
+            for supported_material in materials_supported:
+                if supported_material not in material_properties:
+                    raise serializers.ValidationError(
+                        f"Material '{supported_material}' is listed in 'materials_supported' but lacks pricing data in 'pricing_factors.material_properties'."
+                    )
+                
+                mat_props = material_properties[supported_material]
+                if not isinstance(mat_props, dict):
+                    raise serializers.ValidationError(f"Pricing data for '{supported_material}' must be a JSON object.")
+                
+                # Validate density and cost
+                if 'density_g_cm3' not in mat_props:
+                    raise serializers.ValidationError(f"Density for material '{supported_material}' is missing.")
+                if 'cost_usd_kg' not in mat_props:
+                    raise serializers.ValidationError(f"Cost per kg for material '{supported_material}' is missing.")
+                
+                try:
+                    density = float(mat_props['density_g_cm3'])
+                    cost = float(mat_props['cost_usd_kg'])
+                    if density <= 0:
+                         raise serializers.ValidationError(f"Density for material '{supported_material}' must be a positive number.")
+                    if cost < 0:
+                         raise serializers.ValidationError(f"Cost per kg for material '{supported_material}' must be a non-negative number.")
+                except (ValueError, TypeError):
+                    raise serializers.ValidationError(f"Density and cost for material '{supported_material}' must be valid numbers.")
+
+            # Validate machining factors
+            machining = pricing_factors.get('machining', {})
+            if not isinstance(machining, dict):
+                raise serializers.ValidationError("`machining` in pricing_factors must be a JSON object.")
+            
+            for key in ['base_time_cost_unit', 'time_multiplier_complexity_cost_unit']:
+                if key not in machining:
+                     raise serializers.ValidationError(f"Pricing factor '{key}' is missing from 'pricing_factors.machining'.")
+                try:
+                    val = float(machining[key])
+                    if val < 0:
+                        raise serializers.ValidationError(f"`{key}` in machining factors must be a non-negative number.")
+                except (ValueError, TypeError):
+                     raise serializers.ValidationError(f"`{key}` in machining factors must be a valid number.")
+
         # Validate 'max_size_mm' structure
         max_size_mm = value.get("max_size_mm")
-        if max_size_mm is not None: # Optional part of capabilities
+        if max_size_mm is not None:
             if not isinstance(max_size_mm, list) or len(max_size_mm) != 3:
                 raise serializers.ValidationError("`max_size_mm` must be a list of three numbers (e.g., [X, Y, Z]).")
             if not all(isinstance(dim, (int, float)) and dim >= 0 for dim in max_size_mm):
                 raise serializers.ValidationError("All dimensions in `max_size_mm` must be non-negative numbers.")
-
-        # Note: The example structure for pricing_factors is already documented in comments above.
-        # Actual enforcement of pricing_factors structure can be added here if strictness is desired now,
-        # or deferred until manufacturers actively use it. For now, the example comment serves as guidance.
 
         return value
 
@@ -175,6 +160,18 @@ class ManufacturerProfileSerializer(serializers.ModelSerializer):
                 raise serializers.ValidationError("All certifications must be strings.")
         return value
 
+    def update(self, instance, validated_data):
+        # print(f"Serializer update validated_data: {validated_data}") # DEBUG: REMOVE AFTER DEBUGGING
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        instance.save()
+        return instance
+    def update(self, instance, validated_data):
+        print(f"Serializer update validated_data: {validated_data}") # DEBUG
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        instance.save()
+        return instance
 class ManufacturerPublicSerializer(serializers.ModelSerializer):
     """
     Serializer for public display of manufacturers.

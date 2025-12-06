@@ -12,14 +12,14 @@ class Review(models.Model):
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
         related_name='given_reviews',
-        limit_choices_to={'role': UserRole.CUSTOMER}
+        limit_choices_to={'role': 'customer'}
     )
 
     manufacturer = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
         related_name='received_reviews',
-        limit_choices_to={'role': UserRole.MANUFACTURER}
+        limit_choices_to={'role': 'manufacturer'}
     )
 
     # order_id is optional. If it becomes a ForeignKey to an 'Orders' table later,

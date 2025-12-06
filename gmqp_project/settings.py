@@ -25,7 +25,9 @@ SECRET_KEY = "django-insecure-m(rdfq5a-grhp9nysp8wwvt-babcn2&0l-%p#qi3re=o)0yeta
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ["localhost", "127.0.0.1"]
+
+CORS_ALLOW_ALL_ORIGINS = True # For development only
 
 
 # Application definition
@@ -38,6 +40,7 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     # Third-party apps
+    "corsheaders",
     "rest_framework",
     "rest_framework_simplejwt",
     # My apps
@@ -46,6 +49,7 @@ INSTALLED_APPS = [
     "quotes",
     "reviews",
     "orders",
+    "notifications",
 ]
 
 # Specify the custom user model
@@ -120,6 +124,7 @@ PASSWORD_HASHERS = [
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
+    "corsheaders.middleware.CorsMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
@@ -235,4 +240,8 @@ CELERY_TASK_TRACK_STARTED = True # If you want tasks to report 'STARTED' state
 import sys
 if 'test' in sys.argv or 'pytest' in sys.argv:
     CELERY_TASK_ALWAYS_EAGER = True
-    CELERY_TASK_EAGER_PROPAGATES = True # Makes task exceptions reraise
+    CELERY_TASK_EAGER_PROPAGATES = True
+
+# Razorpay Configuration
+RAZORPAY_KEY_ID = os.environ.get('RAZORPAY_KEY_ID', 'rzp_test_YOUR_KEY_ID')
+RAZORPAY_KEY_SECRET = os.environ.get('RAZORPAY_KEY_SECRET', 'YOUR_KEY_SECRET')

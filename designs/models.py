@@ -33,6 +33,31 @@ class Design(models.Model):
         choices=DesignStatus.choices,
         default=DesignStatus.PENDING_ANALYSIS,
     )
+    
+    # --- New Fields for 14-Point Quotation Model ---
+    class UrgencyLevel(models.TextChoices):
+        STANDARD = 'standard', _('Standard')
+        URGENT = 'urgent', _('Urgent')
+
+    class PackagingType(models.TextChoices):
+        STANDARD = 'standard', _('Standard')
+        CUSTOM = 'custom', _('Custom / Branded')
+        EXPORT = 'export', _('Export (Crate/Fumigated)')
+
+    urgency = models.CharField(
+        max_length=20,
+        choices=UrgencyLevel.choices,
+        default=UrgencyLevel.STANDARD
+    )
+    packaging_requirements = models.CharField(
+        max_length=20,
+        choices=PackagingType.choices,
+        default=PackagingType.STANDARD
+    )
+    # Stores list of required inspections e.g. ["CMM", "Material Cert", "Hardness"]
+    inspection_requirements = models.JSONField(default=list, blank=True)
+    requires_engineering_review = models.BooleanField(default=False)
+    
     geometric_data = models.JSONField(blank=True, null=True) # To store analysis results
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True) # Good practice, though not in spec explicitly for this table

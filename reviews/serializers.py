@@ -22,7 +22,7 @@ class ReviewSerializer(serializers.ModelSerializer):
             'created_at',
             'updated_at'
         ]
-        read_only_fields = ['id', 'customer_display_name', 'manufacturer_display_name', 'created_at', 'updated_at']
+        read_only_fields = ['id', 'customer', 'manufacturer', 'customer_display_name', 'manufacturer_display_name', 'created_at', 'updated_at']
         # 'customer' is often set implicitly from request.user.
         # 'manufacturer' is typically part of the URL or payload for creation.
 

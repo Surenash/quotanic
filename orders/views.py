@@ -1,7 +1,15 @@
 from rest_framework import generics, permissions
-from .models import Order
+from .models import Order, OrderStatus
 from .serializers import OrderSerializer
 from accounts.models import UserRole # To check user roles
+import razorpay
+from django.conf import settings
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status
+from django.shortcuts import get_object_or_404
+from django.db import transaction
+from notifications.signals import order_status_changed
 
 # --- Custom Permissions for Orders ---
 
@@ -131,7 +139,14 @@ class CanUpdateSpecificOrderFieldsPermission(permissions.BasePermission):
                 if current_status not in allowed_transitions or new_status not in allowed_transitions[current_status]:
                     self.message = f"Manufacturer: Invalid status transition from '{current_status}' to '{new_status}'."
                     return False
-                # If setting to SHIPPED, ensure tracking info might be expected (handled by serializer update method for now)
+                
+                # If setting to SHIPPED, ensure tracking info is provided
+                if new_status == OrderStatus.SHIPPED:
+                    tracking = request.data.get('tracking_number')
+                    carrier = request.data.get('shipping_carrier')
+                    if not tracking or not carrier:
+                         self.message = "Manufacturer must provide 'tracking_number' and 'shipping_carrier' when marking order as Shipped."
+                         return False
 
             elif is_customer:
                 # Customer can only cancel if order is in a pre-production state
@@ -162,54 +177,119 @@ class CanUpdateSpecificOrderFieldsPermission(permissions.BasePermission):
         return True # All checks passed for the role and attempted field updates
 
 
-from rest_framework.views import APIView
-from .models import OrderStatus # Ensure OrderStatus is available
-from django.shortcuts import get_object_or_404
-from django.db import transaction
-
 class OrderPaymentView(APIView):
     """
     POST /api/orders/{order_id}/process-payment/
-    Simulates processing a payment for an order.
+    Initiates a Razorpay order for payment.
+    Returns the Razorpay Order ID and options for the frontend checkout.
     """
-    permission_classes = [permissions.IsAuthenticated, IsOrderParticipantOrAdmin] # Only customer of order or admin
+    permission_classes = [permissions.IsAuthenticated]
 
-    def post(self, request, id, *args, **kwargs): # 'id' is order_id
+    def post(self, request, id, *args, **kwargs):
         order = get_object_or_404(Order, id=id)
 
-        # Manually check if the user is the customer of this order for this specific action
-        if order.customer != request.user and not request.user.is_staff:
-            return Response(
-                {"error": "You do not have permission to process payment for this order."},
-                status=status.HTTP_403_FORBIDDEN
-            )
+        # Check permission: Only customer (owner) can pay
+        if order.customer != request.user:
+            return Response({"error": "Permission denied."}, status=status.HTTP_403_FORBIDDEN)
 
         if order.status != OrderStatus.PENDING_PAYMENT:
             return Response(
-                {"error": f"Order is not pending payment. Current status: {order.get_status_display()}"},
+                {"error": f"Order is not pending payment. Status: {order.status}"},
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        # Placeholder: Simulate payment success/failure
-        # In a real app, this would involve integrating with a payment gateway (Stripe, PayPal, etc.)
-        # For simulation, let's assume a dummy token "valid_dummy_token" means success.
-        payment_token = request.data.get("payment_token")
-        payment_successful = (payment_token == "valid_dummy_token")
+        # Initialize Razorpay Client
+        # Ensure RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET are in settings.py
+        try:
+            print(f"DEBUG: View - RAZORPAY_KEY_ID: {getattr(settings, 'RAZORPAY_KEY_ID', 'NOT FOUND IN VIEW')}")
+            print(f"DEBUG: View - RAZORPAY_KEY_SECRET: {getattr(settings, 'RAZORPAY_KEY_SECRET', 'NOT FOUND IN VIEW')}")
+            client = razorpay.Client(auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET))
+        except AttributeError:
+             return Response({"error": "Server configuration error: Razorpay keys missing."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+        # Razorpay expects amount in paise (1 INR = 100 paise)
+        # order_total_price_usd is essentially acting as INR for this context
+        # assuming the platform uses INR, or we converted USD to INR before this step.
+        # For simplicity, let's treat the decimal value as the main currency unit (e.g. INR).
+        amount_in_subunit = int(order.order_total_price_usd * 100)
+
+        data = {
+            "amount": amount_in_subunit,
+            "currency": "INR",
+            "receipt": str(order.id),
+            "notes": {
+                "design_id": str(order.design.id),
+                "customer_email": order.customer.email
+            }
+        }
+
+        try:
+            razorpay_order = client.order.create(data=data)
+            # Return necessary details to frontend to open Razorpay Modal
+            return Response({
+                "id": razorpay_order['id'],
+                "amount": razorpay_order['amount'],
+                "currency": razorpay_order['currency'],
+                "key": settings.RAZORPAY_KEY_ID,
+                "order_id": order.id # Our internal order ID
+            }, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({"error": f"Razorpay Order Creation Failed: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class PaymentCallbackView(APIView):
+    """
+    POST /api/orders/payment-callback/
+    Verifies the Razorpay signature after payment completion.
+    Updates Order status to PROCESSING if successful.
+    """
+    permission_classes = [permissions.AllowAny] # Callback might come from client or webhook
+
+    def post(self, request, *args, **kwargs):
+        # Frontend sends these details after successful payment
+        razorpay_payment_id = request.data.get('razorpay_payment_id')
+        razorpay_order_id = request.data.get('razorpay_order_id')
+        razorpay_signature = request.data.get('razorpay_signature')
+
+        if not all([razorpay_payment_id, razorpay_order_id, razorpay_signature]):
+             return Response({"error": "Missing payment details."}, status=status.HTTP_400_BAD_REQUEST)
+
+        client = razorpay.Client(auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET))
+
+        try:
+            # verify_payment_signature raises an error if verification fails
+            client.utility.verify_payment_signature({
+                'razorpay_order_id': razorpay_order_id,
+                'razorpay_payment_id': razorpay_payment_id,
+                'razorpay_signature': razorpay_signature
+            })
+        except razorpay.errors.SignatureVerificationError:
+            return Response({"error": "Payment verification failed: Invalid Signature."}, status=status.HTTP_400_BAD_REQUEST)
+
+        # If verification successful, update our Order
+        # We need to find which internal order corresponds to this Razorpay order.
+        # Since we didn't store razorpay_order_id on the model yet, we can't look it up directly.
+        # Ideally, we should have stored it in OrderPaymentView or have the frontend send back our internal 'order_id'.
+        # Let's assume the frontend sends our internal 'internal_order_id' for robust lookup.
+        
+        internal_order_id = request.data.get('internal_order_id')
+        if not internal_order_id:
+             # Fallback: If we stored razorpay_order_id in the DB, we'd query by that.
+             # For now, fail if not provided.
+             return Response({"error": "Internal Order ID missing in callback."}, status=status.HTTP_400_BAD_REQUEST)
+
+        order = get_object_or_404(Order, id=internal_order_id)
+
+        if order.status == OrderStatus.PROCESSING:
+             return Response({"message": "Order already processed."}, status=status.HTTP_200_OK)
 
         with transaction.atomic():
-            if payment_successful:
-                # Assuming the next step after payment is manufacturer confirmation or processing
-                # If PENDING_MANUFACTURER_CONFIRMATION is used after payment, change to that.
-                # If payment happens after manufacturer confirmation, then PROCESSING is fine.
-                # Current flow: Quote Accepted -> Order (PENDING_MANUF_CONFIRM) -> Manuf Confirms (-> PROCESSING or PENDING_PAYMENT)
-                # Let's adjust the flow: Order created with PENDING_PAYMENT after quote acceptance.
-                # Manuf. confirmation could be an implicit part of them not cancelling.
-                # So, successful payment moves to PROCESSING.
-                order.status = OrderStatus.PROCESSING
-                order.save(update_fields=['status', 'updated_at'])
-                # Potentially trigger notifications or next steps for manufacturer
-                return Response({"message": "Payment successful. Order is now processing."}, status=status.HTTP_200_OK)
-            else:
-                order.status = OrderStatus.PAYMENT_FAILED
-                order.save(update_fields=['status', 'updated_at'])
-                return Response({"error": "Payment failed. Please try again or use a different payment method."}, status=status.HTTP_400_BAD_REQUEST)
+            old_status = order.status
+            order.status = OrderStatus.PROCESSING
+            # Optionally store the transaction ID
+            # order.payment_id = razorpay_payment_id 
+            order.save()
+            
+            order_status_changed.send(sender=self.__class__, order=order, old_status=old_status, new_status=order.status)
+
+        return Response({"message": "Payment verified. Order processing started."}, status=status.HTTP_200_OK)

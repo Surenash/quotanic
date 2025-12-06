@@ -5,6 +5,7 @@ from designs.serializers import DesignSerializer # To nest design details
 from quotes.serializers import QuoteSerializer # To nest quote details
 # For displaying user details like email/company name
 from accounts.serializers import UserSerializer # Simplified user details
+from notifications.signals import order_status_changed # Import signal
 
 class OrderSerializer(serializers.ModelSerializer):
     # Using simplified serializers for related objects to avoid overly complex nesting
@@ -113,47 +114,10 @@ class OrderSerializer(serializers.ModelSerializer):
             }
         return None
 
-    # If status updates via this serializer are allowed for specific roles:
-    # def validate_status(self, value):
-    #     # Add logic here to check allowed status transitions based on current status and user role
-    #     # This would be similar to the logic in CanUpdateQuote permission but for order statuses.
-    #     # For example, a manufacturer might change 'IN_PRODUCTION' to 'SHIPPED'.
-    #     # A customer might not be able to change status at all via this serializer.
-    #     if self.instance: # Only validate on updates
-    #         current_status = self.instance.status
-    #         new_status = value # The proposed new status value
-    #         user = self.context['request'].user # Assuming request is in context
-
-    #         if user.role == UserRole.MANUFACTURER and user == self.instance.manufacturer:
-    #             allowed_transitions_manufacturer = {
-    #                 OrderStatus.PENDING_MANUFACTURER_CONFIRMATION: [OrderStatus.PROCESSING, OrderStatus.CANCELLED_BY_MANUFACTURER],
-    #                 OrderStatus.PROCESSING: [OrderStatus.IN_PRODUCTION, OrderStatus.CANCELLED_BY_MANUFACTURER],
-    #                 OrderStatus.IN_PRODUCTION: [OrderStatus.SHIPPED],
-    #                 OrderStatus.SHIPPED: [OrderStatus.COMPLETED], # Or auto-completed after X days
-    #             }
-    #             if current_status in allowed_transitions_manufacturer and \
-    #                new_status not in allowed_transitions_manufacturer[current_status]:
-    #                 raise serializers.ValidationError(f"Manufacturer cannot change order status from '{current_status}' to '{new_status}'.")
-    #         elif user.role == UserRole.CUSTOMER and user == self.instance.customer:
-    #             allowed_transitions_customer = {
-    #                 # Example: Customer can cancel if it's still pending confirmation or processing
-    #                 OrderStatus.PENDING_MANUFACTURER_CONFIRMATION: [OrderStatus.CANCELLED_BY_CUSTOMER],
-    #                 OrderStatus.PENDING_PAYMENT: [OrderStatus.CANCELLED_BY_CUSTOMER],
-    #                 OrderStatus.PROCESSING: [OrderStatus.CANCELLED_BY_CUSTOMER],
-    #             }
-    #             if current_status in allowed_transitions_customer and \
-    #                new_status not in allowed_transitions_customer[current_status]:
-    #                 raise serializers.ValidationError(f"Customer cannot change order status from '{current_status}' to '{new_status}'.")
-    #             elif new_status == OrderStatus.CANCELLED_BY_CUSTOMER and current_status not in allowed_transitions_customer:
-    #                 raise serializers.ValidationError(f"Order cannot be cancelled by customer in its current status: '{current_status}'.")
-
-    #         # Add more checks for other roles or general invalid transitions
-    #         elif not user.is_staff: # If not staff and not one of the above specific roles
-    #             raise serializers.ValidationError("You do not have permission to change the order status.")
-
-    #     return value
-
     def update(self, instance, validated_data):
+        # Capture old status before update
+        old_status = instance.status
+        
         # If status is changed to SHIPPED, and actual_ship_date is not provided, set it to now.
         if 'status' in validated_data and validated_data['status'] == OrderStatus.SHIPPED:
             if not validated_data.get('actual_ship_date'):
@@ -169,4 +133,11 @@ class OrderSerializer(serializers.ModelSerializer):
                 instance.actual_ship_date = timezone.now().date()
                 instance.save(update_fields=['actual_ship_date']) # Save this specific change
 
+        # Emit signal if status changed
+        new_status = instance.status
+        if old_status != new_status:
+            order_status_changed.send(sender=self.__class__, order=instance, old_status=old_status, new_status=new_status)
+
         return instance
+
+

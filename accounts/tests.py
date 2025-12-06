@@ -518,7 +518,7 @@ class ManufacturerAPITests(APITestCase):
         data = {"capabilities": capabilities_missing_machining}
         response = self.client.put(url, data, format='json')
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertIn("`base_time_cost_unit` in machining factors must be a non-negative number.", response.data['capabilities'][0])
+        self.assertIn("Pricing factor 'base_time_cost_unit' is missing from 'pricing_factors.machining'.", response.data['capabilities'][0])
         # Depending on error ordering, the other might also appear or just the first one.
         # self.assertIn("`time_multiplier_complexity_cost_unit` in machining factors must be a non-negative number.", response.data['capabilities'][0])
 

@@ -110,7 +110,17 @@ class Manufacturer(models.Model):
     )
     # Other pricing parameters like material costs, densities, base_time, time_multiplier
     # will be stored in the 'capabilities' JSONField under a 'pricing_factors' key.
-    # Example: capabilities = { "pricing_factors": { "material_properties": {...}, "machining": {...} } }
+    # Example: capabilities = {
+    #   "pricing_factors": {
+    #       "material_properties": {...},
+    #       "machining": {...},
+    #       "tooling": {"custom_tooling_cost_usd": 100.0, "amortize": true},
+    #       "engineering": {"review_fee_usd": 75.0},
+    #       "qc": {"inspection_costs": {"cmm": 50.0, "material_cert": 25.0}},
+    #       "packaging": {"standard_cost_unit": 2.0, "custom_cost_unit": 10.0, "export_cost_unit": 25.0},
+    #       "logistics": {"base_fee_usd": 10.0, "cost_per_kg": 5.0}
+    #   }
+    # }
 
 
     # Timestamps (optional, but good practice)

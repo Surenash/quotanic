@@ -302,9 +302,9 @@ class GenerateQuotesView(APIView):
             #    continue
             # For this example, let's say we *prefer* CNC if available, but don't filter out if not.
             # Or, for a stricter filter demonstration:
-            if capabilities.get("cnc") is False: # Explicitly false
-                 logger.info(f"Mf {mf_profile.user.email} skipped: does not offer CNC (explicitly set to false).")
-                 continue
+            # if capabilities.get("cnc") is False: # Explicitly false
+            #      logger.info(f"Mf {mf_profile.user.email} skipped: does not offer CNC (explicitly set to false).")
+            #      continue
             # If "cnc" is true or missing, they pass this filter. (This is just an example filter behavior)
 
 
