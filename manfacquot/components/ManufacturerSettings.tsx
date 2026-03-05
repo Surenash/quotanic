@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Diamond, DollarSign, BarChart2, Wrench, Sparkles, CheckSquare, Package, FileText, CheckCircle2, XCircle } from 'lucide-react';
 import { api } from '../utils/api';
 import { styles } from '../types/theme';
 import { ALL_CAPABILITIES_GROUPS, SURFACE_FINISHES, POST_PROCESSING_ASSEMBLY } from '../utils/constants';
@@ -31,9 +32,9 @@ const ManufacturerSettingsPage = () => {
         setSaving(true);
         try {
             await api.updateManufacturerSettings({ capabilities: settings });
-            setNotification({ show: true, message: '✅ Settings saved successfully!', type: 'success' });
+            setNotification({ show: true, message: 'Settings saved successfully!', type: 'success' });
         } catch (err) {
-            setNotification({ show: true, message: '❌ Failed to save settings', type: 'error' });
+            setNotification({ show: true, message: 'Failed to save settings', type: 'error' });
         } finally {
             setSaving(false);
         }
@@ -45,9 +46,9 @@ const ManufacturerSettingsPage = () => {
         try {
             const data = await api.resetManufacturerSettings();
             setSettings(data.capabilities);
-            setNotification({ show: true, message: '✅ Settings reset to defaults', type: 'success' });
+            setNotification({ show: true, message: 'Settings reset to defaults', type: 'success' });
         } catch (err) {
-            setNotification({ show: true, message: '❌ Failed to reset settings', type: 'error' });
+            setNotification({ show: true, message: 'Failed to reset settings', type: 'error' });
         }
     };
 
@@ -79,14 +80,14 @@ const ManufacturerSettingsPage = () => {
     const pf = settings.pricing_factors || {};
 
     const tabs = [
-        { id: 'materials', label: '💎 Materials & Costs', icon: '💎' },
-        { id: 'pricing', label: '💰 Pricing Rates', icon: '💰' },
-        { id: 'overhead', label: '📊 Overhead & Margins', icon: '📊' },
-        { id: 'processes', label: '🔧 Manufacturing Processes', icon: '🔧' },
-        { id: 'secondary', label: '✨ Secondary Operations', icon: '✨' },
-        { id: 'qc', label: '✅ Engineering & QC', icon: '✅' },
-        { id: 'logistics', label: '📦 Logistics & Packaging', icon: '📦' },
-        { id: 'terms', label: '📋 Terms & Conditions', icon: '📋' }
+        { id: 'materials', label: 'Materials & Costs', icon: <Diamond size={16} /> },
+        { id: 'pricing', label: 'Pricing Rates', icon: <DollarSign size={16} /> },
+        { id: 'overhead', label: 'Overhead & Margins', icon: <BarChart2 size={16} /> },
+        { id: 'processes', label: 'Manufacturing Processes', icon: <Wrench size={16} /> },
+        { id: 'secondary', label: 'Secondary Operations', icon: <Sparkles size={16} /> },
+        { id: 'qc', label: 'Engineering & QC', icon: <CheckSquare size={16} /> },
+        { id: 'logistics', label: 'Logistics & Packaging', icon: <Package size={16} /> },
+        { id: 'terms', label: 'Terms & Conditions', icon: <FileText size={16} /> }
     ];
 
     return (
@@ -126,10 +127,13 @@ const ManufacturerSettingsPage = () => {
                             fontWeight: '600',
                             cursor: 'pointer',
                             transition: 'all 0.2s',
-                            whiteSpace: 'nowrap'
+                            whiteSpace: 'nowrap',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '8px'
                         }}
                     >
-                        {tab.icon} {tab.label.split(' ').slice(1).join(' ')}
+                        {tab.icon} {tab.label}
                     </button>
                 ))}
             </div>

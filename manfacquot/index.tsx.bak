@@ -1644,7 +1644,7 @@ const DashboardOverview = ({ user }) => {
 
                 <div style={styles.statCard}>
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
-                        <span style={{ fontSize: '24px' }}>💰</span>
+                        <PieChart style={{ width: '24px', height: '24px', color: '#10B981', marginRight: '8px' }} />
                     </div>
                     <h3 style={styles.statValue}>${stats?.monthly_revenue?.toFixed(2) || '0.00'}</h3>
                     <p style={styles.statLabel}>Revenue (This Month)</p>
@@ -1653,7 +1653,7 @@ const DashboardOverview = ({ user }) => {
 
                 <div style={styles.statCard}>
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
-                        <span style={{ fontSize: '24px' }}>⚡</span>
+                        <Zap style={{ width: '24px', height: '24px', color: '#F59E0B', marginRight: '8px' }} />
                     </div>
                     <h3 style={styles.statValue}>{stats?.avg_response_time_hours?.toFixed(1) || '0.0'}h</h3>
                     <p style={styles.statLabel}>Avg Response Time</p>
@@ -1666,7 +1666,7 @@ const DashboardOverview = ({ user }) => {
             {/* Recent Activity */}
             <div style={{ marginTop: '32px' }}>
                 <h3 style={{ ...styles.dashboardPageTitle, fontSize: '20px', marginBottom: '16px' }}>
-                    📋 Recent Activity
+                    <FileText style={{ width: '20px', height: '20px', marginRight: '8px' }} /> Recent Activity
                 </h3>
                 <div style={{
                     background: 'rgba(255,255,255,0.02)',
@@ -1676,7 +1676,7 @@ const DashboardOverview = ({ user }) => {
                 }}>
                     {activity?.recent_quotes?.length === 0 && activity?.recent_orders?.length === 0 ? (
                         <div style={{ textAlign: 'center', padding: '40px', color: '#64748B' }}>
-                            <p style={{ fontSize: '48px', marginBottom: '16px' }}>🎯</p>
+                            <Box style={{ width: '48px', height: '48px', color: '#64748B', marginBottom: '16px' }} />
                             <p style={{ fontSize: '16px', fontWeight: 500, marginBottom: '8px' }}>No activity yet</p>
                             <p style={{ fontSize: '14px' }}>Complete your profile to start receiving quote requests!</p>
                         </div>
@@ -1694,7 +1694,7 @@ const DashboardOverview = ({ user }) => {
                                 }}>
                                     <div>
                                         <p style={{ color: '#E2E8F0', fontWeight: 500 }}>
-                                            🆕 New Quote Request: {quote.design__design_name}
+                                            <Sparkles style={{ width: '16px', height: '16px', color: '#0AF0F0', marginRight: '4px', verticalAlign: 'middle' }} /> New Quote Request: {quote.design__design_name}
                                         </p>
                                         <p style={{ color: '#94A3B8', fontSize: '12px', marginTop: '4px' }}>
                                             {new Date(quote.created_at).toLocaleDateString()}
@@ -1720,7 +1720,7 @@ const DashboardOverview = ({ user }) => {
             {/* Quick Actions */}
             <div style={{ marginTop: '32px' }}>
                 <h3 style={{ ...styles.dashboardPageTitle, fontSize: '20px', marginBottom: '16px' }}>
-                    ⚡ Quick Actions
+                    <Zap style={{ width: '20px', height: '20px', marginRight: '8px' }} /> Quick Actions
                 </h3>
                 <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
                     <button
@@ -1733,7 +1733,7 @@ const DashboardOverview = ({ user }) => {
                         }}
                         onClick={() => window.location.hash = '#quotes'}
                     >
-                        📬 View Pending Quotes ({stats?.pending_quotes || 0})
+                        <Archive style={{ width: '16px', height: '16px', marginRight: '8px', display: 'inline' }} /> View Pending Quotes ({stats?.pending_quotes || 0})
                     </button>
                     <button
                         style={{
@@ -1745,7 +1745,7 @@ const DashboardOverview = ({ user }) => {
                         }}
                         onClick={() => window.location.hash = '#profile'}
                     >
-                        ⚙️ Update Profile
+                        <Settings style={{ width: '16px', height: '16px', marginRight: '8px', display: 'inline' }} /> Update Profile
                     </button>
                     <button
                         style={{
@@ -1756,7 +1756,7 @@ const DashboardOverview = ({ user }) => {
                             minWidth: '200px'
                         }}
                     >
-                        📊 View Analytics (Coming Soon)
+                        <BarChart2 style={{ width: '16px', height: '16px', marginRight: '8px', display: 'inline' }} /> View Analytics (Coming Soon)
                     </button>
                 </div>
             </div>
@@ -2618,9 +2618,9 @@ const DesignAnalysisResults = ({ designId, onContinue }) => {
                     Our advanced Feature-Based Machining system is detecting features, planning operations, and calculating accurate time estimates.
                 </p>
                 <div style={{ marginTop: '24px', color: '#94A3B8' }}>
-                    <p>⚙️ Detecting features...</p>
-                    <p>🔧 Planning machining operations...</p>
-                    <p>📊 Analyzing manufacturability...</p>
+                    <p>Settings Detecting features...</p>
+                    <p>Wrench Planning machining operations...</p>
+                    <p>BarChart2 Analyzing manufacturability...</p>
                 </div>
             </div>
         );
@@ -2642,7 +2642,7 @@ const DesignAnalysisResults = ({ designId, onContinue }) => {
     if (analysis?.basic) {
         return (
             <div style={styles.uploadPageContainer}>
-                <h2 style={styles.dashboardPageTitle}>✅ Upload Complete!</h2>
+                <h2 style={styles.dashboardPageTitle}>CheckCircle2 Upload Complete!</h2>
                 <p style={styles.dashboardPageSubtitle}>Your design has been uploaded successfully.</p>
                 <div style={{ marginTop: '32px' }}>
                     <CtaButton text="Request Quotes from Manufacturers" primary onClick={handleGenerateQuotes} disabled={generatingQuotes} />
@@ -2657,7 +2657,7 @@ const DesignAnalysisResults = ({ designId, onContinue }) => {
 
     return (
         <div style={styles.uploadPageContainer}>
-            <h2 style={styles.dashboardPageTitle}>✅ FBM Analysis Complete!</h2>
+            <h2 style={styles.dashboardPageTitle}>CheckCircle2 FBM Analysis Complete!</h2>
             <p style={styles.dashboardPageSubtitle}>
                 Our AI has detected {fbm_summary?.total_features || 0} features and planned {fbm_summary?.total_operations || 0} machining operations.
             </p>
@@ -2697,7 +2697,7 @@ const DesignAnalysisResults = ({ designId, onContinue }) => {
             {/* Manufacturing Risks */}
             {manufacturing_risks && manufacturing_risks.length > 0 && (
                 <div style={styles.warningBox}>
-                    <h4 style={{ margin: '0 0 12px 0', fontSize: '16px' }}>⚠️ Manufacturing Considerations</h4>
+                    <h4 style={{ margin: '0 0 12px 0', fontSize: '16px' }}>ShieldCheck Manufacturing Considerations</h4>
                     {manufacturing_risks.map((risk, i) => (
                         <p key={i} style={{ margin: '4px 0', fontSize: '14px' }}>• {risk}</p>
                     ))}
@@ -2707,10 +2707,10 @@ const DesignAnalysisResults = ({ designId, onContinue }) => {
             {/* Machinability Info */}
             {machinability_assessment && (
                 <div style={styles.fbmBadge}>
-                    {machinability_assessment.has_undercuts && <span>🔄 Undercuts Detected (5-axis recommended)</span>}
-                    {machinability_assessment.has_thin_walls && <span>⚠️ Thin Walls (min {machinability_assessment.min_wall_thickness}mm)</span>}
-                    <span>📊 Complexity: {machinability_assessment.complexity_score?.toFixed(1) || 'N/A'}/10</span>
-                    <span>🎯 Accessibility: {((machinability_assessment.accessibility_score || 0) * 100).toFixed(0)}%</span>
+                    {machinability_assessment.has_undercuts && <span>Zap Undercuts Detected (5-axis recommended)</span>}
+                    {machinability_assessment.has_thin_walls && <span>ShieldCheck Thin Walls (min {machinability_assessment.min_wall_thickness}mm)</span>}
+                    <span>BarChart2 Complexity: {machinability_assessment.complexity_score?.toFixed(1) || 'N/A'}/10</span>
+                    <span>Box Accessibility: {((machinability_assessment.accessibility_score || 0) * 100).toFixed(0)}%</span>
                 </div>
             )}
 
@@ -2849,7 +2849,7 @@ const DesignQuotationsPage = ({ designId, onNavigate }) => {
                                 padding: '8px 16px',
                                 fontSize: '14px'
                             }}>
-                            💰 Price (Low to High)
+                            PieChart Price (Low to High)
                         </button>
                         <button
                             onClick={() => setSortBy('lead_time')}
@@ -2859,7 +2859,7 @@ const DesignQuotationsPage = ({ designId, onNavigate }) => {
                                 padding: '8px 16px',
                                 fontSize: '14px'
                             }}>
-                            ⚡ Lead Time (Fast to Slow)
+                            Zap Lead Time (Fast to Slow)
                         </button>
                     </div>
 
@@ -3039,7 +3039,7 @@ const ManufacturingIntelligencePanel = ({ designId, onClose }) => {
                     {/* Tool Analysis */}
                     {report.tool_analysis?.required_tools?.length > 0 && (
                         <div style={styles.section}>
-                            <h3 style={{ ...styles.profileSectionTitle, textAlign: 'left' }}>🔧 Required Tooling</h3>
+                            <h3 style={{ ...styles.profileSectionTitle, textAlign: 'left' }}>Wrench Required Tooling</h3>
                             {report.tool_analysis.required_tools.map((tool, i) => (
                                 <div key={i} style={styles.toolCard}>
                                     <div>
@@ -3058,7 +3058,7 @@ const ManufacturingIntelligencePanel = ({ designId, onClose }) => {
 
                             {report.tool_analysis.specialty_tools_needed?.length > 0 && (
                                 <div style={styles.alertBox}>
-                                    <strong>⚠️ Specialty Tools Required:</strong>
+                                    <strong>ShieldCheck Specialty Tools Required:</strong>
                                     {report.tool_analysis.specialty_tools_needed.map((t, i) => (
                                         <p key={i} style={{ margin: '8px 0', fontSize: '14px' }}>{t.type} - {t.note}</p>
                                     ))}
@@ -3152,7 +3152,7 @@ const ManufacturingIntelligencePanel = ({ designId, onClose }) => {
                     {/* Cost Opportunities */}
                     {report.cost_opportunities?.length > 0 && (
                         <div style={styles.section}>
-                            <h3 style={{ ...styles.profileSectionTitle, textAlign: 'left' }}>💰 Cost Saving Opportunities</h3>
+                            <h3 style={{ ...styles.profileSectionTitle, textAlign: 'left' }}>PieChart Cost Saving Opportunities</h3>
                             {report.cost_opportunities.map((opp, i) => (
                                 <div key={i} style={styles.opportunityCard}>
                                     <h4 style={{ margin: '0 0 8px 0', fontSize: '15px', color: '#E0E7FF' }}>{opp.type}</h4>

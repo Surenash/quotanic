@@ -50,3 +50,6 @@ db.sqlite3-journal
 *.ntvs*
 *.njsproj
 *.sln
+
+# Large Binaries
+cloudflared*
