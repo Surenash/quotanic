@@ -1,0 +1,95 @@
+import uuid
+from django.db import models
+from django.conf import settings # To reference AUTH_USER_MODEL
+from django.utils.translation import gettext_lazy as _
+
+# From spec: CREATE TYPE design_status AS ENUM ('pending_analysis', 'analysis_complete', 'quoted', 'ordered');
+class DesignStatus(models.TextChoices):
+    PENDING_ANALYSIS = 'pending_analysis', _('Pending Analysis')
+    ANALYSIS_COMPLETE = 'analysis_complete', _('Analysis Complete')
+    ANALYSIS_FAILED = 'analysis_failed', _('Analysis Failed') # New status
+    QUOTED = 'quoted', _('Quoted')
+    ORDERED = 'ordered', _('Ordered')
+
+class Design(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    # customer_id UUID NOT NULL REFERENCES Users(id),
+    # The ForeignKey will create a 'customer_id' column.
+    customer = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='designs'
+        # If we need to ensure only 'customer' role users:
+        # limit_choices_to={'role': 'customer'}
+        # This is a DB constraint. Validation should also be in serializer/view.
+    )
+    design_name = models.CharField(max_length=255)
+    s3_file_key = models.CharField(max_length=1024)
+    material = models.CharField(max_length=100)
+    quantity = models.IntegerField()
+
+    status = models.CharField(
+        max_length=20, # Max length of enum values
+        choices=DesignStatus.choices,
+        default=DesignStatus.PENDING_ANALYSIS,
+    )
+    
+    # --- Manufacturing Details (Frontend Form Fields) ---
+    manufacturing_process = models.CharField(max_length=100, blank=True, default='')
+    surface_finish = models.CharField(max_length=100, blank=True, default='None')
+    tolerances = models.TextField(blank=True, default='')  # Free text for tolerance specifications
+    post_processing = models.JSONField(default=list, blank=True)  # List of selected post-processing options
+    
+    # --- Additional Information ---
+    additional_instructions = models.TextField(blank=True, default='')
+    required_certifications = models.TextField(blank=True, default='')  # e.g., "ISO 9001, Material Certs"
+    shipping_destination = models.CharField(max_length=255, blank=True, default='')
+    target_price = models.DecimalField(
+        max_digits=10, 
+        decimal_places=2, 
+        null=True, 
+        blank=True,
+        help_text="Customer's target price per part"
+    )
+    
+    # --- Supporting Files ---
+    supporting_files = models.JSONField(default=list, blank=True)  # List of S3 keys for supporting documents
+    
+    # --- 14-Point Quotation Model Fields ---
+    class UrgencyLevel(models.TextChoices):
+        STANDARD = 'standard', _('Standard')
+        URGENT = 'urgent', _('Urgent')
+
+    class PackagingType(models.TextChoices):
+        STANDARD = 'standard', _('Standard')
+        CUSTOM = 'custom', _('Custom / Branded')
+        EXPORT = 'export', _('Export (Crate/Fumigated)')
+
+    urgency = models.CharField(
+        max_length=20,
+        choices=UrgencyLevel.choices,
+        default=UrgencyLevel.STANDARD
+    )
+    packaging_requirements = models.CharField(
+        max_length=20,
+        choices=PackagingType.choices,
+        default=PackagingType.STANDARD
+    )
+    # Stores list of required inspections e.g. ["CMM", "Material Cert", "Hardness"]
+    inspection_requirements = models.JSONField(default=list, blank=True)
+    requires_engineering_review = models.BooleanField(default=False)
+    
+    geometric_data = models.JSONField(blank=True, null=True) # To store analysis results
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True) # Good practice, though not in spec explicitly for this table
+
+    def __str__(self):
+        return f"{self.design_name} (Customer: {self.customer.get_username()})" # Using get_username() for flexibility
+
+    class Meta:
+        db_table = 'Designs' # To match spec table name
+        verbose_name = 'Design'
+        verbose_name_plural = 'Designs'
+        ordering = ['-created_at']
+        # Django automatically creates an index on ForeignKey fields (like customer_id),
+        # so CREATE INDEX idx_designs_customer_id ON Designs(customer_id); is covered.

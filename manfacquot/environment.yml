@@ -1,0 +1,10 @@
+name: gmqp-env
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.12
+  - pythonocc-core
+  - pip
+  - pip:
+    - -r requirements.txt
