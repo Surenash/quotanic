@@ -16,30 +16,28 @@ Including another URLconf
 """
 
 from django.contrib import admin
-from django.urls import path, include, re_path
-from django.views.generic import TemplateView
+from django.urls import path, include
+from django.http import JsonResponse
+from accounts.urls import manufacturer_urlpatterns
 
-from accounts.urls import manufacturer_urlpatterns # Import the new list
+def api_health(request):
+    return JsonResponse({"status": "ok", "service": "quotanic-api"})
 
 urlpatterns = [
     path("admin/", admin.site.urls),
-    path("api/auth/", include("accounts.urls")), # This will include the original urlpatterns from accounts.urls
-    path("api/manufacturers/", include(manufacturer_urlpatterns)), # Includes manufacturer details and their nested reviews
-    path("api/designs/", include("designs.urls")), # Includes design details and their nested quotes
-
-    # Direct access to quotes by ID (e.g., /api/quotes/<quote_id>/)
+    path("api/auth/", include("accounts.urls")),
+    path("api/manufacturers/", include(manufacturer_urlpatterns)),
+    path("api/designs/", include("designs.urls")),
     path("api/quotes/", include("quotes.urls")),
-
-    # Direct access to reviews by ID (e.g., /api/reviews/<review_id>/)
     path("api/reviews/", include("reviews.urls")),
-
-    # Order endpoints
-    # Order endpoints
     path("api/orders/", include("orders.urls")),
 
-    # React App Catch-all
-    path("", TemplateView.as_view(template_name="index.html")),
-    re_path(r"^(?:.*)/?$", TemplateView.as_view(template_name="index.html")),
+    # API 404 Handler
+    path("api/", lambda request: JsonResponse({"error": "Resource not found"}, status=404)),
+    path("api/<path:path>", lambda request, path: JsonResponse({"error": "Resource not found"}, status=404)),
+
+    # Health check at root
+    path("", api_health),
 ]
 
 # Serve media files in production

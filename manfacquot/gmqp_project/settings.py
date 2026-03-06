@@ -27,9 +27,18 @@ SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'django-insecure-m(rdfq5a-grhp9
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.environ.get('DEBUG', 'True').lower() == 'true'
 
-ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
+ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', 'localhost,127.0.0.1,52.66.209.255,api.quotanic.com').split(',')
 
 CORS_ALLOW_ALL_ORIGINS = True # For development only
+
+CSRF_TRUSTED_ORIGINS = [
+    'http://52.66.209.255',
+    'http://52.66.209.255:8000',
+    'https://api.quotanic.com',
+    'https://quotanic.com',
+    'https://www.quotanic.com',
+    'https://*.amplifyapp.com',
+]
 
 
 # Application definition
@@ -130,6 +139,7 @@ MIDDLEWARE = [
     "corsheaders.middleware.CorsMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
+    "gmqp_project.middleware.DisableCSRFForAPI",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
@@ -140,7 +150,7 @@ ROOT_URLCONF = "gmqp_project.urls"
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": [BASE_DIR / "dist"],
+        "DIRS": [],
         "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [
@@ -155,14 +165,14 @@ TEMPLATES = [
 WSGI_APPLICATION = "gmqp_project.wsgi.application"
 
 
-# Database
-# https://docs.djangoproject.com/en/5.2/ref/settings/#databases
+import dj_database_url
 
 DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "db.sqlite3",
-    }
+    "default": dj_database_url.config(
+        default=f"sqlite:///{BASE_DIR / 'db.sqlite3'}",
+        conn_max_age=600,
+        conn_health_checks=True,
+    )
 }
 
 
@@ -226,13 +236,13 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 AWS_ACCESS_KEY_ID = os.environ.get('AWS_ACCESS_KEY_ID', 'YOUR_AWS_ACCESS_KEY_ID_HERE')
 AWS_SECRET_ACCESS_KEY = os.environ.get('AWS_SECRET_ACCESS_KEY', 'YOUR_AWS_SECRET_ACCESS_KEY_HERE')
 AWS_STORAGE_BUCKET_NAME = os.environ.get('AWS_STORAGE_BUCKET_NAME', 'your-gmqp-design-files-bucket')
-AWS_S3_REGION_NAME = os.environ.get('AWS_S3_REGION_NAME', 'us-east-1') # e.g., 'us-east-1'
+AWS_S3_REGION_NAME = os.environ.get('AWS_S3_REGION_NAME', 'ap-south-1') # Mumbai
 AWS_S3_ENDPOINT_URL = os.environ.get('AWS_S3_ENDPOINT_URL', None) # For MinIO/LocalStack, e.g., 'http://localhost:9000'
 AWS_S3_SIGNATURE_VERSION = 's3v4'
 AWS_S3_PRESIGNED_URL_EXPIRATION = 3600  # seconds (1 hour)
 
 # Path in the bucket where design files will be stored
-AWS_S3_DESIGNS_UPLOAD_PREFIX = os.environ.get('AWS_S3_DESIGNS_UPLOAD_PREFIX','uploads/designs/')
+AWS_S3_DESIGNS_UPLOAD_PREFIX = os.environ.get('AWS_S3_DESIGNS_UPLOAD_PREFIX', 'uploads/designs/')
 
 
 # Celery Configuration Options

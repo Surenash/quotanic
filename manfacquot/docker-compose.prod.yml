@@ -1,6 +1,18 @@
 version: '3.8'
 
 services:
+  db:
+    image: postgres:15-alpine
+    restart: always
+    environment:
+      POSTGRES_DB: quotanic_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: QuotanicDB2026!
+    volumes:
+      - ./postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
   web:
     build: .
     ports:
@@ -9,10 +21,12 @@ services:
       - .env
     environment:
       - DEBUG=False
+      - DATABASE_URL=postgres://postgres:QuotanicDB2026!@db:5432/quotanic_db
+      - ALLOWED_HOSTS=localhost,127.0.0.1,52.66.209.255,api.quotanic.com
     volumes:
-      - ./db.sqlite3:/app/db.sqlite3
       - ./media:/app/media
     depends_on:
+      - db
       - redis
 
   redis:
@@ -24,10 +38,12 @@ services:
     command: celery -A gmqp_project worker --loglevel=info
     env_file:
       - .env
+    environment:
+      - DATABASE_URL=postgres://postgres:QuotanicDB2026!@db:5432/quotanic_db
     volumes:
-      - ./db.sqlite3:/app/db.sqlite3
       - ./media:/app/media
     depends_on:
+      - db
       - redis
       - web
 
@@ -35,10 +51,12 @@ services:
     image: nginx:1.25-alpine
     ports:
       - "80:80"
+      - "443:443"
     volumes:
-      - ./nginx/default.conf.template:/etc/nginx/templates/default.conf.template
+      - ./nginx/ssl.conf.template:/etc/nginx/templates/ssl.conf.template:ro
+      - /etc/letsencrypt:/etc/letsencrypt:ro
       - ./media:/app/media
     environment:
-      - DOMAIN_NAME=${DOMAIN_NAME:-localhost}
+      - DOMAIN_NAME=${DOMAIN_NAME:-quotanic.com}
     depends_on:
       - web

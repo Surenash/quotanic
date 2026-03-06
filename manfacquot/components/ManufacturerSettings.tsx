@@ -466,11 +466,10 @@ const ManufacturerSettingsPage = () => {
                                 </div>
                             </div>
                         </div>
-                    </div>
-                )}
+                    )}
+                </div>
             </div>
         </div>
-        </div >
     );
 };
 

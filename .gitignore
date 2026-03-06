@@ -53,3 +53,11 @@ db.sqlite3-journal
 
 # Large Binaries
 cloudflared*
+*.zip
+*.tar.gz
+*.pem
+*.json
+!package.json
+!tsconfig.json
+!composer.json
+!manfacquot/cors.json

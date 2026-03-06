@@ -21,7 +21,7 @@ export default defineConfig(({ mode, command }) => {
         }
       },
     },
-    base: mode === 'production' ? '/static/' : '/',
+    base: '/',
     plugins: [react()],
     resolve: {
       alias: {

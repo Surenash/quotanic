@@ -44,7 +44,7 @@ import ManufacturerSettingsPage from './components/ManufacturerSettings';
 
 import './index.css';
 
-const API_BASE_URL = '/api'; // Using relative URL for proxying// --- Constants for Manufacturer Signup & Directory ---
+const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || '') + '/api'; // Uses env var in production// --- Constants for Manufacturer Signup & Directory ---
 import {
     PRODUCTION_VOLUMES, CERTIFICATIONS, MACHINING_PROCESSES, SHEET_METAL_PROCESSES, CASTING_PROCESSES, FORGING_PROCESSES,
     INJECTION_MOLDING_PROCESSES, ADDITIVE_PROCESSES, WELDING_JOINING_PROCESSES, MATERIALS_METALS, MATERIALS_PLASTICS,

@@ -42,7 +42,7 @@ def create_demo_data():
         print(f"Created Manufacturer: {mfg_email}")
 
     # 2. Create Dummy Customers
-    customer_companies = ["AeroSpace Dynamics", "MedTech Innovators", "AutoParts Global", "ConsumerGadgets Inc.", "Robotics Next"]
+    customer_companies = ["AeroSpace Dynamics"]
     customers = []
     
     for company in customer_companies:

@@ -1,6 +1,6 @@
 // API Client extracted from index.tsx
 
-const API_BASE_URL = '/api'; // Using relative URL for proxying
+const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || '') + '/api'; // Uses env var in production
 
 export const getTokens = () => ({
     access: localStorage.getItem('accessToken'),
