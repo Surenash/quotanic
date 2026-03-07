@@ -1905,14 +1905,30 @@ const QuoteRequestModal = ({ request, onClose, onSubmit }) => {
 const CostBreakdownModal = ({ request, onClose }) => {
     // Parse the notes field to extract breakdown data
     const parseBreakdown = (notes) => {
+        if (!notes) return null;
         try {
-            // Notes format: "Match Score: 70.0/100. Process: ManufacturingProcess.MILLING_3_AXIS. {json_data}"
+            // Notes format: "Match Score: ... Process: ... {JSON}"
+            // We want to find the first '{' and the last '}' to extract the JSON body
             const jsonStart = notes.indexOf('{');
-            if (jsonStart === -1) return null;
+            const jsonEnd = notes.lastIndexOf('}');
+            
+            if (jsonStart === -1 || jsonEnd === -1 || jsonEnd < jsonStart) return null;
 
-            const jsonStr = notes.substring(jsonStart);
-            const data = JSON.parse(jsonStr.replace(/'/g, '"'));
-            return data;
+            const jsonStr = notes.substring(jsonStart, jsonEnd + 1);
+            
+            // Try standard JSON parse first
+            try {
+                return JSON.parse(jsonStr);
+            } catch (e) {
+                // Fallback for Python-style dictionaries (single quotes)
+                // Only replace single quotes that are not preceded by a backslash
+                const fixedJson = jsonStr
+                    .replace(/'/g, '"')
+                    .replace(/None/g, 'null')
+                    .replace(/True/g, 'true')
+                    .replace(/False/g, 'false');
+                return JSON.parse(fixedJson);
+            }
         } catch (e) {
             console.error('Failed to parse breakdown:', e);
             return null;
