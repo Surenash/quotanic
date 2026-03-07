@@ -159,6 +159,7 @@ const ManufacturerSettingsPage = () => {
         if (name) {
             const currentSelected = settings.selected_materials || [];
             updateSetting(['selected_materials'], [...currentSelected, name]);
+            updateSetting(['materials_supported'], [...currentSelected, name]); // Sync legacy
             updateSetting(['pricing_factors', 'material_properties', name], { density_g_cm3: 2.7, cost_usd_kg: 5.0 });
         }
     };
@@ -224,6 +225,7 @@ const ManufacturerSettingsPage = () => {
 
                 <div style={{ flex: 1, background: 'var(--bg-panel)', padding: '32px', borderRadius: '12px', minHeight: '600px', border: '1px solid var(--border-color)', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)' }}>
 
+                    {/* 1. MATERIAL SELECTION */}
                     {activeTab === 'material-selection' && (
                         <div>
                             <h3 style={{ color: 'var(--neon-cyan)', marginBottom: '16px' }}>Select Supported Materials</h3>
@@ -234,15 +236,25 @@ const ManufacturerSettingsPage = () => {
                                         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '8px' }}>
                                             {group.items.map(material => (
                                                 <label key={material} style={{ display: 'flex', alignItems: 'center', padding: '8px 12px', background: 'rgba(255,255,255,0.02)', borderRadius: '6px', cursor: 'pointer' }}>
-                                                    <input type="checkbox" checked={(settings.selected_materials || []).includes(material)} onChange={(e) => {
-                                                        const current = settings.selected_materials || [];
-                                                        if (e.target.checked) {
-                                                            updateSetting(['selected_materials'], [...current, material]);
-                                                            if (!pf.material_properties?.[material]) updateSetting(['pricing_factors', 'material_properties', material], { density_g_cm3: 2.7, cost_usd_kg: 5.0 });
-                                                        } else {
-                                                            updateSetting(['selected_materials'], current.filter((m: string) => m !== material));
-                                                        }
-                                                    }} style={{ marginRight: '10px' }} />
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={(settings.selected_materials || []).includes(material)}
+                                                        onChange={(e) => {
+                                                            const newSettings = JSON.parse(JSON.stringify(settings));
+                                                            const current = newSettings.selected_materials || [];
+                                                            const next = e.target.checked ? [...current, material] : current.filter((m: string) => m !== material);
+                                                            newSettings.selected_materials = next;
+                                                            newSettings.materials_supported = next; // Sync with profile
+                                                            
+                                                            if (e.target.checked && (!newSettings.pricing_factors?.material_properties?.[material])) {
+                                                                if (!newSettings.pricing_factors) newSettings.pricing_factors = {};
+                                                                if (!newSettings.pricing_factors.material_properties) newSettings.pricing_factors.material_properties = {};
+                                                                newSettings.pricing_factors.material_properties[material] = { density_g_cm3: 2.7, cost_usd_kg: 5.0 };
+                                                            }
+                                                            setSettings(newSettings);
+                                                        }}
+                                                        style={{ marginRight: '10px', accentColor: 'var(--neon-cyan)' }}
+                                                    />
                                                     <span style={{ color: '#CBD5E1', fontSize: '13px' }}>{material}</span>
                                                 </label>
                                             ))}
@@ -253,6 +265,7 @@ const ManufacturerSettingsPage = () => {
                         </div>
                     )}
 
+                    {/* 2. MATERIAL PRICING */}
                     {activeTab === 'materials' && (
                         <div>
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
@@ -296,15 +309,34 @@ const ManufacturerSettingsPage = () => {
                                     <div key={group.title}>
                                         <h4 style={{ color: '#E2E8F0', marginBottom: '12px', borderBottom: '1px solid rgba(255,255,255,0.1)' }}>{group.title}</h4>
                                         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: '8px' }}>
-                                            {group.processes.map(process => (
-                                                <label key={process} style={{ display: 'flex', alignItems: 'center', padding: '8px 12px', background: 'var(--bg-panel)', borderRadius: '6px', cursor: 'pointer' }}>
-                                                    <input type="checkbox" checked={(settings.processes || []).includes(process)} onChange={(e) => {
-                                                        const current = settings.processes || [];
-                                                        updateSetting(['processes'], e.target.checked ? [...current, process] : current.filter((p: string) => p !== process));
-                                                    }} style={{ marginRight: '10px' }} />
-                                                    <span style={{ color: '#CBD5E1', fontSize: '13px' }}>{process}</span>
-                                                </label>
-                                            ))}
+                                            {group.processes.map(process => {
+                                                const groupKey = group.title.toLowerCase().replace(/ & /g, 'and').replace(/ /g, '');
+                                                return (
+                                                    <label key={process} style={{ display: 'flex', alignItems: 'center', padding: '8px 12px', background: 'var(--bg-panel)', borderRadius: '6px', cursor: 'pointer' }}>
+                                                        <input
+                                                            type="checkbox"
+                                                            checked={(settings[groupKey] || []).includes(process)}
+                                                            onChange={(e) => {
+                                                                const newSettings = JSON.parse(JSON.stringify(settings));
+                                                                const currentGroup = newSettings[groupKey] || [];
+                                                                const nextGroup = e.target.checked ? [...currentGroup, process] : currentGroup.filter((p: string) => p !== process);
+                                                                newSettings[groupKey] = nextGroup;
+                                                                
+                                                                // Sync the flat 'processes' list for matching engine
+                                                                const allGroups = ALL_CAPABILITIES_GROUPS.map(g => g.title.toLowerCase().replace(/ & /g, 'and').replace(/ /g, ''));
+                                                                const flatProcesses: string[] = [];
+                                                                allGroups.forEach(key => {
+                                                                    if (newSettings[key]) flatProcesses.push(...newSettings[key]);
+                                                                });
+                                                                newSettings.processes = Array.from(new Set(flatProcesses));
+                                                                setSettings(newSettings);
+                                                            }}
+                                                            style={{ marginRight: '10px' }}
+                                                        />
+                                                        <span style={{ color: '#CBD5E1', fontSize: '13px' }}>{process}</span>
+                                                    </label>
+                                                );
+                                            })}
                                         </div>
                                     </div>
                                 ))}
