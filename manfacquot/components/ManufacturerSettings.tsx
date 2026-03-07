@@ -62,6 +62,8 @@ const ManufacturerSettingsPage = () => {
         }
     };
 
+    const [rateUnit, setRateUnit] = useState<'min' | 'hour'>('min');
+
     const updateSetting = (path: string[], value: any) => {
         const newSettings = JSON.parse(JSON.stringify(settings));
         let current = newSettings;
@@ -73,6 +75,33 @@ const ManufacturerSettingsPage = () => {
 
         current[path[path.length - 1]] = value;
         setSettings(newSettings);
+    };
+
+    const handleNumberInput = (path: string[], value: string, isPercentage: boolean = false) => {
+        if (value === '') {
+            updateSetting(path, null);
+            return;
+        }
+        
+        let num = parseFloat(value);
+        if (isNaN(num)) return;
+        
+        if (isPercentage) num = num / 100;
+        updateSetting(path, num);
+    };
+
+    const handleRateInput = (machine: string, value: string) => {
+        if (value === '') {
+            updateSetting(['pricing_factors', 'machining', 'rates', machine], null);
+            return;
+        }
+
+        let num = parseFloat(value);
+        if (isNaN(num)) return;
+
+        // If user is inputting in 'hour', convert to 'min' for storage
+        const minRate = rateUnit === 'hour' ? num / 60 : num;
+        updateSetting(['pricing_factors', 'machining', 'rates', machine], minRate);
     };
 
     const deleteSetting = (path: string[]) => {
@@ -196,11 +225,11 @@ const ManufacturerSettingsPage = () => {
                                         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '12px' }}>
                                             <div>
                                                 <label style={{ fontSize: '11px', color: 'var(--text-secondary)', display: 'block', marginBottom: '4px' }}>Density (g/cm³)</label>
-                                                <input type="number" step="0.01" value={props.density_g_cm3 || ''} onChange={(e) => updateSetting(['pricing_factors', 'material_properties', material, 'density_g_cm3'], parseFloat(e.target.value))} style={{ ...styles.input, width: '100%', padding: '8px' }} />
+                                                <input type="number" step="0.01" value={props.density_g_cm3 ?? ''} onChange={(e) => handleNumberInput(['pricing_factors', 'material_properties', material, 'density_g_cm3'], e.target.value)} style={{ ...styles.input, width: '100%', padding: '8px' }} />
                                             </div>
                                             <div>
                                                 <label style={{ fontSize: '11px', color: 'var(--text-secondary)', display: 'block', marginBottom: '4px' }}>Cost (USD/kg)</label>
-                                                <input type="number" step="0.1" value={props.cost_usd_kg || ''} onChange={(e) => updateSetting(['pricing_factors', 'material_properties', material, 'cost_usd_kg'], parseFloat(e.target.value))} style={{ ...styles.input, width: '100%', padding: '8px' }} />
+                                                <input type="number" step="0.1" value={props.cost_usd_kg ?? ''} onChange={(e) => handleNumberInput(['pricing_factors', 'material_properties', material, 'cost_usd_kg'], e.target.value)} style={{ ...styles.input, width: '100%', padding: '8px' }} />
                                             </div>
                                             <div style={{ gridColumn: 'span 2' }}>
                                                 <label style={{ fontSize: '11px', color: 'var(--text-secondary)', display: 'block', marginBottom: '4px' }}>Supplier API / Link <Link size={10} /></label>
@@ -216,25 +245,55 @@ const ManufacturerSettingsPage = () => {
                     {/* PRICING RATES */}
                     {activeTab === 'pricing' && (
                         <div>
-                            <h3 style={{ color: 'var(--neon-cyan)', marginBottom: '16px' }}>Machine & Labor Rates</h3>
-                            <p style={{ color: 'var(--text-secondary)', fontSize: '14px', marginBottom: '24px' }}>Configure hourly rates for each machine listed in your profile.</p>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                                <h3 style={{ color: 'var(--neon-cyan)', margin: 0 }}>Machine & Labor Rates</h3>
+                                <div style={{ display: 'flex', background: 'rgba(255,255,255,0.05)', borderRadius: '8px', padding: '4px' }}>
+                                    <button 
+                                        onClick={() => setRateUnit('min')}
+                                        style={{ padding: '6px 12px', border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold', background: rateUnit === 'min' ? 'var(--neon-cyan)' : 'transparent', color: rateUnit === 'min' ? 'black' : '#CBD5E1', transition: 'all 0.2s' }}
+                                    >
+                                        USD/Min
+                                    </button>
+                                    <button 
+                                        onClick={() => setRateUnit('hour')}
+                                        style={{ padding: '6px 12px', border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold', background: rateUnit === 'hour' ? 'var(--neon-cyan)' : 'transparent', color: rateUnit === 'hour' ? 'black' : '#CBD5E1', transition: 'all 0.2s' }}
+                                    >
+                                        USD/Hour
+                                    </button>
+                                </div>
+                            </div>
+                            <p style={{ color: 'var(--text-secondary)', fontSize: '14px', marginBottom: '24px' }}>Configure hourly or minute-based rates for each machine listed in your profile.</p>
 
                             <div style={{ display: 'grid', gap: '32px' }}>
                                 <div>
                                     <h4 style={{ color: '#E2E8F0', marginBottom: '12px', fontSize: '14px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Machining Rates</h4>
                                     <div style={{ display: 'grid', gap: '12px' }}>
-                                        {(settings.processes || []).map((machine: string) => (
-                                            <div key={machine} style={{ display: 'grid', gridTemplateColumns: '1fr 120px 120px', gap: '16px', alignItems: 'center', padding: '12px', background: 'rgba(255,255,255,0.02)', borderRadius: '8px' }}>
-                                                <span style={{ color: '#CBD5E1', fontSize: '14px', fontWeight: '500' }}>{machine}</span>
-                                                <div>
-                                                    <label style={{ fontSize: '10px', color: 'var(--text-secondary)', display: 'block', marginBottom: '2px' }}>USD/Min</label>
-                                                    <input type="number" step="0.1" value={pf.machining?.rates?.[machine] || 1.5} onChange={(e) => updateSetting(['pricing_factors', 'machining', 'rates', machine], parseFloat(e.target.value))} style={{ ...styles.input, width: '100%', padding: '6px' }} />
+                                        {(settings.processes || []).map((machine: string) => {
+                                            const minRate = pf.machining?.rates?.[machine] ?? 1.5;
+                                            const displayValue = rateUnit === 'hour' ? (minRate * 60).toFixed(2) : minRate;
+                                            
+                                            return (
+                                                <div key={machine} style={{ display: 'grid', gridTemplateColumns: '1fr 150px 150px', gap: '16px', alignItems: 'center', padding: '12px', background: 'rgba(255,255,255,0.02)', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                                                    <span style={{ color: '#CBD5E1', fontSize: '14px', fontWeight: '500' }}>{machine}</span>
+                                                    <div>
+                                                        <label style={{ fontSize: '10px', color: 'var(--text-secondary)', display: 'block', marginBottom: '2px' }}>{rateUnit === 'min' ? 'USD/Min' : 'USD/Hour'}</label>
+                                                        <input 
+                                                            type="number" 
+                                                            step="0.1" 
+                                                            value={displayValue} 
+                                                            onChange={(e) => handleRateInput(machine, e.target.value)} 
+                                                            style={{ ...styles.input, width: '100%', padding: '6px' }} 
+                                                        />
+                                                    </div>
+                                                    <div style={{ color: 'var(--neon-cyan)', fontSize: '12px', fontWeight: 'bold' }}>
+                                                        {rateUnit === 'hour' 
+                                                            ? `≈ $${(parseFloat(displayValue as string) / 60).toFixed(3)}/min`
+                                                            : `≈ $${(parseFloat(displayValue as string) * 60).toFixed(2)}/hr`
+                                                        }
+                                                    </div>
                                                 </div>
-                                                <div style={{ color: 'var(--neon-cyan)', fontSize: '12px', fontWeight: 'bold' }}>
-                                                    ≈ ${((pf.machining?.rates?.[machine] || 1.5) * 60).toFixed(2)}/hr
-                                                </div>
-                                            </div>
-                                        ))}
+                                            );
+                                        })}
                                         {(settings.processes || []).length === 0 && (
                                             <p style={{ color: '#EF4444', fontSize: '13px', fontStyle: 'italic' }}>No machines selected in profile. Please select processes in the "Manufacturing Processes" tab.</p>
                                         )}
@@ -247,11 +306,11 @@ const ManufacturerSettingsPage = () => {
                                         <div style={{ display: 'grid', gap: '12px' }}>
                                             <div>
                                                 <label style={{ fontSize: '12px', color: 'var(--text-secondary)', display: 'block', marginBottom: '4px' }}>Skilled Rate (USD/hour)</label>
-                                                <input type="number" step="0.5" value={pf.labor?.skilled_rate_hourly || ''} onChange={(e) => updateSetting(['pricing_factors', 'labor', 'skilled_rate_hourly'], parseFloat(e.target.value))} style={{ ...styles.input, width: '100%' }} />
+                                                <input type="number" step="0.5" value={pf.labor?.skilled_rate_hourly ?? ''} onChange={(e) => handleNumberInput(['pricing_factors', 'labor', 'skilled_rate_hourly'], e.target.value)} style={{ ...styles.input, width: '100%' }} />
                                             </div>
                                             <div>
                                                 <label style={{ fontSize: '12px', color: 'var(--text-secondary)', display: 'block', marginBottom: '4px' }}>Efficiency Factor (0.1 - 1.0)</label>
-                                                <input type="number" step="0.01" value={pf.labor?.efficiency_factor || ''} onChange={(e) => updateSetting(['pricing_factors', 'labor', 'efficiency_factor'], parseFloat(e.target.value))} style={{ ...styles.input, width: '100%' }} />
+                                                <input type="number" step="0.01" value={pf.labor?.efficiency_factor ?? ''} onChange={(e) => handleNumberInput(['pricing_factors', 'labor', 'efficiency_factor'], e.target.value)} style={{ ...styles.input, width: '100%' }} />
                                             </div>
                                         </div>
                                     </div>
@@ -260,11 +319,11 @@ const ManufacturerSettingsPage = () => {
                                         <div style={{ display: 'grid', gap: '12px' }}>
                                             <div>
                                                 <label style={{ fontSize: '12px', color: 'var(--text-secondary)', display: 'block', marginBottom: '4px' }}>Scrap Rate (%)</label>
-                                                <input type="number" step="0.01" value={(pf.material_factors?.scrap_rate_percent || 0) * 100} onChange={(e) => updateSetting(['pricing_factors', 'material_factors', 'scrap_rate_percent'], parseFloat(e.target.value) / 100)} style={{ ...styles.input, width: '100%' }} />
+                                                <input type="number" step="0.01" value={pf.material_factors?.scrap_rate_percent !== undefined ? (pf.material_factors.scrap_rate_percent * 100).toFixed(2) : ''} onChange={(e) => handleNumberInput(['pricing_factors', 'material_factors', 'scrap_rate_percent'], e.target.value, true)} style={{ ...styles.input, width: '100%' }} />
                                             </div>
                                             <div>
                                                 <label style={{ fontSize: '12px', color: 'var(--text-secondary)', display: 'block', marginBottom: '4px' }}>Yield Rate (%)</label>
-                                                <input type="number" step="0.01" value={(pf.material_factors?.yield_rate_percent || 0) * 100} onChange={(e) => updateSetting(['pricing_factors', 'material_factors', 'yield_rate_percent'], parseFloat(e.target.value) / 100)} style={{ ...styles.input, width: '100%' }} />
+                                                <input type="number" step="0.01" value={pf.material_factors?.yield_rate_percent !== undefined ? (pf.material_factors.yield_rate_percent * 100).toFixed(2) : ''} onChange={(e) => handleNumberInput(['pricing_factors', 'material_factors', 'yield_rate_percent'], e.target.value, true)} style={{ ...styles.input, width: '100%' }} />
                                             </div>
                                         </div>
                                     </div>
@@ -286,11 +345,11 @@ const ManufacturerSettingsPage = () => {
                             <div style={{ display: 'grid', gap: '16px', maxWidth: '600px' }}>
                                 <div style={{ padding: '16px', background: 'rgba(255,255,255,0.02)', borderRadius: '8px' }}>
                                     <label style={{ fontSize: '14px', color: '#CBD5E1', display: 'block', marginBottom: '8px' }}>Global Overhead Rate (%)</label>
-                                    <input type="number" step="1" value={(pf.overheads?.rate_percent || 0) * 100} onChange={(e) => updateSetting(['pricing_factors', 'overheads', 'rate_percent'], parseFloat(e.target.value) / 100)} style={{ ...styles.input, width: '100%' }} />
+                                    <input type="number" step="1" value={pf.overheads?.rate_percent !== undefined ? (pf.overheads.rate_percent * 100).toFixed(2) : ''} onChange={(e) => handleNumberInput(['pricing_factors', 'overheads', 'rate_percent'], e.target.value, true)} style={{ ...styles.input, width: '100%' }} />
                                 </div>
                                 <div style={{ padding: '16px', background: 'rgba(255,255,255,0.02)', borderRadius: '8px' }}>
                                     <label style={{ fontSize: '14px', color: '#CBD5E1', display: 'block', marginBottom: '8px' }}>Target Profit Margin (%)</label>
-                                    <input type="number" step="1" value={(pf.profit_margin?.rate_percent || 0) * 100} onChange={(e) => updateSetting(['pricing_factors', 'profit_margin', 'rate_percent'], parseFloat(e.target.value) / 100)} style={{ ...styles.input, width: '100%' }} />
+                                    <input type="number" step="1" value={pf.profit_margin?.rate_percent !== undefined ? (pf.profit_margin.rate_percent * 100).toFixed(2) : ''} onChange={(e) => handleNumberInput(['pricing_factors', 'profit_margin', 'rate_percent'], e.target.value, true)} style={{ ...styles.input, width: '100%' }} />
                                 </div>
                                 
                                 {Object.entries(pf.overheads?.custom_sections || {}).map(([name, value]: [string, any]) => (
@@ -299,7 +358,7 @@ const ManufacturerSettingsPage = () => {
                                             <label style={{ fontSize: '14px', color: 'var(--neon-cyan)', display: 'block' }}>{name} (%)</label>
                                             <button onClick={() => deleteSetting(['pricing_factors', 'overheads', 'custom_sections', name])} style={{ color: '#EF4444', background: 'transparent', border: 'none', cursor: 'pointer' }}><Trash2 size={14} /></button>
                                         </div>
-                                        <input type="number" step="0.5" value={value * 100} onChange={(e) => updateSetting(['pricing_factors', 'overheads', 'custom_sections', name], parseFloat(e.target.value) / 100)} style={{ ...styles.input, width: '100%' }} />
+                                        <input type="number" step="0.5" value={value !== undefined ? (value * 100).toFixed(2) : ''} onChange={(e) => handleNumberInput(['pricing_factors', 'overheads', 'custom_sections', name], e.target.value, true)} style={{ ...styles.input, width: '100%' }} />
                                     </div>
                                 ))}
                             </div>
@@ -413,14 +472,14 @@ const ManufacturerSettingsPage = () => {
                             <div style={{ display: 'grid', gap: '20px', maxWidth: '600px' }}>
                                 <div style={{ padding: '16px', background: 'rgba(255,255,255,0.02)', borderRadius: '8px' }}>
                                     <label style={{ fontSize: '14px', color: '#CBD5E1', display: 'block', marginBottom: '8px' }}>Standard Engineering Review Fee (USD)</label>
-                                    <input type="number" step="5" value={pf.engineering?.review_fee_usd || ''} onChange={(e) => updateSetting(['pricing_factors', 'engineering', 'review_fee_usd'], parseFloat(e.target.value))} style={{ ...styles.input, width: '100%' }} />
+                                    <input type="number" step="5" value={pf.engineering?.review_fee_usd ?? ''} onChange={(e) => handleNumberInput(['pricing_factors', 'engineering', 'review_fee_usd'], e.target.value)} style={{ ...styles.input, width: '100%' }} />
                                 </div>
 
                                 <h4 style={{ color: '#E2E8F0', margin: '12px 0 4px 0', fontSize: '14px' }}>Inspection Services</h4>
                                 {Object.entries(pf.qc?.inspection_costs || {}).map(([type, cost]: [string, any]) => (
                                     <div key={type} style={{ display: 'grid', gridTemplateColumns: '1fr 120px', gap: '12px', alignItems: 'center', padding: '12px', background: 'rgba(255,255,255,0.02)', borderRadius: '8px' }}>
                                         <span style={{ color: 'var(--text-secondary)', textTransform: 'uppercase', fontSize: '12px' }}>{type}</span>
-                                        <input type="number" step="5" value={cost} onChange={(e) => updateSetting(['pricing_factors', 'qc', 'inspection_costs', type], parseFloat(e.target.value))} style={{ ...styles.input }} />
+                                        <input type="number" step="5" value={cost ?? ''} onChange={(e) => handleNumberInput(['pricing_factors', 'qc', 'inspection_costs', type], e.target.value)} style={{ ...styles.input }} />
                                     </div>
                                 ))}
 
@@ -430,7 +489,7 @@ const ManufacturerSettingsPage = () => {
                                             <label style={{ fontSize: '14px', color: 'var(--neon-cyan)', display: 'block' }}>{name} Fee (USD)</label>
                                             <button onClick={() => deleteSetting(['pricing_factors', 'qc', 'custom_sections', name])} style={{ color: '#EF4444', background: 'transparent', border: 'none', cursor: 'pointer' }}><Trash2 size={14} /></button>
                                         </div>
-                                        <input type="number" step="5" value={value} onChange={(e) => updateSetting(['pricing_factors', 'qc', 'custom_sections', name], parseFloat(e.target.value))} style={{ ...styles.input, width: '100%' }} />
+                                        <input type="number" step="5" value={value ?? ''} onChange={(e) => handleNumberInput(['pricing_factors', 'qc', 'custom_sections', name], e.target.value)} style={{ ...styles.input, width: '100%' }} />
                                     </div>
                                 ))}
                             </div>
@@ -453,11 +512,11 @@ const ManufacturerSettingsPage = () => {
                                     <div style={{ display: 'grid', gap: '12px' }}>
                                         <div style={{ padding: '12px', background: 'rgba(255,255,255,0.02)', borderRadius: '8px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                             <span style={{ fontSize: '13px' }}>Standard Packaging</span>
-                                            <input type="number" step="0.1" value={pf.packaging?.standard_cost_unit || ''} onChange={(e) => updateSetting(['pricing_factors', 'packaging', 'standard_cost_unit'], parseFloat(e.target.value))} style={{ ...styles.input, width: '100px' }} />
+                                            <input type="number" step="0.1" value={pf.packaging?.standard_cost_unit ?? ''} onChange={(e) => handleNumberInput(['pricing_factors', 'packaging', 'standard_cost_unit'], e.target.value)} style={{ ...styles.input, width: '100px' }} />
                                         </div>
                                         <div style={{ padding: '12px', background: 'rgba(255,255,255,0.02)', borderRadius: '8px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                             <span style={{ fontSize: '13px' }}>Custom Packaging</span>
-                                            <input type="number" step="0.1" value={pf.packaging?.custom_cost_unit || ''} onChange={(e) => updateSetting(['pricing_factors', 'packaging', 'custom_cost_unit'], parseFloat(e.target.value))} style={{ ...styles.input, width: '100px' }} />
+                                            <input type="number" step="0.1" value={pf.packaging?.custom_cost_unit ?? ''} onChange={(e) => handleNumberInput(['pricing_factors', 'packaging', 'custom_cost_unit'], e.target.value)} style={{ ...styles.input, width: '100px' }} />
                                         </div>
                                         {Object.entries(pf.packaging?.custom_sections || {}).map(([name, value]: [string, any]) => (
                                             <div key={name} style={{ padding: '12px', background: 'rgba(255,255,255,0.02)', borderRadius: '8px', border: '1px solid var(--neon-cyan)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -465,7 +524,7 @@ const ManufacturerSettingsPage = () => {
                                                     <button onClick={() => deleteSetting(['pricing_factors', 'packaging', 'custom_sections', name])} style={{ color: '#EF4444', background: 'transparent', border: 'none', cursor: 'pointer' }}><Trash2 size={12} /></button>
                                                     <span style={{ fontSize: '13px', color: 'var(--neon-cyan)' }}>{name}</span>
                                                 </div>
-                                                <input type="number" step="0.1" value={value} onChange={(e) => updateSetting(['pricing_factors', 'packaging', 'custom_sections', name], parseFloat(e.target.value))} style={{ ...styles.input, width: '100px' }} />
+                                                <input type="number" step="0.1" value={value ?? ''} onChange={(e) => handleNumberInput(['pricing_factors', 'packaging', 'custom_sections', name], e.target.value)} style={{ ...styles.input, width: '100px' }} />
                                             </div>
                                         ))}
                                     </div>
@@ -476,11 +535,11 @@ const ManufacturerSettingsPage = () => {
                                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                                         <div>
                                             <label style={{ fontSize: '12px', color: 'var(--text-secondary)', display: 'block', marginBottom: '4px' }}>Base Fee (USD)</label>
-                                            <input type="number" step="1" value={pf.logistics?.base_fee_usd || ''} onChange={(e) => updateSetting(['pricing_factors', 'logistics', 'base_fee_usd'], parseFloat(e.target.value))} style={{ ...styles.input, width: '100%' }} />
+                                            <input type="number" step="1" value={pf.logistics?.base_fee_usd ?? ''} onChange={(e) => handleNumberInput(['pricing_factors', 'logistics', 'base_fee_usd'], e.target.value)} style={{ ...styles.input, width: '100%' }} />
                                         </div>
                                         <div>
                                             <label style={{ fontSize: '12px', color: 'var(--text-secondary)', display: 'block', marginBottom: '4px' }}>Cost per kg (USD)</label>
-                                            <input type="number" step="0.1" value={pf.logistics?.cost_per_kg || ''} onChange={(e) => updateSetting(['pricing_factors', 'logistics', 'cost_per_kg'], parseFloat(e.target.value))} style={{ ...styles.input, width: '100%' }} />
+                                            <input type="number" step="0.1" value={pf.logistics?.cost_per_kg ?? ''} onChange={(e) => handleNumberInput(['pricing_factors', 'logistics', 'cost_per_kg'], e.target.value)} style={{ ...styles.input, width: '100%' }} />
                                         </div>
                                     </div>
                                 </div>
@@ -501,7 +560,7 @@ const ManufacturerSettingsPage = () => {
                             <div style={{ display: 'grid', gap: '16px', maxWidth: '600px' }}>
                                 <div style={{ padding: '16px', background: 'rgba(255,255,255,0.02)', borderRadius: '8px' }}>
                                     <label style={{ fontSize: '14px', color: '#CBD5E1', display: 'block', marginBottom: '8px' }}>Quote Validity (days)</label>
-                                    <input type="number" value={pf.terms?.validity_days || ''} onChange={(e) => updateSetting(['pricing_factors', 'terms', 'validity_days'], parseInt(e.target.value))} style={{ ...styles.input, width: '100%' }} />
+                                    <input type="number" value={pf.terms?.validity_days ?? ''} onChange={(e) => handleNumberInput(['pricing_factors', 'terms', 'validity_days'], e.target.value)} style={{ ...styles.input, width: '100%' }} />
                                 </div>
                                 <div style={{ padding: '16px', background: 'rgba(255,255,255,0.02)', borderRadius: '8px' }}>
                                     <label style={{ fontSize: '14px', color: '#CBD5E1', display: 'block', marginBottom: '8px' }}>Payment Terms</label>
@@ -514,7 +573,7 @@ const ManufacturerSettingsPage = () => {
                                             <label style={{ fontSize: '14px', color: 'var(--neon-cyan)', display: 'block' }}>{name}</label>
                                             <button onClick={() => deleteSetting(['pricing_factors', 'terms', 'custom_sections', name])} style={{ color: '#EF4444', background: 'transparent', border: 'none', cursor: 'pointer' }}><Trash2 size={14} /></button>
                                         </div>
-                                        <input type="text" value={value} onChange={(e) => updateSetting(['pricing_factors', 'terms', 'custom_sections', name], e.target.value)} style={{ ...styles.input, width: '100%' }} />
+                                        <input type="text" value={value || ''} onChange={(e) => updateSetting(['pricing_factors', 'terms', 'custom_sections', name], e.target.value)} style={{ ...styles.input, width: '100%' }} />
                                     </div>
                                 ))}
                             </div>
