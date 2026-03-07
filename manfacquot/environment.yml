@@ -1,10 +1,12 @@
-name: gmqp-env
+name: base
 channels:
   - conda-forge
   - defaults
 dependencies:
-  - python=3.12
-  - pythonocc-core
+  - python=3.11
+  - pythonocc-core>=7.7.0
+  - cadquery>=2.6.0
+  - gunicorn>=21.2.0
   - pip
   - pip:
     - -r requirements.txt

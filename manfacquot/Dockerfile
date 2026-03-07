@@ -1,34 +1,33 @@
-# Serve with Django API
-FROM python:3.11-slim
-WORKDIR /app
+# Use a base image with Conda/Mamba pre-installed
+FROM mambaorg/micromamba:latest
 
-# Install system dependencies (needed for certain python packages)
-# libgl1 is the modern replacement for libgl1-mesa-glx in newer Debian
+USER root
 RUN apt-get update && apt-get install -y \
     libgl1 \
     libglib2.0-0 \
+    libsm6 \
+    libxext6 \
+    libxrender1 \
     && rm -rf /var/lib/apt/lists/*
 
-# Install python dependencies
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+WORKDIR /app
+COPY --chown=$MAMBA_USER:$MAMBA_USER environment.yml .
+COPY --chown=$MAMBA_USER:$MAMBA_USER requirements.txt .
 
-# Copy backend code
-COPY . .
+# Create environment from environment.yml
+RUN micromamba install -y -n base -f environment.yml && \
+    micromamba clean --all --yes
 
-# Create staticfiles directory (Static Root)
-RUN mkdir -p /app/staticfiles
+# Copy the rest of the application
+COPY --chown=$MAMBA_USER:$MAMBA_USER . .
 
-# Collect static files
-# We pass dummy environment variables because collectstatic loads settings.py,
-# which might require certain env vars to be present (even if not used)
-# and we want to prevent connection errors to DB during build if possible (though collectstatic checks DB).
-# Setting DATABASE_URL to sqlite should be safe if we don't have one.
-RUN DJANGO_SECRET_KEY=build-key DEBUG=False python manage.py collectstatic --noinput
+# Set environment variables
+ENV PATH /opt/conda/bin:$PATH
+ENV DJANGO_SETTINGS_MODULE=gmqp_project.settings
+ENV PYTHONUNBUFFERED=1
 
 # Expose port
 EXPOSE 8000
 
-# Run gunicorn
-# Note: Workers should be adjusted based on CPU cores (e.g., 2-4)
-CMD ["gunicorn", "--bind", "0.0.0.0:8000", "--workers", "3", "gmqp_project.wsgi:application"]
+# Run gunicorn through micromamba to ensure the environment is active
+CMD ["micromamba", "run", "-n", "base", "gunicorn", "--bind", "0.0.0.0:8000", "--workers", "3", "gmqp_project.wsgi:application"]

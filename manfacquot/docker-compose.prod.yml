@@ -35,7 +35,7 @@ services:
 
   celery:
     build: .
-    command: celery -A gmqp_project worker --loglevel=info
+    command: micromamba run -n base celery -A gmqp_project worker --loglevel=info
     env_file:
       - .env
     environment:
