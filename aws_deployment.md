@@ -7,8 +7,8 @@ Frontend	https://quotanic.com
 Backend API	https://api.quotanic.com/api/
 Demo Login Credentials
 Role	Email	Password
-Manufacturer	demo_mfg@quotanic.com	password123
-Customer	purchasing@aerospacedynamics.com	password123
+Manufacturer	demo_mfg@quotanic.com	[MASKED]
+Customer	purchasing@aerospacedynamics.com	[MASKED]
 Recent Service Recovery
 Fixed Frontend Security Warning: Identified that the "Broken HTTPS" warning was caused by the backend API (api.quotanic.com) being unreachable.
 Service Recovery: Logged into the EC2 instance and restarted the Docker services (Django, Nginx, Celery).

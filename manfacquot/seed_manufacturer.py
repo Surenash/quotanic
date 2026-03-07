@@ -9,7 +9,9 @@ django.setup()
 from accounts.models import User, UserRole, Manufacturer
 
 def create_manufacturer(email, name, capabilities, location="USA"):
-    password = "StrongPass123!@#"
+    password = os.environ.get('SEED_USER_PASSWORD', 'StrongPass123!@#')
+    if not os.environ.get('SEED_USER_PASSWORD') and not os.environ.get('DEBUG'):
+         print(f"WARNING: Using default password for {email}. Set SEED_USER_PASSWORD env var for security.")
     user, created = User.objects.get_or_create(email=email, defaults={
         'company_name': name,
         'role': UserRole.MANUFACTURER,
