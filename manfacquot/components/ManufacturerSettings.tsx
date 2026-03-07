@@ -83,11 +83,16 @@ const ManufacturerSettingsPage = () => {
             return;
         }
         
-        let num = parseFloat(value);
-        if (isNaN(num)) return;
-        
-        if (isPercentage) num = num / 100;
-        updateSetting(path, num);
+        if (value === '.' || value === '-') {
+            updateSetting(path, value);
+            return;
+        }
+
+        if (!isNaN(parseFloat(value)) && /^-?\d*\.?\d*$/.test(value)) {
+            let num = parseFloat(value);
+            if (isPercentage) num = num / 100;
+            updateSetting(path, num);
+        }
     };
 
     const handleRateInput = (machine: string, value: string) => {
@@ -96,12 +101,16 @@ const ManufacturerSettingsPage = () => {
             return;
         }
 
-        let num = parseFloat(value);
-        if (isNaN(num)) return;
+        if (value === '.' || value === '-') {
+            updateSetting(['pricing_factors', 'machining', 'rates', machine], value);
+            return;
+        }
 
-        // If user is inputting in 'hour', convert to 'min' for storage
-        const minRate = rateUnit === 'hour' ? num / 60 : num;
-        updateSetting(['pricing_factors', 'machining', 'rates', machine], minRate);
+        if (!isNaN(parseFloat(value)) && /^-?\d*\.?\d*$/.test(value)) {
+            const num = parseFloat(value);
+            const minRate = rateUnit === 'hour' ? num / 60 : num;
+            updateSetting(['pricing_factors', 'machining', 'rates', machine], minRate);
+        }
     };
 
     const deleteSetting = (path: string[]) => {
@@ -133,7 +142,6 @@ const ManufacturerSettingsPage = () => {
         { id: 'terms', label: 'Terms & Conditions', icon: <FileText size={16} /> }
     ];
 
-    // Helper to add a custom material
     const addCustomMaterial = () => {
         const name = window.prompt('Enter material name:');
         if (name) {
@@ -141,7 +149,6 @@ const ManufacturerSettingsPage = () => {
         }
     };
 
-    // Helper to add a custom section
     const addCustomSection = (category: string) => {
         const name = window.prompt('Enter section name:');
         if (name) {
@@ -173,7 +180,6 @@ const ManufacturerSettingsPage = () => {
             )}
 
             <div style={{ display: 'flex', gap: '32px', alignItems: 'flex-start', marginTop: '24px' }}>
-                {/* Vertical Tabs Sidebar */}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', minWidth: '240px' }}>
                     {tabs.map(tab => (
                         <button
@@ -201,10 +207,8 @@ const ManufacturerSettingsPage = () => {
                     ))}
                 </div>
 
-                {/* Tab Content */}
                 <div style={{ flex: 1, background: 'var(--bg-panel)', padding: '32px', borderRadius: '12px', minHeight: '600px', border: '1px solid var(--border-color)', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)' }}>
 
-                    {/* MATERIALS & COSTS */}
                     {activeTab === 'materials' && (
                         <div>
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
@@ -225,15 +229,15 @@ const ManufacturerSettingsPage = () => {
                                         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '12px' }}>
                                             <div>
                                                 <label style={{ fontSize: '11px', color: 'var(--text-secondary)', display: 'block', marginBottom: '4px' }}>Density (g/cm³)</label>
-                                                <input type="number" step="0.01" value={props.density_g_cm3 ?? ''} onChange={(e) => handleNumberInput(['pricing_factors', 'material_properties', material, 'density_g_cm3'], e.target.value)} style={{ ...styles.input, width: '100%', padding: '8px' }} />
+                                                <input type="text" value={props.density_g_cm3 ?? ''} onChange={(e) => handleNumberInput(['pricing_factors', 'material_properties', material, 'density_g_cm3'], e.target.value)} style={{ ...styles.input, width: '100%', padding: '8px' }} />
                                             </div>
                                             <div>
                                                 <label style={{ fontSize: '11px', color: 'var(--text-secondary)', display: 'block', marginBottom: '4px' }}>Cost (USD/kg)</label>
-                                                <input type="number" step="0.1" value={props.cost_usd_kg ?? ''} onChange={(e) => handleNumberInput(['pricing_factors', 'material_properties', material, 'cost_usd_kg'], e.target.value)} style={{ ...styles.input, width: '100%', padding: '8px' }} />
+                                                <input type="text" value={props.cost_usd_kg ?? ''} onChange={(e) => handleNumberInput(['pricing_factors', 'material_properties', material, 'cost_usd_kg'], e.target.value)} style={{ ...styles.input, width: '100%', padding: '8px' }} />
                                             </div>
                                             <div style={{ gridColumn: 'span 2' }}>
                                                 <label style={{ fontSize: '11px', color: 'var(--text-secondary)', display: 'block', marginBottom: '4px' }}>Supplier API / Link <Link size={10} /></label>
-                                                <input type="text" placeholder="https://supplier.com/api/v1/aluminum..." value={props.supplier_link || ''} onChange={(e) => updateSetting(['pricing_factors', 'material_properties', material, 'supplier_link'], e.target.value)} style={{ ...styles.input, width: '100%', padding: '8px', fontSize: '12px' }} />
+                                                <input type="text" placeholder="https://supplier.com..." value={props.supplier_link || ''} onChange={(e) => updateSetting(['pricing_factors', 'material_properties', material, 'supplier_link'], e.target.value)} style={{ ...styles.input, width: '100%', padding: '8px', fontSize: '12px' }} />
                                             </div>
                                         </div>
                                     </div>
@@ -242,89 +246,47 @@ const ManufacturerSettingsPage = () => {
                         </div>
                     )}
 
-                    {/* PRICING RATES */}
                     {activeTab === 'pricing' && (
                         <div>
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
                                 <h3 style={{ color: 'var(--neon-cyan)', margin: 0 }}>Machine & Labor Rates</h3>
                                 <div style={{ display: 'flex', background: 'rgba(255,255,255,0.05)', borderRadius: '8px', padding: '4px' }}>
-                                    <button 
-                                        onClick={() => setRateUnit('min')}
-                                        style={{ padding: '6px 12px', border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold', background: rateUnit === 'min' ? 'var(--neon-cyan)' : 'transparent', color: rateUnit === 'min' ? 'black' : '#CBD5E1', transition: 'all 0.2s' }}
-                                    >
-                                        USD/Min
-                                    </button>
-                                    <button 
-                                        onClick={() => setRateUnit('hour')}
-                                        style={{ padding: '6px 12px', border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold', background: rateUnit === 'hour' ? 'var(--neon-cyan)' : 'transparent', color: rateUnit === 'hour' ? 'black' : '#CBD5E1', transition: 'all 0.2s' }}
-                                    >
-                                        USD/Hour
-                                    </button>
+                                    <button onClick={() => setRateUnit('min')} style={{ padding: '6px 12px', border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold', background: rateUnit === 'min' ? 'var(--neon-cyan)' : 'transparent', color: rateUnit === 'min' ? 'black' : '#CBD5E1' }}>USD/Min</button>
+                                    <button onClick={() => setRateUnit('hour')} style={{ padding: '6px 12px', border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold', background: rateUnit === 'hour' ? 'var(--neon-cyan)' : 'transparent', color: rateUnit === 'hour' ? 'black' : '#CBD5E1' }}>USD/Hour</button>
                                 </div>
                             </div>
-                            <p style={{ color: 'var(--text-secondary)', fontSize: '14px', marginBottom: '24px' }}>Configure hourly or minute-based rates for each machine listed in your profile.</p>
-
                             <div style={{ display: 'grid', gap: '32px' }}>
                                 <div>
-                                    <h4 style={{ color: '#E2E8F0', marginBottom: '12px', fontSize: '14px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Machining Rates</h4>
+                                    <h4 style={{ color: '#E2E8F0', marginBottom: '12px', fontSize: '14px', textTransform: 'uppercase' }}>Machining Rates</h4>
                                     <div style={{ display: 'grid', gap: '12px' }}>
                                         {(settings.processes || []).map((machine: string) => {
                                             const minRate = pf.machining?.rates?.[machine] ?? 1.5;
-                                            const displayValue = rateUnit === 'hour' ? (minRate * 60).toFixed(2) : minRate;
-                                            
+                                            const displayValue = rateUnit === 'hour' ? (typeof minRate === 'number' ? (minRate * 60).toFixed(2) : minRate) : minRate;
                                             return (
-                                                <div key={machine} style={{ display: 'grid', gridTemplateColumns: '1fr 150px 150px', gap: '16px', alignItems: 'center', padding: '12px', background: 'rgba(255,255,255,0.02)', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)' }}>
-                                                    <span style={{ color: '#CBD5E1', fontSize: '14px', fontWeight: '500' }}>{machine}</span>
-                                                    <div>
-                                                        <label style={{ fontSize: '10px', color: 'var(--text-secondary)', display: 'block', marginBottom: '2px' }}>{rateUnit === 'min' ? 'USD/Min' : 'USD/Hour'}</label>
-                                                        <input 
-                                                            type="number" 
-                                                            step="0.1" 
-                                                            value={displayValue} 
-                                                            onChange={(e) => handleRateInput(machine, e.target.value)} 
-                                                            style={{ ...styles.input, width: '100%', padding: '6px' }} 
-                                                        />
-                                                    </div>
+                                                <div key={machine} style={{ display: 'grid', gridTemplateColumns: '1fr 150px 150px', gap: '16px', alignItems: 'center', padding: '12px', background: 'rgba(255,255,255,0.02)', borderRadius: '8px' }}>
+                                                    <span style={{ color: '#CBD5E1', fontSize: '14px' }}>{machine}</span>
+                                                    <input type="text" value={displayValue ?? ''} onChange={(e) => handleRateInput(machine, e.target.value)} style={{ ...styles.input, width: '100%', padding: '6px' }} />
                                                     <div style={{ color: 'var(--neon-cyan)', fontSize: '12px', fontWeight: 'bold' }}>
-                                                        {rateUnit === 'hour' 
-                                                            ? `≈ $${(parseFloat(displayValue as string) / 60).toFixed(3)}/min`
-                                                            : `≈ $${(parseFloat(displayValue as string) * 60).toFixed(2)}/hr`
-                                                        }
+                                                        {rateUnit === 'hour' ? `≈ $${(parseFloat(displayValue) / 60).toFixed(3)}/min` : `≈ $${(parseFloat(displayValue) * 60).toFixed(2)}/hr`}
                                                     </div>
                                                 </div>
                                             );
                                         })}
-                                        {(settings.processes || []).length === 0 && (
-                                            <p style={{ color: '#EF4444', fontSize: '13px', fontStyle: 'italic' }}>No machines selected in profile. Please select processes in the "Manufacturing Processes" tab.</p>
-                                        )}
                                     </div>
                                 </div>
-
                                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>
                                     <div>
-                                        <h4 style={{ color: '#E2E8F0', marginBottom: '12px', fontSize: '14px' }}>Labor & Efficiency</h4>
+                                        <h4 style={{ color: '#E2E8F0', marginBottom: '12px', fontSize: '14px' }}>Labor</h4>
                                         <div style={{ display: 'grid', gap: '12px' }}>
-                                            <div>
-                                                <label style={{ fontSize: '12px', color: 'var(--text-secondary)', display: 'block', marginBottom: '4px' }}>Skilled Rate (USD/hour)</label>
-                                                <input type="number" step="0.5" value={pf.labor?.skilled_rate_hourly ?? ''} onChange={(e) => handleNumberInput(['pricing_factors', 'labor', 'skilled_rate_hourly'], e.target.value)} style={{ ...styles.input, width: '100%' }} />
-                                            </div>
-                                            <div>
-                                                <label style={{ fontSize: '12px', color: 'var(--text-secondary)', display: 'block', marginBottom: '4px' }}>Efficiency Factor (0.1 - 1.0)</label>
-                                                <input type="number" step="0.01" value={pf.labor?.efficiency_factor ?? ''} onChange={(e) => handleNumberInput(['pricing_factors', 'labor', 'efficiency_factor'], e.target.value)} style={{ ...styles.input, width: '100%' }} />
-                                            </div>
+                                            <input type="text" value={pf.labor?.skilled_rate_hourly ?? ''} onChange={(e) => handleNumberInput(['pricing_factors', 'labor', 'skilled_rate_hourly'], e.target.value)} style={{ ...styles.input, width: '100%' }} />
+                                            <input type="text" value={pf.labor?.efficiency_factor ?? ''} onChange={(e) => handleNumberInput(['pricing_factors', 'labor', 'efficiency_factor'], e.target.value)} style={{ ...styles.input, width: '100%' }} />
                                         </div>
                                     </div>
                                     <div>
                                         <h4 style={{ color: '#E2E8F0', marginBottom: '12px', fontSize: '14px' }}>Material Factors</h4>
                                         <div style={{ display: 'grid', gap: '12px' }}>
-                                            <div>
-                                                <label style={{ fontSize: '12px', color: 'var(--text-secondary)', display: 'block', marginBottom: '4px' }}>Scrap Rate (%)</label>
-                                                <input type="number" step="0.01" value={pf.material_factors?.scrap_rate_percent !== undefined ? (pf.material_factors.scrap_rate_percent * 100).toFixed(2) : ''} onChange={(e) => handleNumberInput(['pricing_factors', 'material_factors', 'scrap_rate_percent'], e.target.value, true)} style={{ ...styles.input, width: '100%' }} />
-                                            </div>
-                                            <div>
-                                                <label style={{ fontSize: '12px', color: 'var(--text-secondary)', display: 'block', marginBottom: '4px' }}>Yield Rate (%)</label>
-                                                <input type="number" step="0.01" value={pf.material_factors?.yield_rate_percent !== undefined ? (pf.material_factors.yield_rate_percent * 100).toFixed(2) : ''} onChange={(e) => handleNumberInput(['pricing_factors', 'material_factors', 'yield_rate_percent'], e.target.value, true)} style={{ ...styles.input, width: '100%' }} />
-                                            </div>
+                                            <input type="text" value={pf.material_factors?.scrap_rate_percent !== undefined ? (typeof pf.material_factors.scrap_rate_percent === 'number' ? (pf.material_factors.scrap_rate_percent * 100).toFixed(2) : pf.material_factors.scrap_rate_percent) : ''} onChange={(e) => handleNumberInput(['pricing_factors', 'material_factors', 'scrap_rate_percent'], e.target.value, true)} style={{ ...styles.input, width: '100%' }} />
+                                            <input type="text" value={pf.material_factors?.yield_rate_percent !== undefined ? (typeof pf.material_factors.yield_rate_percent === 'number' ? (pf.material_factors.yield_rate_percent * 100).toFixed(2) : pf.material_factors.yield_rate_percent) : ''} onChange={(e) => handleNumberInput(['pricing_factors', 'material_factors', 'yield_rate_percent'], e.target.value, true)} style={{ ...styles.input, width: '100%' }} />
                                         </div>
                                     </div>
                                 </div>
@@ -332,65 +294,44 @@ const ManufacturerSettingsPage = () => {
                         </div>
                     )}
 
-                    {/* OVERHEAD & MARGINS */}
                     {activeTab === 'overhead' && (
                         <div>
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-                                <h3 style={{ color: 'var(--neon-cyan)', margin: 0 }}>Overhead & Profit Margins</h3>
-                                <button onClick={() => addCustomSection('overheads')} style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 12px', background: 'rgba(var(--neon-cyan-rgb), 0.1)', border: '1px solid var(--neon-cyan)', borderRadius: '6px', color: 'var(--neon-cyan)', fontSize: '12px', fontWeight: 'bold', cursor: 'pointer' }}>
-                                    <Plus size={14} /> Add Custom Surcharge
+                                <h3 style={{ color: 'var(--neon-cyan)', margin: 0 }}>Overhead & Margins</h3>
+                                <button onClick={() => addCustomSection('overheads')} style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 12px', background: 'rgba(var(--neon-cyan-rgb), 0.1)', border: '1px solid var(--neon-cyan)', borderRadius: '6px', color: 'var(--neon-cyan)', cursor: 'pointer' }}>
+                                    <Plus size={14} /> Add Surcharge
                                 </button>
                             </div>
-
                             <div style={{ display: 'grid', gap: '16px', maxWidth: '600px' }}>
-                                <div style={{ padding: '16px', background: 'rgba(255,255,255,0.02)', borderRadius: '8px' }}>
-                                    <label style={{ fontSize: '14px', color: '#CBD5E1', display: 'block', marginBottom: '8px' }}>Global Overhead Rate (%)</label>
-                                    <input type="number" step="1" value={pf.overheads?.rate_percent !== undefined ? (pf.overheads.rate_percent * 100).toFixed(2) : ''} onChange={(e) => handleNumberInput(['pricing_factors', 'overheads', 'rate_percent'], e.target.value, true)} style={{ ...styles.input, width: '100%' }} />
-                                </div>
-                                <div style={{ padding: '16px', background: 'rgba(255,255,255,0.02)', borderRadius: '8px' }}>
-                                    <label style={{ fontSize: '14px', color: '#CBD5E1', display: 'block', marginBottom: '8px' }}>Target Profit Margin (%)</label>
-                                    <input type="number" step="1" value={pf.profit_margin?.rate_percent !== undefined ? (pf.profit_margin.rate_percent * 100).toFixed(2) : ''} onChange={(e) => handleNumberInput(['pricing_factors', 'profit_margin', 'rate_percent'], e.target.value, true)} style={{ ...styles.input, width: '100%' }} />
-                                </div>
-                                
+                                <input type="text" value={pf.overheads?.rate_percent !== undefined ? (typeof pf.overheads.rate_percent === 'number' ? (pf.overheads.rate_percent * 100).toFixed(2) : pf.overheads.rate_percent) : ''} onChange={(e) => handleNumberInput(['pricing_factors', 'overheads', 'rate_percent'], e.target.value, true)} style={{ ...styles.input, width: '100%' }} />
+                                <input type="text" value={pf.profit_margin?.rate_percent !== undefined ? (typeof pf.profit_margin.rate_percent === 'number' ? (pf.profit_margin.rate_percent * 100).toFixed(2) : pf.profit_margin.rate_percent) : ''} onChange={(e) => handleNumberInput(['pricing_factors', 'profit_margin', 'rate_percent'], e.target.value, true)} style={{ ...styles.input, width: '100%' }} />
                                 {Object.entries(pf.overheads?.custom_sections || {}).map(([name, value]: [string, any]) => (
-                                    <div key={name} style={{ padding: '16px', background: 'rgba(255,255,255,0.02)', borderRadius: '8px', border: '1px solid var(--neon-cyan)' }}>
-                                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                                            <label style={{ fontSize: '14px', color: 'var(--neon-cyan)', display: 'block' }}>{name} (%)</label>
+                                    <div key={name} style={{ display: 'grid', gap: '8px' }}>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                                            <label style={{ fontSize: '14px', color: 'var(--neon-cyan)' }}>{name} (%)</label>
                                             <button onClick={() => deleteSetting(['pricing_factors', 'overheads', 'custom_sections', name])} style={{ color: '#EF4444', background: 'transparent', border: 'none', cursor: 'pointer' }}><Trash2 size={14} /></button>
                                         </div>
-                                        <input type="number" step="0.5" value={value !== undefined ? (value * 100).toFixed(2) : ''} onChange={(e) => handleNumberInput(['pricing_factors', 'overheads', 'custom_sections', name], e.target.value, true)} style={{ ...styles.input, width: '100%' }} />
+                                        <input type="text" value={value !== undefined ? (typeof value === 'number' ? (value * 100).toFixed(2) : value) : ''} onChange={(e) => handleNumberInput(['pricing_factors', 'overheads', 'custom_sections', name], e.target.value, true)} style={{ ...styles.input, width: '100%' }} />
                                     </div>
                                 ))}
                             </div>
                         </div>
                     )}
 
-                    {/* MANUFACTURING PROCESSES */}
                     {activeTab === 'processes' && (
                         <div>
                             <h3 style={{ color: 'var(--neon-cyan)', marginBottom: '16px' }}>Manufacturing Capabilities</h3>
-                            <p style={{ color: 'var(--text-secondary)', fontSize: '14px', marginBottom: '24px' }}>Selecting processes here will automatically update your machine list in Pricing Rates.</p>
-
                             <div style={{ display: 'grid', gap: '24px' }}>
                                 {ALL_CAPABILITIES_GROUPS.map((group) => (
                                     <div key={group.title}>
-                                        <h4 style={{ color: '#E2E8F0', marginBottom: '12px', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '4px' }}>{group.title}</h4>
+                                        <h4 style={{ color: '#E2E8F0', marginBottom: '12px', borderBottom: '1px solid rgba(255,255,255,0.1)' }}>{group.title}</h4>
                                         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: '8px' }}>
                                             {group.processes.map(process => (
-                                                <label key={process} style={{ display: 'flex', alignItems: 'center', padding: '8px 12px', background: 'var(--bg-panel)', borderRadius: '6px', cursor: 'pointer', transition: 'background 0.2s', border: '1px solid rgba(255,255,255,0.05)' }}>
-                                                    <input
-                                                        type="checkbox"
-                                                        checked={(settings.processes || []).includes(process)}
-                                                        onChange={(e) => {
-                                                            const currentProcesses = settings.processes || [];
-                                                            if (e.target.checked) {
-                                                                updateSetting(['processes'], [...currentProcesses, process]);
-                                                            } else {
-                                                                updateSetting(['processes'], currentProcesses.filter((p: string) => p !== process));
-                                                            }
-                                                        }}
-                                                        style={{ marginRight: '10px', accentColor: 'var(--neon-cyan)' }}
-                                                    />
+                                                <label key={process} style={{ display: 'flex', alignItems: 'center', padding: '8px 12px', background: 'var(--bg-panel)', borderRadius: '6px', cursor: 'pointer' }}>
+                                                    <input type="checkbox" checked={(settings.processes || []).includes(process)} onChange={(e) => {
+                                                        const current = settings.processes || [];
+                                                        updateSetting(['processes'], e.target.checked ? [...current, process] : current.filter((p: string) => p !== process));
+                                                    }} style={{ marginRight: '10px' }} />
                                                     <span style={{ color: '#CBD5E1', fontSize: '13px' }}>{process}</span>
                                                 </label>
                                             ))}
@@ -401,178 +342,91 @@ const ManufacturerSettingsPage = () => {
                         </div>
                     )}
 
-                    {/* SECONDARY OPERATIONS */}
                     {activeTab === 'secondary' && (
-                        <div>
-                            <h3 style={{ color: 'var(--neon-cyan)', marginBottom: '16px' }}>Secondary & Finishing Capabilities</h3>
-                            <p style={{ color: 'var(--text-secondary)', fontSize: '14px', marginBottom: '24px' }}>These options will be available for customers to select during the request process.</p>
-
-                            <div style={{ display: 'grid', gap: '32px' }}>
-                                <div>
-                                    <h4 style={{ color: '#E2E8F0', marginBottom: '12px', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '4px' }}>Surface Finishes</h4>
-                                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: '8px' }}>
-                                        {SURFACE_FINISHES.map(finish => (
-                                            <label key={finish} style={{ display: 'flex', alignItems: 'center', padding: '8px 12px', background: 'var(--bg-panel)', borderRadius: '6px', cursor: 'pointer', border: '1px solid rgba(255,255,255,0.05)' }}>
-                                                <input
-                                                    type="checkbox"
-                                                    checked={(settings.secondary_ops || []).includes(finish)}
-                                                    onChange={(e) => {
-                                                        const currentOps = settings.secondary_ops || [];
-                                                        if (e.target.checked) {
-                                                            updateSetting(['secondary_ops'], [...currentOps, finish]);
-                                                        } else {
-                                                            updateSetting(['secondary_ops'], currentOps.filter((p: string) => p !== finish));
-                                                        }
-                                                    }}
-                                                    style={{ marginRight: '10px', accentColor: 'var(--neon-cyan)' }}
-                                                />
-                                                <span style={{ color: '#CBD5E1', fontSize: '13px' }}>{finish}</span>
-                                            </label>
-                                        ))}
-                                    </div>
-                                </div>
-
-                                <div>
-                                    <h4 style={{ color: '#E2E8F0', marginBottom: '12px', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '4px' }}>Post-Processing</h4>
-                                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: '8px' }}>
-                                        {POST_PROCESSING_ASSEMBLY.map(process => (
-                                            <label key={process} style={{ display: 'flex', alignItems: 'center', padding: '8px 12px', background: 'var(--bg-panel)', borderRadius: '6px', cursor: 'pointer', border: '1px solid rgba(255,255,255,0.05)' }}>
-                                                <input
-                                                    type="checkbox"
-                                                    checked={(settings.secondary_ops || []).includes(process)}
-                                                    onChange={(e) => {
-                                                        const currentOps = settings.secondary_ops || [];
-                                                        if (e.target.checked) {
-                                                            updateSetting(['secondary_ops'], [...currentOps, process]);
-                                                        } else {
-                                                            updateSetting(['secondary_ops'], currentOps.filter((p: string) => p !== process));
-                                                        }
-                                                    }}
-                                                    style={{ marginRight: '10px', accentColor: 'var(--neon-cyan)' }}
-                                                />
-                                                <span style={{ color: '#CBD5E1', fontSize: '13px' }}>{process}</span>
-                                            </label>
-                                        ))}
-                                    </div>
+                        <div style={{ display: 'grid', gap: '32px' }}>
+                            <div>
+                                <h3 style={{ color: 'var(--neon-cyan)', marginBottom: '16px' }}>Surface Finishes</h3>
+                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: '8px' }}>
+                                    {SURFACE_FINISHES.map(finish => (
+                                        <label key={finish} style={{ display: 'flex', alignItems: 'center', padding: '8px 12px', background: 'var(--bg-panel)', borderRadius: '6px', cursor: 'pointer' }}>
+                                            <input type="checkbox" checked={(settings.secondary_ops || []).includes(finish)} onChange={(e) => {
+                                                const current = settings.secondary_ops || [];
+                                                updateSetting(['secondary_ops'], e.target.checked ? [...current, finish] : current.filter((p: string) => p !== finish));
+                                            }} style={{ marginRight: '10px' }} />
+                                            <span style={{ color: '#CBD5E1', fontSize: '13px' }}>{finish}</span>
+                                        </label>
+                                    ))}
                                 </div>
                             </div>
                         </div>
                     )}
 
-                    {/* ENGINEERING & QC */}
                     {activeTab === 'qc' && (
                         <div>
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-                                <h3 style={{ color: 'var(--neon-cyan)', margin: 0 }}>Engineering & Quality Control</h3>
-                                <button onClick={() => addCustomSection('qc')} style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 12px', background: 'rgba(var(--neon-cyan-rgb), 0.1)', border: '1px solid var(--neon-cyan)', borderRadius: '6px', color: 'var(--neon-cyan)', fontSize: '12px', fontWeight: 'bold', cursor: 'pointer' }}>
-                                    <Plus size={14} /> Add Custom Service
+                                <h3 style={{ color: 'var(--neon-cyan)', margin: 0 }}>Engineering & QC</h3>
+                                <button onClick={() => addCustomSection('qc')} style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 12px', background: 'rgba(var(--neon-cyan-rgb), 0.1)', border: '1px solid var(--neon-cyan)', borderRadius: '6px', color: 'var(--neon-cyan)', cursor: 'pointer' }}>
+                                    <Plus size={14} /> Add Service
                                 </button>
                             </div>
-
                             <div style={{ display: 'grid', gap: '20px', maxWidth: '600px' }}>
-                                <div style={{ padding: '16px', background: 'rgba(255,255,255,0.02)', borderRadius: '8px' }}>
-                                    <label style={{ fontSize: '14px', color: '#CBD5E1', display: 'block', marginBottom: '8px' }}>Standard Engineering Review Fee (USD)</label>
-                                    <input type="number" step="5" value={pf.engineering?.review_fee_usd ?? ''} onChange={(e) => handleNumberInput(['pricing_factors', 'engineering', 'review_fee_usd'], e.target.value)} style={{ ...styles.input, width: '100%' }} />
-                                </div>
-
-                                <h4 style={{ color: '#E2E8F0', margin: '12px 0 4px 0', fontSize: '14px' }}>Inspection Services</h4>
+                                <input type="text" value={pf.engineering?.review_fee_usd ?? ''} onChange={(e) => handleNumberInput(['pricing_factors', 'engineering', 'review_fee_usd'], e.target.value)} style={{ ...styles.input, width: '100%' }} />
                                 {Object.entries(pf.qc?.inspection_costs || {}).map(([type, cost]: [string, any]) => (
-                                    <div key={type} style={{ display: 'grid', gridTemplateColumns: '1fr 120px', gap: '12px', alignItems: 'center', padding: '12px', background: 'rgba(255,255,255,0.02)', borderRadius: '8px' }}>
-                                        <span style={{ color: 'var(--text-secondary)', textTransform: 'uppercase', fontSize: '12px' }}>{type}</span>
-                                        <input type="number" step="5" value={cost ?? ''} onChange={(e) => handleNumberInput(['pricing_factors', 'qc', 'inspection_costs', type], e.target.value)} style={{ ...styles.input }} />
+                                    <div key={type} style={{ display: 'grid', gridTemplateColumns: '1fr 120px', gap: '12px', alignItems: 'center' }}>
+                                        <span style={{ color: 'var(--text-secondary)', fontSize: '12px' }}>{type}</span>
+                                        <input type="text" value={cost ?? ''} onChange={(e) => handleNumberInput(['pricing_factors', 'qc', 'inspection_costs', type], e.target.value)} style={{ ...styles.input }} />
                                     </div>
                                 ))}
-
                                 {Object.entries(pf.qc?.custom_sections || {}).map(([name, value]: [string, any]) => (
-                                    <div key={name} style={{ padding: '16px', background: 'rgba(255,255,255,0.02)', borderRadius: '8px', border: '1px solid var(--neon-cyan)' }}>
-                                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                                            <label style={{ fontSize: '14px', color: 'var(--neon-cyan)', display: 'block' }}>{name} Fee (USD)</label>
+                                    <div key={name} style={{ padding: '16px', background: 'rgba(255,255,255,0.02)', borderRadius: '8px' }}>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                                            <label style={{ fontSize: '14px', color: 'var(--neon-cyan)' }}>{name}</label>
                                             <button onClick={() => deleteSetting(['pricing_factors', 'qc', 'custom_sections', name])} style={{ color: '#EF4444', background: 'transparent', border: 'none', cursor: 'pointer' }}><Trash2 size={14} /></button>
                                         </div>
-                                        <input type="number" step="5" value={value ?? ''} onChange={(e) => handleNumberInput(['pricing_factors', 'qc', 'custom_sections', name], e.target.value)} style={{ ...styles.input, width: '100%' }} />
+                                        <input type="text" value={value ?? ''} onChange={(e) => handleNumberInput(['pricing_factors', 'qc', 'custom_sections', name], e.target.value)} style={{ ...styles.input, width: '100%' }} />
                                     </div>
                                 ))}
                             </div>
                         </div>
                     )}
 
-                    {/* LOGISTICS & PACKAGING */}
                     {activeTab === 'logistics' && (
                         <div>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '16px' }}>
                                 <h3 style={{ color: 'var(--neon-cyan)', margin: 0 }}>Logistics & Packaging</h3>
-                                <button onClick={() => addCustomSection('packaging')} style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 12px', background: 'rgba(var(--neon-cyan-rgb), 0.1)', border: '1px solid var(--neon-cyan)', borderRadius: '6px', color: 'var(--neon-cyan)', fontSize: '12px', fontWeight: 'bold', cursor: 'pointer' }}>
-                                    <Plus size={14} /> Add Packaging Type
+                                <button onClick={() => addCustomSection('packaging')} style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 12px', background: 'rgba(var(--neon-cyan-rgb), 0.1)', border: '1px solid var(--neon-cyan)', borderRadius: '6px', color: 'var(--neon-cyan)', cursor: 'pointer' }}>
+                                    <Plus size={14} /> Add Type
                                 </button>
                             </div>
-
                             <div style={{ display: 'grid', gap: '24px', maxWidth: '600px' }}>
-                                <div>
-                                    <h4 style={{ color: '#E2E8F0', marginBottom: '12px', fontSize: '14px' }}>Unit Packaging Costs (USD)</h4>
-                                    <div style={{ display: 'grid', gap: '12px' }}>
-                                        <div style={{ padding: '12px', background: 'rgba(255,255,255,0.02)', borderRadius: '8px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                            <span style={{ fontSize: '13px' }}>Standard Packaging</span>
-                                            <input type="number" step="0.1" value={pf.packaging?.standard_cost_unit ?? ''} onChange={(e) => handleNumberInput(['pricing_factors', 'packaging', 'standard_cost_unit'], e.target.value)} style={{ ...styles.input, width: '100px' }} />
-                                        </div>
-                                        <div style={{ padding: '12px', background: 'rgba(255,255,255,0.02)', borderRadius: '8px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                            <span style={{ fontSize: '13px' }}>Custom Packaging</span>
-                                            <input type="number" step="0.1" value={pf.packaging?.custom_cost_unit ?? ''} onChange={(e) => handleNumberInput(['pricing_factors', 'packaging', 'custom_cost_unit'], e.target.value)} style={{ ...styles.input, width: '100px' }} />
-                                        </div>
-                                        {Object.entries(pf.packaging?.custom_sections || {}).map(([name, value]: [string, any]) => (
-                                            <div key={name} style={{ padding: '12px', background: 'rgba(255,255,255,0.02)', borderRadius: '8px', border: '1px solid var(--neon-cyan)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                                    <button onClick={() => deleteSetting(['pricing_factors', 'packaging', 'custom_sections', name])} style={{ color: '#EF4444', background: 'transparent', border: 'none', cursor: 'pointer' }}><Trash2 size={12} /></button>
-                                                    <span style={{ fontSize: '13px', color: 'var(--neon-cyan)' }}>{name}</span>
-                                                </div>
-                                                <input type="number" step="0.1" value={value ?? ''} onChange={(e) => handleNumberInput(['pricing_factors', 'packaging', 'custom_sections', name], e.target.value)} style={{ ...styles.input, width: '100px' }} />
-                                            </div>
-                                        ))}
+                                <input type="text" value={pf.packaging?.standard_cost_unit ?? ''} onChange={(e) => handleNumberInput(['pricing_factors', 'packaging', 'standard_cost_unit'], e.target.value)} style={{ ...styles.input, width: '100%' }} />
+                                <input type="text" value={pf.packaging?.custom_cost_unit ?? ''} onChange={(e) => handleNumberInput(['pricing_factors', 'packaging', 'custom_cost_unit'], e.target.value)} style={{ ...styles.input, width: '100%' }} />
+                                {Object.entries(pf.packaging?.custom_sections || {}).map(([name, value]: [string, any]) => (
+                                    <div key={name} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                        <button onClick={() => deleteSetting(['pricing_factors', 'packaging', 'custom_sections', name])} style={{ color: '#EF4444', background: 'transparent', border: 'none', cursor: 'pointer' }}><Trash2 size={12} /></button>
+                                        <input type="text" value={value ?? ''} onChange={(e) => handleNumberInput(['pricing_factors', 'packaging', 'custom_sections', name], e.target.value)} style={{ ...styles.input, width: '100px' }} />
                                     </div>
-                                </div>
-
-                                <div>
-                                    <h4 style={{ color: '#E2E8F0', marginBottom: '12px', fontSize: '14px' }}>Logistics Fees</h4>
-                                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                                        <div>
-                                            <label style={{ fontSize: '12px', color: 'var(--text-secondary)', display: 'block', marginBottom: '4px' }}>Base Fee (USD)</label>
-                                            <input type="number" step="1" value={pf.logistics?.base_fee_usd ?? ''} onChange={(e) => handleNumberInput(['pricing_factors', 'logistics', 'base_fee_usd'], e.target.value)} style={{ ...styles.input, width: '100%' }} />
-                                        </div>
-                                        <div>
-                                            <label style={{ fontSize: '12px', color: 'var(--text-secondary)', display: 'block', marginBottom: '4px' }}>Cost per kg (USD)</label>
-                                            <input type="number" step="0.1" value={pf.logistics?.cost_per_kg ?? ''} onChange={(e) => handleNumberInput(['pricing_factors', 'logistics', 'cost_per_kg'], e.target.value)} style={{ ...styles.input, width: '100%' }} />
-                                        </div>
-                                    </div>
-                                </div>
+                                ))}
+                                <input type="text" value={pf.logistics?.base_fee_usd ?? ''} onChange={(e) => handleNumberInput(['pricing_factors', 'logistics', 'base_fee_usd'], e.target.value)} style={{ ...styles.input, width: '100%' }} />
+                                <input type="text" value={pf.logistics?.cost_per_kg ?? ''} onChange={(e) => handleNumberInput(['pricing_factors', 'logistics', 'cost_per_kg'], e.target.value)} style={{ ...styles.input, width: '100%' }} />
                             </div>
                         </div>
                     )}
 
-                    {/* TERMS & CONDITIONS */}
                     {activeTab === 'terms' && (
                         <div>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '16px' }}>
                                 <h3 style={{ color: 'var(--neon-cyan)', margin: 0 }}>Terms & Conditions</h3>
-                                <button onClick={() => addCustomSection('terms')} style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 12px', background: 'rgba(var(--neon-cyan-rgb), 0.1)', border: '1px solid var(--neon-cyan)', borderRadius: '6px', color: 'var(--neon-cyan)', fontSize: '12px', fontWeight: 'bold', cursor: 'pointer' }}>
-                                    <Plus size={14} /> Add Custom Term
+                                <button onClick={() => addCustomSection('terms')} style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 12px', background: 'rgba(var(--neon-cyan-rgb), 0.1)', border: '1px solid var(--neon-cyan)', borderRadius: '6px', color: 'var(--neon-cyan)', cursor: 'pointer' }}>
+                                    <Plus size={14} /> Add Term
                                 </button>
                             </div>
-
                             <div style={{ display: 'grid', gap: '16px', maxWidth: '600px' }}>
-                                <div style={{ padding: '16px', background: 'rgba(255,255,255,0.02)', borderRadius: '8px' }}>
-                                    <label style={{ fontSize: '14px', color: '#CBD5E1', display: 'block', marginBottom: '8px' }}>Quote Validity (days)</label>
-                                    <input type="number" value={pf.terms?.validity_days ?? ''} onChange={(e) => handleNumberInput(['pricing_factors', 'terms', 'validity_days'], e.target.value)} style={{ ...styles.input, width: '100%' }} />
-                                </div>
-                                <div style={{ padding: '16px', background: 'rgba(255,255,255,0.02)', borderRadius: '8px' }}>
-                                    <label style={{ fontSize: '14px', color: '#CBD5E1', display: 'block', marginBottom: '8px' }}>Payment Terms</label>
-                                    <input type="text" value={pf.terms?.payment_terms || ''} onChange={(e) => updateSetting(['pricing_factors', 'terms', 'payment_terms'], e.target.value)} style={{ ...styles.input, width: '100%' }} placeholder="e.g., Net 30" />
-                                </div>
-                                
+                                <input type="text" value={pf.terms?.validity_days ?? ''} onChange={(e) => handleNumberInput(['pricing_factors', 'terms', 'validity_days'], e.target.value)} style={{ ...styles.input, width: '100%' }} />
+                                <input type="text" value={pf.terms?.payment_terms || ''} onChange={(e) => updateSetting(['pricing_factors', 'terms', 'payment_terms'], e.target.value)} style={{ ...styles.input, width: '100%' }} />
                                 {Object.entries(pf.terms?.custom_sections || {}).map(([name, value]: [string, any]) => (
-                                    <div key={name} style={{ padding: '16px', background: 'rgba(255,255,255,0.02)', borderRadius: '8px', border: '1px solid var(--neon-cyan)' }}>
-                                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                                            <label style={{ fontSize: '14px', color: 'var(--neon-cyan)', display: 'block' }}>{name}</label>
-                                            <button onClick={() => deleteSetting(['pricing_factors', 'terms', 'custom_sections', name])} style={{ color: '#EF4444', background: 'transparent', border: 'none', cursor: 'pointer' }}><Trash2 size={14} /></button>
-                                        </div>
+                                    <div key={name}>
+                                        <button onClick={() => deleteSetting(['pricing_factors', 'terms', 'custom_sections', name])} style={{ color: '#EF4444', background: 'transparent', border: 'none', cursor: 'pointer' }}><Trash2 size={14} /></button>
                                         <input type="text" value={value || ''} onChange={(e) => updateSetting(['pricing_factors', 'terms', 'custom_sections', name], e.target.value)} style={{ ...styles.input, width: '100%' }} />
                                     </div>
                                 ))}
