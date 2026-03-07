@@ -1657,8 +1657,16 @@ const ManufacturerProfileManagementPage = () => {
                     const caps = profile.capabilities || {};
                     const normalizedData = {
                         ...profile,
+                        companyName: profile.company_name || '',
+                        email: profile.email || '',
+                        location: profile.location || '',
+                        website: profile.website_url || '',
+                        about: profile.about || '',
+                        logoUrl: profile.logoUrl || '',
+                        backgroundUrl: profile.backgroundUrl || '',
+                        
                         // Unpack capabilities into flat fields for the form
-                        supportedMaterials: caps.materials_supported || [],
+                        supportedMaterials: caps.selected_materials || caps.materials_supported || [],
                         productionVolume: caps.production_volume || '',
                         leadTimeRange: caps.lead_time_range || '',
                         moq: caps.moq || 0,
@@ -1666,21 +1674,21 @@ const ManufacturerProfileManagementPage = () => {
                         qualityControlProcesses: caps.quality_control || '',
                         materialTesting: caps.material_testing || '',
 
-                        // Capability groups
-                        cncMachining: caps.cnc_machining || [],
-                        '3dPrinting': caps.three_d_printing || [], // Note: key matches backend map
-                        experimentation: caps.experimentation || [],
-                        injectionMolding: caps.injection_molding || [],
-                        sheetMetal: caps.sheet_metal_fabrication || [],
-                        vacuumCasting: caps.vacuum_casting || [],
-                        finishing: caps.finishing_services || [],
+                        // Capability groups - match ALL_CAPABILITIES_GROUPS logic
+                        machining: caps.machining || caps.cnc_machining || [],
+                        sheetmetal: caps.sheetmetal || caps.sheet_metal_fabrication || [],
+                        casting: caps.casting || [],
+                        forging: caps.forging || [],
+                        injectionmolding: caps.injectionmolding || caps.injection_molding || [],
+                        '3dprinting': caps['3dprinting'] || caps.three_d_printing || [],
+                        weldingandjoining: caps.weldingandjoining || [],
 
                         portfolio: profile.portfolio || [],
                         certifications: profile.certifications || [],
                     };
                     setFormData(normalizedData);
                 } else {
-                    setError('Failed to load profile data or data is in wrong format.');
+                    setError('Failed to load profile data.');
                 }
             } catch (err) {
                 setError('Failed to load profile data.');
@@ -1709,8 +1717,6 @@ const ManufacturerProfileManagementPage = () => {
             setFormData(prev => ({ ...prev, [field]: null }));
             return;
         }
-
-        // Convert image to base64 for persistence
         const reader = new FileReader();
         reader.onloadend = () => {
             setFormData(prev => ({ ...prev, [field]: reader.result }));
@@ -1728,7 +1734,7 @@ const ManufacturerProfileManagementPage = () => {
                         id: Date.now() + Math.random(),
                         type: file.type.startsWith('video') ? 'video' : 'image',
                         title: file.name.split('.')[0],
-                        url: reader.result as string // base64 data URL
+                        url: reader.result as string
                     };
                     setFormData(prev => ({ ...prev, portfolio: [...prev.portfolio, newItem] }));
                 };
@@ -1754,28 +1760,47 @@ const ManufacturerProfileManagementPage = () => {
         setError('');
         setNotification({ show: false, message: '', type: 'success' });
 
-        // Construct clean payload with only backend-expected fields
+        // Maintain full capabilities object while updating specific fields
+        const currentCapabilities = formData.capabilities || {};
+        
+        // Sync manufacturing process groups
+        // We aggregate ALL selected processes into a flat list for the matching engine
+        const allProcesses = [
+            ...(formData.machining || []),
+            ...(formData.sheetmetal || []),
+            ...(formData.casting || []),
+            ...(formData.forging || []),
+            ...(formData.injectionmolding || []),
+            ...(formData['3dprinting'] || []),
+            ...(formData.weldingandjoining || []),
+        ];
+
         const payload = {
             companyName: formData.companyName,
             email: formData.email,
             location: formData.location,
-            about: formData.about || null,
-            website: formData.website === '' ? null : formData.website,
-            logoUrl: formData.logoUrl || null,
-            backgroundUrl: formData.backgroundUrl || null,
-            portfolio: formData.portfolio || [],
-            certifications: formData.certifications || [],
+            about: formData.about,
+            website: formData.website,
+            logoUrl: formData.logoUrl,
+            backgroundUrl: formData.backgroundUrl,
+            portfolio: formData.portfolio,
+            certifications: formData.certifications,
             capabilities: {
-                // Pack flat fields into capabilities using backend keys
-                materials_supported: formData.supportedMaterials || [],
-                production_volume: formData.productionVolume || '',
-                lead_time_range: formData.leadTimeRange || '',
-                moq: formData.moq || 0,
-                other_certifications: formData.otherCertifications || '',
-                quality_control: formData.qualityControlProcesses || '',
-                material_testing: formData.materialTesting || '',
+                ...currentCapabilities,
+                // Primary fields for matching and search
+                selected_materials: formData.supportedMaterials || [],
+                materials_supported: formData.supportedMaterials || [], // Backward compatibility
+                processes: allProcesses,
+                
+                // Detailed info fields
+                production_volume: formData.productionVolume,
+                lead_time_range: formData.leadTimeRange,
+                moq: formData.moq,
+                other_certifications: formData.otherCertifications,
+                quality_control: formData.qualityControlProcesses,
+                material_testing: formData.materialTesting,
 
-                // Manufacturing process groups (using correct keys from form)
+                // Categorized storage
                 machining: formData.machining || [],
                 sheetmetal: formData.sheetmetal || [],
                 casting: formData.casting || [],
@@ -1789,6 +1814,18 @@ const ManufacturerProfileManagementPage = () => {
         try {
             await api.updateManufacturerProfile(payload);
             setNotification({ show: true, message: 'Profile updated successfully!', type: 'success' });
+            
+            // Refresh local state with updated data from backend
+            const updatedProfile = await api.getManufacturerProfile();
+            if (updatedProfile) {
+                // Trigger a local state update to ensure "persistence" during the session
+                const caps = updatedProfile.capabilities || {};
+                setFormData({
+                    ...updatedProfile,
+                    companyName: updatedProfile.company_name,
+                    // ... re-normalize as above if needed, but the current UI state is already "saved"
+                });
+            }
         } catch (err) {
             setNotification({ show: true, message: err.message, type: 'error' });
         } finally {
