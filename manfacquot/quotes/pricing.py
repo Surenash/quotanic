@@ -204,7 +204,7 @@ def calculate_quote_price(design: Design, manufacturer: Manufacturer) -> Pricing
     logistics_cost_unit = (Decimal(str(log_factors.get('base_fee_usd', 0))) / Decimal(quantity)) + (mass_kg * Decimal(str(log_factors.get('cost_per_kg', 5.0))))
 
     # Total Direct Cost
-    direct_cost = material_cost_unit + labor_cost_unit + run_cost_per_unit + setup_cost_unit + total_finishing_cost
+    direct_cost = material_cost_unit + labor_cost_per_unit + run_cost_per_unit + setup_cost_unit + total_finishing_cost
     
     # Overhead
     overhead_factors = pf.get('overheads', {})

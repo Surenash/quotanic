@@ -279,10 +279,18 @@ class GenerateQuotesView(APIView):
                 
             capabilities = mf_profile.capabilities or {}
 
-            # Basic Filters (Material & Size - Keeping previous logic)
-            supported_materials = capabilities.get('materials_supported', [])
-            if design.material not in supported_materials:
-                # If direct request, we might allow it (or warn), but for search we skip
+            # Basic Filters (Material & Size)
+            # Use the new 'selected_materials' field from settings if available, else fallback to 'materials_supported'
+            supported_materials = capabilities.get('selected_materials') or capabilities.get('materials_supported', [])
+            
+            # Flexible Material Matching (Substring)
+            material_matched = False
+            for m in supported_materials:
+                if design.material.lower() in m.lower() or m.lower() in design.material.lower():
+                    material_matched = True
+                    break
+            
+            if not material_matched:
                 logger.info(f"Mf {mf_profile.user.email} filtered out: Material {design.material} not in {supported_materials}")
                 if not requested_manufacturer_id: continue
 
