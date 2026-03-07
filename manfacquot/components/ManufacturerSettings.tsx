@@ -512,11 +512,37 @@ const ManufacturerSettingsPage = () => {
                                     <Plus size={14} /> Add Packaging
                                 </button>
                             </div>
-                            <div style={{ display: 'grid', gap: '24px', maxWidth: '600px' }}>
-                                <input type="text" placeholder="Standard Pkg (USD/unit)" value={pf.packaging?.standard_cost_unit ?? ''} onChange={(e) => handleSmartInput(['pricing_factors', 'packaging', 'standard_cost_unit'], e)} onKeyDown={(e) => handleSmartInput(['pricing_factors', 'packaging', 'standard_cost_unit'], e)} style={{ ...styles.input, width: '100%' }} />
-                                <input type="text" placeholder="Custom Pkg (USD/unit)" value={pf.packaging?.custom_cost_unit ?? ''} onChange={(e) => handleSmartInput(['pricing_factors', 'packaging', 'custom_cost_unit'], e)} onKeyDown={(e) => handleSmartInput(['pricing_factors', 'packaging', 'custom_cost_unit'], e)} style={{ ...styles.input, width: '100%' }} />
-                                <input type="text" placeholder="Base Logistics Fee" value={pf.logistics?.base_fee_usd ?? ''} onChange={(e) => handleSmartInput(['pricing_factors', 'logistics', 'base_fee_usd'], e)} onKeyDown={(e) => handleSmartInput(['pricing_factors', 'logistics', 'base_fee_usd'], e)} style={{ ...styles.input, width: '100%' }} />
-                                <input type="text" placeholder="Cost per kg" value={pf.logistics?.cost_per_kg ?? ''} onChange={(e) => handleSmartInput(['pricing_factors', 'logistics', 'cost_per_kg'], e)} onKeyDown={(e) => handleSmartInput(['pricing_factors', 'logistics', 'cost_per_kg'], e)} style={{ ...styles.input, width: '100%' }} />
+                            <div style={{ display: 'grid', gap: '20px', maxWidth: '600px' }}>
+                                <div>
+                                    <label style={{ fontSize: '14px', color: '#CBD5E1', display: 'block', marginBottom: '8px' }}>Standard Packaging (USD/unit)</label>
+                                    <input type="text" value={pf.packaging?.standard_cost_unit ?? ''} onChange={(e) => handleSmartInput(['pricing_factors', 'packaging', 'standard_cost_unit'], e)} onKeyDown={(e) => handleSmartInput(['pricing_factors', 'packaging', 'standard_cost_unit'], e)} style={{ ...styles.input, width: '100%' }} />
+                                </div>
+                                <div>
+                                    <label style={{ fontSize: '14px', color: '#CBD5E1', display: 'block', marginBottom: '8px' }}>Custom Packaging (USD/unit)</label>
+                                    <input type="text" value={pf.packaging?.custom_cost_unit ?? ''} onChange={(e) => handleSmartInput(['pricing_factors', 'packaging', 'custom_cost_unit'], e)} onKeyDown={(e) => handleSmartInput(['pricing_factors', 'packaging', 'custom_cost_unit'], e)} style={{ ...styles.input, width: '100%' }} />
+                                </div>
+                                {Object.entries(pf.packaging?.custom_sections || {}).map(([name, value]: [string, any]) => (
+                                    <div key={name}>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
+                                            <label style={{ fontSize: '14px', color: 'var(--neon-cyan)' }}>{name} (USD)</label>
+                                            <button onClick={() => deleteSetting(['pricing_factors', 'packaging', 'custom_sections', name])} style={{ color: '#EF4444', background: 'transparent', border: 'none', cursor: 'pointer' }}><Trash2 size={12} /></button>
+                                        </div>
+                                        <input type="text" value={value ?? ''} onChange={(e) => handleSmartInput(['pricing_factors', 'packaging', 'custom_sections', name], e)} onKeyDown={(e) => handleSmartInput(['pricing_factors', 'packaging', 'custom_sections', name], e)} style={{ ...styles.input, width: '100%' }} />
+                                    </div>
+                                ))}
+                                <div style={{ borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '20px', marginTop: '10px' }}>
+                                    <h4 style={{ color: '#E2E8F0', marginBottom: '12px', fontSize: '14px' }}>Logistics Fees</h4>
+                                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                                        <div>
+                                            <label style={{ fontSize: '12px', color: 'var(--text-secondary)', display: 'block', marginBottom: '4px' }}>Base Fee (USD)</label>
+                                            <input type="text" value={pf.logistics?.base_fee_usd ?? ''} onChange={(e) => handleSmartInput(['pricing_factors', 'logistics', 'base_fee_usd'], e)} onKeyDown={(e) => handleSmartInput(['pricing_factors', 'logistics', 'base_fee_usd'], e)} style={{ ...styles.input, width: '100%' }} />
+                                        </div>
+                                        <div>
+                                            <label style={{ fontSize: '12px', color: 'var(--text-secondary)', display: 'block', marginBottom: '4px' }}>Cost per kg (USD)</label>
+                                            <input type="text" value={pf.logistics?.cost_per_kg ?? ''} onChange={(e) => handleSmartInput(['pricing_factors', 'logistics', 'cost_per_kg'], e)} onKeyDown={(e) => handleSmartInput(['pricing_factors', 'logistics', 'cost_per_kg'], e)} style={{ ...styles.input, width: '100%' }} />
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     )}
@@ -530,8 +556,23 @@ const ManufacturerSettingsPage = () => {
                                 </button>
                             </div>
                             <div style={{ display: 'grid', gap: '16px', maxWidth: '600px' }}>
-                                <input type="text" placeholder="Quote Validity (days)" value={pf.terms?.validity_days ?? ''} onChange={(e) => handleSmartInput(['pricing_factors', 'terms', 'validity_days'], e)} onKeyDown={(e) => handleSmartInput(['pricing_factors', 'terms', 'validity_days'], e)} style={{ ...styles.input, width: '100%' }} />
-                                <input type="text" placeholder="Payment Terms" value={pf.terms?.payment_terms || ''} onChange={(e) => updateSetting(['pricing_factors', 'terms', 'payment_terms'], e.target.value)} style={{ ...styles.input, width: '100%' }} />
+                                <div>
+                                    <label style={{ fontSize: '14px', color: '#CBD5E1', display: 'block', marginBottom: '8px' }}>Quote Validity (days)</label>
+                                    <input type="text" value={pf.terms?.validity_days ?? ''} onChange={(e) => handleSmartInput(['pricing_factors', 'terms', 'validity_days'], e)} onKeyDown={(e) => handleSmartInput(['pricing_factors', 'terms', 'validity_days'], e)} style={{ ...styles.input, width: '100%' }} />
+                                </div>
+                                <div>
+                                    <label style={{ fontSize: '14px', color: '#CBD5E1', display: 'block', marginBottom: '8px' }}>Payment Terms</label>
+                                    <input type="text" placeholder="e.g. Net 30" value={pf.terms?.payment_terms || ''} onChange={(e) => updateSetting(['pricing_factors', 'terms', 'payment_terms'], e.target.value)} style={{ ...styles.input, width: '100%' }} />
+                                </div>
+                                {Object.entries(pf.terms?.custom_sections || {}).map(([name, value]: [string, any]) => (
+                                    <div key={name}>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
+                                            <label style={{ fontSize: '14px', color: 'var(--neon-cyan)' }}>{name}</label>
+                                            <button onClick={() => deleteSetting(['pricing_factors', 'terms', 'custom_sections', name])} style={{ color: '#EF4444', background: 'transparent', border: 'none', cursor: 'pointer' }}><Trash2 size={14} /></button>
+                                        </div>
+                                        <input type="text" value={value || ''} onChange={(e) => updateSetting(['pricing_factors', 'terms', 'custom_sections', name], e.target.value)} style={{ ...styles.input, width: '100%' }} />
+                                    </div>
+                                ))}
                             </div>
                         </div>
                     )}
