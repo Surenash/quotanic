@@ -51,8 +51,12 @@ class ManufacturerSmartMatcher:
                     break
             
             if not found_alt:
-                logger.info(f"Mf {manufacturer.user.email} rejected: Missing required process {required_process_str} (has: {mf_processes})")
-                return 0.0 # FAIL
+                # One last check: maybe the mf has the raw enum value as a string
+                if str(required_process) in mf_processes:
+                    pass # OK
+                else:
+                    logger.info(f"Mf {manufacturer.user.email} rejected: Missing required process {required_process_str} (has: {mf_processes})")
+                    return 0.0 # FAIL
         
         # 2. MACHINE CHECK (Hard Constraint)
         # If specific machines are strictly required (e.g. 5-axis)

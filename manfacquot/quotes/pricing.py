@@ -242,7 +242,7 @@ def calculate_quote_price(design: Design, manufacturer: Manufacturer) -> Pricing
         'unit_price': f"{final_unit_price:.2f}",
         'terms_validity': validity,
         'terms_payment': payment,
-        'breakdown': f"Mat: {material_cost_unit:.2f}, Lab: {labor_cost_unit:.2f}, Mach: {run_cost_per_unit:.2f}, Setup: {setup_cost_unit:.2f}, Overhead: {overhead_cost_unit:.2f}, Pkg/Log: {(pkg_cost_unit+logistics_cost_unit):.2f}, Risk/Margin: {(risk_cost+profit_margin):.2f}, Urgency: {urgency_prem:.2f}"
+        'breakdown': f"Mat: {material_cost_unit:.2f}, Lab: {labor_cost_per_unit:.2f}, Mach: {run_cost_per_unit:.2f}, Setup: {setup_cost_unit:.2f}, Overhead: {overhead_cost_unit:.2f}, Pkg/Log: {(pkg_cost_unit+logistics_cost_unit):.2f}, Risk/Margin: {(risk_cost+profit_margin):.2f}, Urgency: {urgency_prem:.2f}"
     })
 
     details.estimated_lead_time_days = int(pf.get('estimated_lead_time_base_days', 7) // (2 if getattr(design, 'urgency', 'standard') == 'urgent' else 1))
