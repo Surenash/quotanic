@@ -29,11 +29,34 @@ try:
     from OCC.Core.Bnd import Bnd_Box
     from OCC.Core.BRepBndLib import brepbndlib_Add
     from OCC.Core.gp import gp_Pnt, gp_Vec, gp_Dir, gp_Ax1
-    from OCC.Core.TopoDS import topods_Face, topods_Edge
     from OCC.Core.BRepTools import breptools_UVBounds
+    
+    # Robust TopoDS imports (handles capitalization differences)
+    import OCC.Core.TopoDS as TopoDS
+    # Static casting methods
+    topods_Face = TopoDS.topods.Face
+    topods_Edge = TopoDS.topods.Edge
+    topods_Wire = TopoDS.topods.Wire
+    topods_Shell = TopoDS.topods.Shell
+    topods_Solid = TopoDS.topods.Solid
     PYTHONOCC_AVAILABLE = True
-except ImportError:
-    PYTHONOCC_AVAILABLE = False
+except (ImportError, AttributeError):
+    try:
+        import OCC.Core.TopoDS as TopoDS
+        topods_Face = TopoDS.TopoDS.Face
+        topods_Edge = TopoDS.TopoDS.Edge
+        topods_Wire = TopoDS.TopoDS.Wire
+        PYTHONOCC_AVAILABLE = True
+    except (ImportError, AttributeError):
+        # Last resort fallback
+        from OCC.Core.TopoDS import topods
+        topods_Face = topods.Face
+        topods_Edge = topods.Edge
+        topods_Wire = topods.Wire
+        PYTHONOCC_AVAILABLE = True
+    except Exception as e:
+        print(f"OpenCASCADE TopoDS Import Error: {e}")
+        PYTHONOCC_AVAILABLE = False
 
 # ==============================================================================
 # ENUMERATIONS
@@ -378,6 +401,37 @@ class FeatureRecognitionEngine:
         if z_component > 0.9:
             return 'Top' if normal.Z() > 0 else 'Bottom'
         return 'Side' if z_component < 0.3 else 'Multi-axis'
+
+    def get_overall_metrics(self) -> Dict[str, Any]:
+        """Calculate global geometric properties: volume, bounding box, total area"""
+        if not self.shape:
+            return {'total_volume_cm3': 0.0, 'bbox_mm': [0, 0, 0], 'surface_area_cm2': 0.0}
+            
+        try:
+            # 1. Volume
+            props = GProp_GProps()
+            brepgprop_VolumeProperties(self.shape, props)
+            volume_mm3 = props.Mass()
+            
+            # 2. Bounding Box
+            bbox = Bnd_Box()
+            brepbndlib_Add(self.shape, bbox)
+            xmin, ymin, zmin, xmax, ymax, zmax = bbox.Get()
+            bbox_mm = [xmax - xmin, ymax - ymin, zmax - zmin]
+            
+            # 3. Surface Area
+            props_surf = GProp_GProps()
+            brepgprop_SurfaceProperties(self.shape, props_surf)
+            area_mm2 = props_surf.Mass()
+            
+            return {
+                'total_volume_cm3': round(volume_mm3 / 1000.0, 3),
+                'bbox_mm': [round(d, 2) for d in bbox_mm],
+                'surface_area_cm2': round(area_mm2 / 100.0, 3)
+            }
+        except Exception as e:
+            print(f"Error calculating overall metrics: {e}")
+            return {'total_volume_cm3': 0.0, 'bbox_mm': [0, 0, 0], 'surface_area_cm2': 0.0}
 
     def recognize_all_features(self) -> List[MachiningFeature]:
         """Run complete recognition pipeline"""

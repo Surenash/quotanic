@@ -10,7 +10,23 @@ from OCC.Core.GProp import GProp_GProps
 from OCC.Core.BRep import BRep_Tool
 from OCC.Core.BRepAdaptor import BRepAdaptor_Surface, BRepAdaptor_Curve
 from OCC.Core.GeomAbs import GeomAbs_Plane, GeomAbs_Cylinder, GeomAbs_Cone
-from OCC.Core.TopoDS import topods_Face, topods_Edge
+
+# Robust TopoDS imports
+import OCC.Core.TopoDS as TopoDS
+try:
+    topods_Face = TopoDS.topods.Face
+    topods_Edge = TopoDS.topods.Edge
+except AttributeError:
+    try:
+        from OCC.Core.TopoDS import topods
+        topods_Face = topods.Face
+        topods_Edge = topods.Edge
+    except ImportError:
+        # Fallback
+        from OCC.Core.TopoDS import TopoDS_Face, TopoDS_Edge
+        topods_Face = lambda s: TopoDS_Face(s) if hasattr(TopoDS_Face, "__init__") else TopoDS_Face()
+        topods_Edge = lambda s: TopoDS_Edge(s) if hasattr(TopoDS_Edge, "__init__") else TopoDS_Edge()
+
 from OCC.Core.Bnd import Bnd_Box
 from OCC.Core.BRepBndLib import brepbndlib_Add
 from OCC.Core.gp import gp_Dir, gp_Vec

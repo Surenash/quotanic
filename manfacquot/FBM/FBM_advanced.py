@@ -11,8 +11,33 @@ from OCC.Core.TopAbs import TopAbs_FACE, TopAbs_EDGE, TopAbs_WIRE
 from OCC.Core.BRepAdaptor import BRepAdaptor_Surface, BRepAdaptor_Curve
 from OCC.Core.GeomAbs import (GeomAbs_Plane, GeomAbs_Cylinder, GeomAbs_Cone,  
                                GeomAbs_Torus, GeomAbs_Sphere, GeomAbs_BSplineSurface,
-                               GeomAbs_Circle, GeomAbs_Line, GeomAbs_Helix)
-from OCC.Core.TopoDS import topods_Face, topods_Edge, topods_Wire
+                               GeomAbs_Circle, GeomAbs_Line)
+try:
+    from OCC.Core.GeomAbs import GeomAbs_Helix
+except ImportError:
+    # Use a dummy value or fallback if Helix is not in this version
+    GeomAbs_Helix = 999 
+
+
+# Robust TopoDS imports (handles capitalization differences)
+import OCC.Core.TopoDS as TopoDS
+try:
+    topods_Face = TopoDS.topods.Face
+    topods_Edge = TopoDS.topods.Edge
+    topods_Wire = TopoDS.topods.Wire
+except AttributeError:
+    try:
+        from OCC.Core.TopoDS import topods
+        topods_Face = topods.Face
+        topods_Edge = topods.Edge
+        topods_Wire = topods.Wire
+    except ImportError:
+        # Extreme fallback
+        from OCC.Core.TopoDS import TopoDS_Face, TopoDS_Edge, TopoDS_Wire
+        topods_Face = lambda s: TopoDS_Face(s) if hasattr(TopoDS_Face, "__init__") else TopoDS_Face()
+        topods_Edge = lambda s: TopoDS_Edge(s) if hasattr(TopoDS_Edge, "__init__") else TopoDS_Edge()
+        topods_Wire = lambda s: TopoDS_Wire(s) if hasattr(TopoDS_Wire, "__init__") else TopoDS_Wire()
+
 from OCC.Core.BRep import BRep_Tool
 from typing import List, Dict, Tuple, Optional
 import math
@@ -630,6 +655,9 @@ class AdvancedMachiningProcessPlanner:
         total_time = sum(op.estimated_time for op in self.operations)
         setups = set(op.setup_required for op in self.operations)
         
+        # Calculate overall geometric metrics
+        metrics = self.recognizer.get_overall_metrics()
+        
         return {
             'features': self.features,
             'operations': self.operations,
@@ -640,7 +668,10 @@ class AdvancedMachiningProcessPlanner:
                 'total_patterns': len(self.patterns),
                 'estimated_total_time_minutes': round(total_time, 2),
                 'estimated_total_time_hours': round(total_time / 60, 2),
-                'number_of_setups': len(setups)
+                'number_of_setups': len(setups),
+                'total_volume_cm3': metrics['total_volume_cm3'],
+                'bbox_mm': metrics['bbox_mm'],
+                'surface_area_cm2': metrics['surface_area_cm2']
             }
         }
 

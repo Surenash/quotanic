@@ -1969,7 +1969,7 @@ const CostBreakdownModal = ({ request, onClose }) => {
                             </div>
 
                             {/* Detailed Breakdown */}
-                            <div style={{ marginBottom: '16px' }}>
+                            <div style={{ marginBottom: '24px' }}>
                                 <h4 style={{ margin: '0 0 12px 0', color: '#CBD5E1', fontSize: '14px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Cost Components</h4>
                                 <div style={{ display: 'grid', gap: '8px' }}>
                                     {breakdown.material_cost_per_unit && (
@@ -1990,20 +1990,54 @@ const CostBreakdownModal = ({ request, onClose }) => {
                                             <span style={{ fontWeight: '600' }}>{breakdown.applied_hourly_rate}</span>
                                         </div>
                                     )}
-                                    {breakdown.feature_costs && (
-                                        <div style={{ display: 'flex', justifyContent: 'space-between', padding: '12px', background: 'var(--bg-panel)', borderRadius: '6px' }}>
-                                            <span>Features</span>
-                                            <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>{breakdown.feature_costs}</span>
-                                        </div>
-                                    )}
                                     {breakdown.finishing_cost_per_unit && (
                                         <div style={{ display: 'flex', justifyContent: 'space-between', padding: '12px', background: 'var(--bg-panel)', borderRadius: '6px' }}>
-                                            <span>Finishing <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>{breakdown.finishing_details ? `(${breakdown.finishing_details.substring(0, 30)}...)` : ''}</span></span>
+                                            <span>Finishing <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>({breakdown.finishing_details ? `(${breakdown.finishing_details.substring(0, 30)}...)` : ''}</span></span>
                                             <span style={{ fontWeight: '600' }}>{formatCurrency(breakdown.finishing_cost_per_unit)}</span>
                                         </div>
                                     )}
                                 </div>
                             </div>
+
+                            {/* Step-by-Step Process Flow */}
+                            {breakdown.process_flow && (
+                                <div style={{ marginBottom: '24px' }}>
+                                    <h4 style={{ margin: '0 0 12px 0', color: 'var(--neon-cyan)', fontSize: '14px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Manufacturing Process Flow</h4>
+                                    <div style={{ display: 'grid', gap: '4px', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', overflow: 'hidden' }}>
+                                        <div style={{ display: 'grid', gridTemplateColumns: '40px 1fr 1fr 80px 80px', padding: '10px 12px', background: 'rgba(255,255,255,0.05)', fontSize: '11px', fontWeight: 'bold', textTransform: 'uppercase', color: 'var(--text-secondary)' }}>
+                                            <span>#</span>
+                                            <span>Operation</span>
+                                            <span>Tooling</span>
+                                            <span>Time</span>
+                                            <span style={{ textAlign: 'right' }}>Cost</span>
+                                        </div>
+                                        {(() => {
+                                            try {
+                                                const flow = JSON.parse(breakdown.process_flow);
+                                                return flow.map((step, idx) => (
+                                                    <div key={idx} style={{ 
+                                                        display: 'grid', 
+                                                        gridTemplateColumns: '40px 1fr 1fr 80px 80px', 
+                                                        padding: '10px 12px', 
+                                                        background: idx % 2 === 0 ? 'transparent' : 'rgba(255,255,255,0.02)',
+                                                        fontSize: '12px',
+                                                        alignItems: 'center',
+                                                        borderBottom: idx === flow.length - 1 ? 'none' : '1px solid rgba(255,255,255,0.05)'
+                                                    }}>
+                                                        <span style={{ color: 'var(--text-secondary)' }}>{idx + 1}</span>
+                                                        <span style={{ color: '#E2E8F0', fontWeight: '500' }}>{step.step}</span>
+                                                        <span style={{ color: 'var(--text-secondary)', fontSize: '11px' }}>{step.tool}</span>
+                                                        <span style={{ color: 'var(--text-secondary)' }}>{step.time}</span>
+                                                        <span style={{ color: 'var(--neon-cyan)', fontWeight: '600', textAlign: 'right' }}>{step.cost}</span>
+                                                    </div>
+                                                ));
+                                            } catch (e) {
+                                                return <div style={{ padding: '12px', fontSize: '12px', color: 'var(--text-secondary)' }}>{breakdown.feature_costs}</div>;
+                                            }
+                                        })()}
+                                    </div>
+                                </div>
+                            )}
 
                             {/* Process Info */}
                             {breakdown.ai_process_selected && (

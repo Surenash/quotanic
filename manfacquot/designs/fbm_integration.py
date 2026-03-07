@@ -208,30 +208,45 @@ class FBMAnalyzer:
         result = []
         
         for pattern in patterns:
-            pattern_data = {
-                'pattern_type': pattern.pattern_type.value if hasattr(pattern.pattern_type, 'value') else str(pattern.pattern_type),
-                'feature_ids': pattern.feature_ids,
-                'pattern_count': pattern.pattern_count,
-                'spacing': float(pattern.spacing) if hasattr(pattern, 'spacing') else None,
-                'confidence': float(pattern.confidence),
-                'center': [float(pattern.center.X()), float(pattern.center.Y()), float(pattern.center.Z())] if hasattr(pattern, 'center') else None,
-            }
-            
-            # Add pattern-specific data
-            if hasattr(pattern, 'direction') and pattern.direction:
-                pattern_data['direction'] = [
-                    float(pattern.direction.X()),
-                    float(pattern.direction.Y()),
-                    float(pattern.direction.Z())
-                ]
-            
-            if hasattr(pattern, 'radius'):
-                pattern_data['radius'] = float(pattern.radius)
-            
-            if hasattr(pattern, 'angle_step'):
-                pattern_data['angle_step'] = float(pattern.angle_step)
-            
-            result.append(pattern_data)
+            try:
+                pattern_data = {
+                    'pattern_type': str(pattern.pattern_type.value) if hasattr(pattern.pattern_type, 'value') else str(pattern.pattern_type),
+                    'feature_ids': pattern.feature_ids if hasattr(pattern, 'feature_ids') else [],
+                    'pattern_count': pattern.pattern_count if hasattr(pattern, 'pattern_count') else 0,
+                    'spacing': float(pattern.spacing) if (hasattr(pattern, 'spacing') and pattern.spacing is not None) else None,
+                    'confidence': float(pattern.confidence) if hasattr(pattern, 'confidence') else 0.5,
+                }
+                
+                # Safe coordinate extraction
+                if hasattr(pattern, 'center') and pattern.center is not None:
+                    try:
+                        pattern_data['center'] = [float(pattern.center.X()), float(pattern.center.Y()), float(pattern.center.Z())]
+                    except Exception:
+                        pattern_data['center'] = None
+                else:
+                    pattern_data['center'] = None
+                
+                # Add pattern-specific data
+                if hasattr(pattern, 'direction') and pattern.direction is not None:
+                    try:
+                        pattern_data['direction'] = [
+                            float(pattern.direction.X()),
+                            float(pattern.direction.Y()),
+                            float(pattern.direction.Z())
+                        ]
+                    except Exception:
+                        pass
+                
+                if hasattr(pattern, 'radius') and pattern.radius is not None:
+                    pattern_data['radius'] = float(pattern.radius)
+                
+                if hasattr(pattern, 'angle_step') and pattern.angle_step is not None:
+                    pattern_data['angle_step'] = float(pattern.angle_step)
+                
+                result.append(pattern_data)
+            except Exception as e:
+                logger.error(f"Error extracting individual pattern: {e}")
+                continue
         
         return result
     
@@ -414,4 +429,10 @@ class FBMAnalyzer:
 
 
 # Singleton instance
-fbm_analyzer = FBMAnalyzer() if FBM_AVAILABLE else None
+fbm_analyzer = None
+if FBM_AVAILABLE:
+    try:
+        fbm_analyzer = FBMAnalyzer()
+    except Exception as e:
+        logger.error(f"Failed to initialize FBMAnalyzer singleton: {e}")
+        FBM_AVAILABLE = False

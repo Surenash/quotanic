@@ -21,11 +21,7 @@ coverage.xml
 .mypy_cache
 .pytest_cache
 .vscode
+# node_modules
 node_modules
-dist
 build
 *.egg-info
-.DS_Store
-db.sqlite3
-media
-staticfiles

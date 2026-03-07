@@ -150,6 +150,7 @@ def calculate_quote_price(design: Design, manufacturer: Manufacturer) -> Pricing
         total_estimated_min = Decimal("0.0")
 
         feature_costs_breakdown = []
+        process_steps = [] # New: To store the step-by-step flow
         
         if 'fbm_operations' in geometric_data and geometric_data['fbm_operations']:
             # Precise Feature Pricing
@@ -161,16 +162,27 @@ def calculate_quote_price(design: Design, manufacturer: Manufacturer) -> Pricing
                 
                 op_cost = (op_time_min / Decimal("60")) * hourly_rate
                 
-                # Check for specific feature difficulty
-                feature_type = op.get('feature_type', 'Generic')
-                if 'Thread' in feature_type: 
+                # Use real feature type name instead of Generic
+                # Logic: Check for 'feature_type' in operation, or linked feature's type
+                feature_type = op.get('feature_type', op.get('name', 'Generic Machining'))
+                
+                if 'Thread' in feature_type or 'Tap' in feature_type: 
                     op_cost += Decimal("2.0") # Tapping surcharge
                 
                 total_machining_cost += op_cost
                 feature_costs_breakdown.append(f"{feature_type}: ${op_cost:.2f}")
+                
+                # Build the step-by-step process flow
+                process_steps.append({
+                    'step': op.get('operation_name', op.get('name', 'Machining Step')),
+                    'tool': op.get('tool', op.get('tool_type', 'Standard Tool')),
+                    'time': f"{op_time_min:.1f} min",
+                    'cost': f"${op_cost:.2f}"
+                })
 
             run_cost_per_unit = total_machining_cost
-            details.calculation_details['feature_costs'] = ", ".join(feature_costs_breakdown[:5]) + ("..." if len(feature_costs_breakdown)>5 else "")
+            details.calculation_details['feature_costs'] = ", ".join(feature_costs_breakdown[:10]) + ("..." if len(feature_costs_breakdown)>10 else "")
+            details.calculation_details['process_flow'] = json.dumps(process_steps) # Save full flow as JSON
             
         else:
             # Fallback: Volumetric Estimation (if no detailed FBM features)

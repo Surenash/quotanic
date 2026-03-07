@@ -359,39 +359,30 @@ def perform_fbm_analysis(file_path, file_extension):
         patterns = fbm_result.get('patterns', [])
         geometry_analysis = fbm_result.get('geometry_analysis', {})
         
-        # Calculate basic geometric properties from FBM data if needed
-        # FBM might not provide all geometric properties, so we extract what we can
+        # Consolidate geometric metrics
+        volume_cm3 = float(summary.get('total_volume_cm3', 0.0))
+        bbox_mm = summary.get('bbox_mm', [0, 0, 0])
+        surface_area_cm2 = float(summary.get('surface_area_cm2', 0.0))
         
-        # Try to get volume from features or use a default
-        volume_cm3 = 0.0
-        for feature in features:
-            if feature.get('volume'):
-                volume_cm3 += feature['volume']
-        
-        # If no volume from features, estimate from summary or set to 0
+        # If not in summary, fallback to feature calculation
         if volume_cm3 == 0:
-            volume_cm3 = summary.get('total_volume', 0)
-        
-        # Get bounding box - would need to be calculated from geometry
-        # For now, use placeholder or extract from geometry analysis
-        bbox_mm = [0, 0, 0]  # Placeholder
+            for feature in features:
+                if feature.get('volume'):
+                    volume_cm3 += float(feature['volume'])
         
         # Calculate complexity based on FBM data
         num_features = len(features)
         num_operations = len(operations)
         avg_complexity = sum(f.get('complexity_rating', 1) for f in features) / max(num_features, 1)
         
-        # Normalize complexity score (1-10 scale to 0-1 scale)
-        complexity_score = avg_complexity / 10.0
-        
         # Build comprehensive analysis result
         analysis_results = {
             # Basic geometric data
             "volume_cm3": round(volume_cm3, 2),
             "bbox_mm": bbox_mm,
-            "surface_area_cm2": 0.0,  # FBM doesn't directly provide this
-            "complexity_score": round(complexity_score, 4),
-            "analysis_engine": "FBM-Advanced",
+            "surface_area_cm2": round(surface_area_cm2, 2),
+            "complexity_score": round(avg_complexity / 10.0, 4),
+            "analysis_engine": "FBM-Comprehensive",
             
             # FBM-specific data
             "fbm_features": features,
@@ -546,33 +537,15 @@ def analyze_cad_file(self, design_id):
                             error_message = "STL processing library (numpy-stl) not available."
 
                     elif file_extension in ['.step', '.stp', '.iges', '.igs']:
-                        # Prioritize FBM analysis for STEP/IGES files
-                        # FBM provides superior manufacturing intelligence
-                        if FBM_AVAILABLE and fbm_analyzer:
-                            try:
-                                logger.info(f"Attempting FBM analysis for {file_extension} file...")
-                                geometric_data = perform_fbm_analysis(local_file_path, file_extension)
-                                analysis_successful = True
-                                logger.info("FBM analysis successful - comprehensive manufacturing data available")
-                            except Exception as fbm_error:
-                                logger.warning(f"FBM analysis failed: {fbm_error}. Falling back to basic geometric analysis.")
-                                # Fall back to basic geometric analysis
-                                try:
-                                    geometric_data = perform_advanced_analysis(local_file_path, file_extension)
-                                    analysis_successful = True
-                                    logger.info("Fallback to basic geometric analysis successful")
-                                except Exception as e:
-                                    error_message = f"Both FBM and basic analysis failed. FBM: {fbm_error}, Basic: {e}"
-                                    logger.error(error_message)
-                        else:
-                            # FBM not available, use basic geometric analysis
-                            logger.info("FBM not available, using basic geometric analysis...")
-                            try:
-                                geometric_data = perform_advanced_analysis(local_file_path, file_extension)
-                                analysis_successful = True
-                            except Exception as e:
-                                error_message = f"Advanced analysis failed: {e}"
-                                logger.error(error_message)
+                        # Use unified FBM analysis for STEP/IGES files
+                        try:
+                            logger.info(f"Attempting FBM analysis for {file_extension} file...")
+                            geometric_data = perform_fbm_analysis(local_file_path, file_extension)
+                            analysis_successful = True
+                            logger.info("FBM analysis successful")
+                        except Exception as fbm_error:
+                            error_message = f"FBM analysis failed: {fbm_error}"
+                            logger.error(error_message)
                     else:
                         error_message = f"Unsupported file type: {file_extension}."
 

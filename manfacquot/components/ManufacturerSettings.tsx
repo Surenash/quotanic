@@ -7,8 +7,13 @@ import CtaButton from './CtaButton';
 import Notification from './Notification';
 
 const ManufacturerSettingsPage = () => {
-    const [activeTab, setActiveTab] = useState('materials');
+    const [activeTab, setActiveTab] = useState('profile');
     const [settings, setSettings] = useState<any>(null);
+    const [profile, setProfile] = useState({
+        company_name: '',
+        location: '',
+        about: ''
+    });
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [notification, setNotification] = useState({ show: false, message: '', type: 'success' as 'success' | 'error' });
@@ -21,6 +26,11 @@ const ManufacturerSettingsPage = () => {
         try {
             const data = await api.getManufacturerSettings();
             setSettings(data.capabilities || {});
+            setProfile({
+                company_name: data.company_name || '',
+                location: data.location || '',
+                about: data.about || ''
+            });
         } catch (err) {
             setNotification({ show: true, message: 'Failed to load settings', type: 'error' });
         } finally {
@@ -31,7 +41,10 @@ const ManufacturerSettingsPage = () => {
     const handleSave = async () => {
         setSaving(true);
         try {
-            await api.updateManufacturerSettings({ capabilities: settings });
+            await api.updateManufacturerSettings({ 
+                capabilities: settings,
+                ...profile
+            });
             setNotification({ show: true, message: 'Settings saved successfully!', type: 'success' });
         } catch (err) {
             setNotification({ show: true, message: 'Failed to save settings', type: 'error' });
@@ -80,6 +93,7 @@ const ManufacturerSettingsPage = () => {
     const pf = settings.pricing_factors || {};
 
     const tabs = [
+        { id: 'profile', label: 'Profile Management', icon: <FileText size={16} /> },
         { id: 'materials', label: 'Materials & Costs', icon: <Diamond size={16} /> },
         { id: 'pricing', label: 'Pricing Rates', icon: <DollarSign size={16} /> },
         { id: 'overhead', label: 'Overhead & Margins', icon: <BarChart2 size={16} /> },
@@ -94,8 +108,8 @@ const ManufacturerSettingsPage = () => {
         <div>
             <div style={{ marginBottom: '24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div>
-                    <h2 style={styles.dashboardPageTitle}>Quote Configuration Settings</h2>
-                    <p style={styles.dashboardPageSubtitle}>Configure all parameters used for automated quote generation</p>
+                    <h2 style={styles.dashboardPageTitle}>Manufacturer Settings</h2>
+                    <p style={styles.dashboardPageSubtitle}>Manage your company profile and quote parameters</p>
                 </div>
                 <div style={{ display: 'flex', gap: '12px' }}>
                     <CtaButton text="Reset to Defaults" onClick={handleReset} />
@@ -144,6 +158,41 @@ const ManufacturerSettingsPage = () => {
 
                 {/* Tab Content */}
                 <div style={{ flex: 1, background: 'var(--bg-panel)', padding: '32px', borderRadius: '12px', minHeight: '600px', border: '1px solid var(--border-color)', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)' }}>
+
+                    {/* TAB 0: Profile Management */}
+                    {activeTab === 'profile' && (
+                        <div>
+                            <h3 style={{ color: 'var(--neon-cyan)', marginBottom: '16px' }}>Profile Management</h3>
+                            <div style={{ display: 'grid', gap: '20px', maxWidth: '600px' }}>
+                                <div>
+                                    <label style={{ fontSize: '14px', color: '#CBD5E1', display: 'block', marginBottom: '8px' }}>Company Name</label>
+                                    <input 
+                                        type="text" 
+                                        value={profile.company_name} 
+                                        onChange={(e) => setProfile({...profile, company_name: e.target.value})} 
+                                        style={{ ...styles.input, width: '100%' }} 
+                                    />
+                                </div>
+                                <div>
+                                    <label style={{ fontSize: '14px', color: '#CBD5E1', display: 'block', marginBottom: '8px' }}>Location</label>
+                                    <input 
+                                        type="text" 
+                                        value={profile.location} 
+                                        onChange={(e) => setProfile({...profile, location: e.target.value})} 
+                                        style={{ ...styles.input, width: '100%' }} 
+                                    />
+                                </div>
+                                <div>
+                                    <label style={{ fontSize: '14px', color: '#CBD5E1', display: 'block', marginBottom: '8px' }}>About Company</label>
+                                    <textarea 
+                                        value={profile.about} 
+                                        onChange={(e) => setProfile({...profile, about: e.target.value})} 
+                                        style={{ ...styles.input, width: '100%', minHeight: '120px', padding: '12px' }} 
+                                    />
+                                </div>
+                            </div>
+                        </div>
+                    )}
 
                     {/* TAB 1: Materials & Costs */}
                     {activeTab === 'materials' && (

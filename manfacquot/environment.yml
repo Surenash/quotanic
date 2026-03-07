@@ -1,11 +1,9 @@
 name: base
 channels:
   - conda-forge
-  - defaults
 dependencies:
-  - python=3.11
-  - pythonocc-core>=7.7.0
-  - cadquery>=2.6.0
+  - python=3.10
+  - pythonocc-core
   - gunicorn>=21.2.0
   - pip
   - pip:

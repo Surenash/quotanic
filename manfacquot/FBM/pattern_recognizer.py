@@ -3,7 +3,7 @@ Pattern Recognizer Module
 Detects feature patterns and symmetry for FBM system
 """
 
-from typing import List, Dict, Tuple, Optional
+from typing import List, Dict, Tuple, Optional, Any
 from dataclasses import dataclass, field
 import math
 from enum import Enum
@@ -42,9 +42,11 @@ class FeaturePattern:
     pattern_count: int
     spacing: float = 0.0  # For linear patterns
     angle: float = 0.0  # For circular patterns (degrees between features)
-    center: Tuple[float, float, float] = None  # For circular patterns
-    direction: Tuple[float, float, float] = None  # For linear patterns
+    center: Any = None  # For circular patterns
+    direction: Any = None  # For linear patterns
     confidence: float = 1.0  # 0-1 confidence in pattern detection
+    radius: float = 0.0  # For circular patterns
+    angle_step: float = 0.0  # Alias for angle
 
 
 class PatternRecognizer:

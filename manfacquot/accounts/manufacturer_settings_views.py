@@ -126,27 +126,47 @@ class ManufacturerSettingsView(APIView):
         """Update manufacturer settings"""
         try:
             manufacturer = Manufacturer.objects.get(user=request.user)
+            data = request.data
             
-            # Update capabilities
-            if 'capabilities' in request.data:
-                manufacturer.capabilities = request.data['capabilities']
+            # 1. Update capabilities (JSON field)
+            if 'capabilities' in data:
+                # Merge logic: if we only send part of capabilities, keep the rest
+                current_caps = manufacturer.capabilities or get_default_settings()
+                new_caps = data['capabilities']
+                
+                # Deep update for pricing_factors if present
+                if 'pricing_factors' in new_caps and 'pricing_factors' in current_caps:
+                    current_caps['pricing_factors'].update(new_caps['pricing_factors'])
+                    del new_caps['pricing_factors']
+                
+                current_caps.update(new_caps)
+                manufacturer.capabilities = current_caps
             
-            # Update other profile fields
-            if 'company_name' in request.data:
-                manufacturer.user.company_name = request.data['company_name']
-                manufacturer.user.save()
-                
-            if 'location' in request.data:
-                manufacturer.location = request.data['location']
-                
-            if 'about' in request.data:
-                manufacturer.about = request.data['about']
+            # 2. Update core Manufacturer fields
+            if 'location' in data:
+                manufacturer.location = data['location']
+            if 'about' in data:
+                manufacturer.about = data['about']
+            if 'experience_years' in data:
+                manufacturer.experience_years = data.get('experience_years')
+            
+            # 3. Update related User fields (Company Name)
+            user = manufacturer.user
+            if 'company_name' in data:
+                user.company_name = data['company_name']
+            if 'first_name' in data:
+                user.first_name = data['first_name']
+            if 'last_name' in data:
+                user.last_name = data['last_name']
+            user.save()
             
             manufacturer.save()
             
             return Response({
                 'message': 'Settings updated successfully',
-                'capabilities': manufacturer.capabilities
+                'capabilities': manufacturer.capabilities,
+                'company_name': user.company_name,
+                'location': manufacturer.location
             }, status=status.HTTP_200_OK)
             
         except Manufacturer.DoesNotExist:
