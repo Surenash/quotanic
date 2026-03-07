@@ -331,12 +331,17 @@ class GenerateQuotesView(APIView):
 
                 if pricing_details.price_usd is not None and not pricing_details.errors:
                     try:
+                        import json
+                        # Ensure calculation_details is properly serialized to JSON within the notes string
+                        # The frontend expects "Match Score: ... Process: ... {JSON}"
+                        notes_prefix = f"Match Score: {score:.1f}/100. Process: {requirements.get('primary_process', 'CNC Machining')}. "
+                        
                         quote = Quote.objects.create(
                             design=design,
                             manufacturer=mf_profile.user,
                             price_usd=pricing_details.price_usd,
                             estimated_lead_time_days=pricing_details.estimated_lead_time_days,
-                            notes=f"Match Score: {score:.1f}/100. Process: {requirements['primary_process']}. {pricing_details.calculation_details}",
+                            notes=notes_prefix + json.dumps(pricing_details.calculation_details),
                             status='pending'
                         )
                         generated_quotes.append(quote)
