@@ -150,11 +150,15 @@ def calculate_quote_price(design: Design, manufacturer: Manufacturer) -> Pricing
         total_estimated_min = Decimal("0.0")
 
         feature_costs_breakdown = []
-        process_steps = [] # New: To store the step-by-step flow
-        
+        process_steps = [] # To store the step-by-step flow
+        feature_sequences = {} # To store sequence per feature
+
         if 'fbm_operations' in geometric_data and geometric_data['fbm_operations']:
             # Precise Feature Pricing
             total_machining_cost = Decimal("0.0")
+            
+            # Group operations by feature_id for sequence description
+            ops_by_feature = {}
             
             for op in geometric_data['fbm_operations']:
                 op_time_min = Decimal(str(op.get('estimated_time', 0)))
@@ -163,8 +167,8 @@ def calculate_quote_price(design: Design, manufacturer: Manufacturer) -> Pricing
                 op_cost = (op_time_min / Decimal("60")) * hourly_rate
                 
                 # Use real feature type name instead of Generic
-                # Logic: Check for 'feature_type' in operation, or linked feature's type
                 feature_type = op.get('feature_type', op.get('name', 'Generic Machining'))
+                feature_id = op.get('feature_id', 'unknown')
                 
                 if 'Thread' in feature_type or 'Tap' in feature_type: 
                     op_cost += Decimal("2.0") # Tapping surcharge
@@ -173,16 +177,33 @@ def calculate_quote_price(design: Design, manufacturer: Manufacturer) -> Pricing
                 feature_costs_breakdown.append(f"{feature_type}: ${op_cost:.2f}")
                 
                 # Build the step-by-step process flow
-                process_steps.append({
+                step_data = {
                     'step': op.get('operation_name', op.get('name', 'Machining Step')),
-                    'tool': op.get('tool', op.get('tool_type', 'Standard Tool')),
+                    'tool': op.get('tool_type', 'Standard Tool') + (f" Ø{op.get('tool_diameter')}mm" if op.get('tool_diameter') else ""),
                     'time': f"{op_time_min:.1f} min",
                     'cost': f"${op_cost:.2f}"
-                })
+                }
+                process_steps.append(step_data)
+                
+                # Build feature sequences
+                if feature_id not in ops_by_feature:
+                    ops_by_feature[feature_id] = []
+                ops_by_feature[feature_id].append(op.get('operation_name', op.get('name', 'Machining Step')))
+
+            # Convert grouped ops to readable sequences
+            for fid, ops in ops_by_feature.items():
+                feature_name = "Unknown Feature"
+                # Find feature name from fbm_features
+                for f in geometric_data.get('fbm_features', []):
+                    if f.get('feature_id') == fid:
+                        feature_name = f.get('feature_type', 'Feature')
+                        break
+                feature_sequences[f"{feature_name} #{fid}"] = " -> ".join(ops)
 
             run_cost_per_unit = total_machining_cost
             details.calculation_details['feature_costs'] = ", ".join(feature_costs_breakdown[:10]) + ("..." if len(feature_costs_breakdown)>10 else "")
-            details.calculation_details['process_flow'] = json.dumps(process_steps) # Save full flow as JSON
+            details.calculation_details['process_flow'] = json.dumps(process_steps)
+            details.calculation_details['feature_sequences'] = json.dumps(feature_sequences)
             
         else:
             # Fallback: Volumetric Estimation (if no detailed FBM features)

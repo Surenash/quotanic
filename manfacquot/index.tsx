@@ -44,7 +44,9 @@ import ManufacturerSettingsPage from './components/ManufacturerSettings';
 
 import './index.css';
 
-const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || '') + '/api'; // Uses env var in production// --- Constants for Manufacturer Signup & Directory ---
+const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || '') + '/api'; // Uses env var in production
+const MEDIA_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
+// --- Constants for Manufacturer Signup & Directory ---
 import {
     PRODUCTION_VOLUMES, CERTIFICATIONS, MACHINING_PROCESSES, SHEET_METAL_PROCESSES, CASTING_PROCESSES, FORGING_PROCESSES,
     INJECTION_MOLDING_PROCESSES, ADDITIVE_PROCESSES, WELDING_JOINING_PROCESSES, MATERIALS_METALS, MATERIALS_PLASTICS,
@@ -296,7 +298,7 @@ const Header = ({ isAuthenticated, onLogout, onNavigate }: HeaderProps) => {
             <div style={styles.container}>
                 <div style={styles.headerContent}>
                     <a href="#" style={{ ...styles.logo, display: 'flex', alignItems: 'center', gap: '12px', textDecoration: 'none' }} onClick={(e) => { e.preventDefault(); onNavigate('landing'); }}>
-                        <img src="/media/quotanic-logo.png" alt="Quotanic Logo" style={{ height: '40px', width: 'auto' }} />
+                        <img src="/media/quotanic-logo.png" alt="Quotanic Logo" style={{ height: '32px', width: 'auto' }} />
                         <span style={{ fontSize: '24px', fontWeight: 'bold', color: text_primary, letterSpacing: '2px' }}>
                             QUOTA<span style={{ color: neon_cyan }}>NIC</span>
                         </span>
@@ -2013,7 +2015,7 @@ const CostBreakdownModal = ({ request, onClose }) => {
                                         </div>
                                         {(() => {
                                             try {
-                                                const flow = JSON.parse(breakdown.process_flow);
+                                                const flow = typeof breakdown.process_flow === 'string' ? JSON.parse(breakdown.process_flow) : breakdown.process_flow;
                                                 return flow.map((step, idx) => (
                                                     <div key={idx} style={{ 
                                                         display: 'grid', 
@@ -2032,7 +2034,29 @@ const CostBreakdownModal = ({ request, onClose }) => {
                                                     </div>
                                                 ));
                                             } catch (e) {
-                                                return <div style={{ padding: '12px', fontSize: '12px', color: 'var(--text-secondary)' }}>{breakdown.feature_costs}</div>;
+                                                return <div style={{ padding: '12px', fontSize: '12px', color: 'var(--text-secondary)' }}>{breakdown.feature_costs || 'Flow data format error'}</div>;
+                                            }
+                                        })()}
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Feature Manufacturing Sequences */}
+                            {breakdown.feature_sequences && (
+                                <div style={{ marginBottom: '24px' }}>
+                                    <h4 style={{ margin: '0 0 12px 0', color: 'var(--neon-cyan)', fontSize: '14px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Feature Manufacturing Sequences</h4>
+                                    <div style={{ display: 'grid', gap: '8px' }}>
+                                        {(() => {
+                                            try {
+                                                const sequences = typeof breakdown.feature_sequences === 'string' ? JSON.parse(breakdown.feature_sequences) : breakdown.feature_sequences;
+                                                return Object.entries(sequences).map(([feature, sequence], idx) => (
+                                                    <div key={idx} style={{ padding: '12px', background: 'rgba(255,255,255,0.02)', borderRadius: '6px', borderLeft: '3px solid var(--neon-cyan)' }}>
+                                                        <p style={{ fontSize: '12px', fontWeight: '700', color: 'var(--neon-cyan)', margin: '0 0 4px 0' }}>{feature}</p>
+                                                        <p style={{ fontSize: '13px', color: '#CBD5E1', margin: 0, fontStyle: 'italic' }}>{sequence as string}</p>
+                                                    </div>
+                                                ));
+                                            } catch (e) {
+                                                return null;
                                             }
                                         })()}
                                     </div>
@@ -2649,6 +2673,7 @@ const DesignQuotationsPage = ({ designId, onNavigate }) => {
     const [error, setError] = useState('');
     const [sortBy, setSortBy] = useState('price'); // 'price' or 'lead_time'
     const [acceptingQuoteId, setAcceptingQuoteId] = useState(null);
+    const [breakdownModalInfo, setBreakdownModalInfo] = useState({ isOpen: false, request: null });
 
     useEffect(() => {
         const fetchData = async () => {
@@ -2821,7 +2846,7 @@ const DesignQuotationsPage = ({ designId, onNavigate }) => {
                                                 </span>
                                             </td>
                                             <td style={styles.tableCell}>
-                                                <div style={{ display: 'flex', gap: '8px' }}>
+                                                <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
                                                     {isPending && !hasAcceptedQuote && (
                                                         <CtaButton
                                                             text={acceptingQuoteId === quote.id ? 'Accepting...' : 'Accept Quote'}
@@ -2831,6 +2856,24 @@ const DesignQuotationsPage = ({ designId, onNavigate }) => {
                                                             className="button-small"
                                                         />
                                                     )}
+                                                    <CtaButton 
+                                                        text="View Details" 
+                                                        onClick={() => {
+                                                            const request = {
+                                                                id: quote.id,
+                                                                designId: quote.design,
+                                                                designName: design?.design_name || 'Design',
+                                                                customer: quote.manufacturer_name || 'Manufacturer',
+                                                                material: design?.material || 'N/A',
+                                                                quantity: design?.quantity || 0,
+                                                                price: quote.price_usd,
+                                                                leadTime: quote.estimated_lead_time_days,
+                                                                notes: quote.notes || '',
+                                                            };
+                                                            setBreakdownModalInfo({ isOpen: true, request });
+                                                        }} 
+                                                        className="button-small" 
+                                                    />
                                                     {isAccepted && (
                                                         <span style={{ ...styles.statusBadge, color: 'var(--status-success)' }}>✓ Order Created</span>
                                                     )}
@@ -2844,6 +2887,7 @@ const DesignQuotationsPage = ({ designId, onNavigate }) => {
                     </div>
                 </>
             )}
+            {breakdownModalInfo.isOpen && <CostBreakdownModal request={breakdownModalInfo.request} onClose={() => setBreakdownModalInfo({ isOpen: false, request: null })} />}
         </div>
     );
 };
