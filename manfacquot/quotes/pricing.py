@@ -31,7 +31,7 @@ def calculate_quote_price(design: Design, manufacturer: Manufacturer) -> Pricing
     # --- 1. Get Inputs and Validate ---
     volume_cm3 = geometric_data.get('volume_cm3')
     complexity_score = geometric_data.get('complexity_score')
-    prismatic_score = geometric_data.get('prismatic_score', 1.0) # Default to 1.0 (fully prismatic) if missing
+    prismatic_score = geometric_data.get('prismatic_score', 1.0)
     dfm_risks = geometric_data.get('dfm_risks', [])
     
     if not volume_cm3 or volume_cm3 <= 0:
@@ -62,20 +62,27 @@ def calculate_quote_price(design: Design, manufacturer: Manufacturer) -> Pricing
     urgency_factors = pricing_factors.get('urgency_premium', {})
     terms_factors = pricing_factors.get('terms', {})
 
-    if material not in material_properties:
+    # Match material (handling variations in names)
+    matched_mat = None
+    for m_key in material_properties.keys():
+        if material.lower() in m_key.lower() or m_key.lower() in material.lower():
+            matched_mat = m_key
+            break
+    
+    if not matched_mat:
         details.errors.append(f"Manufacturer does not provide pricing for material: {material}")
         return details
 
-    mat_props = material_properties[material]
+    mat_props = material_properties[matched_mat]
 
-    # --- 2. Calculate Costs (14-Point Model) ---
+    # --- 2. Calculate Costs ---
     try:
         # 1. RAW MATERIAL COSTS
         stock_volume = geometric_data.get('optimal_stock_volume_cm3', geometric_data.get('stock_volume_cm3', volume_cm3))
-        density = Decimal(str(mat_props['density_g_cm3']))
-        cost_per_kg = Decimal(str(mat_props['cost_usd_kg']))
-        scrap_rate = Decimal(str(material_factors.get('scrap_rate_percent', 0.0)))
-        yield_rate = Decimal(str(material_factors.get('yield_rate_percent', 1.0)))
+        density = Decimal(str(mat_props.get('density_g_cm3', 2.7)))
+        cost_per_kg = Decimal(str(mat_props.get('cost_usd_kg', 5.0)))
+        scrap_rate = Decimal(str(material_factors.get('scrap_rate_percent', 0.05)))
+        yield_rate = Decimal(str(material_factors.get('yield_rate_percent', 0.95)))
         
         mass_g = Decimal(str(stock_volume)) * density
         mass_kg = mass_g / Decimal("1000")
@@ -94,18 +101,23 @@ def calculate_quote_price(design: Design, manufacturer: Manufacturer) -> Pricing
         details.calculation_details['ai_process_selected'] = str(primary_process)
         details.calculation_details['ai_reasoning'] = "; ".join(requirements.get('reasoning', []))
 
-        # Select Machine Rate
-        base_machining_rate = Decimal(str(machining_factors.get('machining_rate_usd_min', 1.5))) * Decimal("60")
+        # Select Machine Rate from the new synchronized rates
+        # Try to find a rate for the specific primary process
+        machine_rates = machining_factors.get('rates', {})
+        hourly_rate = Decimal("90.00") # Default
         
-        if primary_process == ManufacturingProcess.MILLING_5_AXIS:
-            multiplier = Decimal(str(machining_factors.get('5_axis_multiplier', 2.0)))
-            hourly_rate = base_machining_rate * multiplier
-            details.calculation_details['machine_selected'] = "5-Axis CNC Mill"
-        elif primary_process == ManufacturingProcess.TURNING_LIVE_TOOLING:
-            hourly_rate = base_machining_rate * Decimal("1.5")
-            details.calculation_details['machine_selected'] = "Mill-Turn Lathe"
-        else:
-            hourly_rate = base_machining_rate
+        process_str = str(primary_process)
+        found_rate = False
+        for m_name, m_rate in machine_rates.items():
+            if process_str.lower() in m_name.lower():
+                hourly_rate = Decimal(str(m_rate)) * Decimal("60")
+                details.calculation_details['machine_selected'] = m_name
+                found_rate = True
+                break
+        
+        if not found_rate:
+            # Fallback to general machining rate if specific one not found
+            hourly_rate = Decimal(str(machining_factors.get('machining_rate_usd_min', 1.5))) * Decimal("60")
             details.calculation_details['machine_selected'] = "Standard 3-Axis CNC"
 
         details.calculation_details['applied_hourly_rate'] = f"${hourly_rate:.2f}/hr"
@@ -172,8 +184,8 @@ def calculate_quote_price(design: Design, manufacturer: Manufacturer) -> Pricing
 
         # Labor
         labor_ratio = Decimal("0.5")
-        skilled_rate = Decimal(str(labor_factors.get('skilled_rate_hourly', 25.0)))
-        efficiency = Decimal(str(labor_factors.get('efficiency_factor', 1.0)))
+        skilled_rate = Decimal(str(labor_factors.get('skilled_rate_hourly', 35.0)))
+        efficiency = Decimal(str(labor_factors.get('efficiency_factor', 0.85)))
         labor_hours = ((total_estimated_min / Decimal("60")) * labor_ratio) + Decimal("0.5")
         effective_hours = labor_hours / efficiency
         labor_cost_per_unit = effective_hours * skilled_rate
@@ -210,12 +222,26 @@ def calculate_quote_price(design: Design, manufacturer: Manufacturer) -> Pricing
 
         # QC & Packaging & Logistics
         qc_cost_per_unit = sum(Decimal(str(qc_factors.get('inspection_costs', {}).get(req, 10.0))) for req in getattr(design, 'inspection_requirements', []))
+        # Add custom QC services
+        custom_qc = qc_factors.get('custom_sections', {})
+        qc_cost_per_unit += sum(Decimal(str(v)) for v in custom_qc.values())
+
         logistics_cost_per_unit = (Decimal(str(logistics_factors.get('base_fee_usd', 0.0))) / Decimal(quantity)) + (Decimal(str(mass_kg)) * Decimal(str(logistics_factors.get('cost_per_kg', 5.0))))
-        pkg_cost_per_unit = Decimal(str(packaging_factors.get('base_cost_unit', 2.0)))
+        
+        pkg_cost_per_unit = Decimal(str(packaging_factors.get('standard_cost_unit', 2.0)))
+        # Add custom packaging
+        custom_pkg = packaging_factors.get('custom_sections', {})
+        pkg_cost_per_unit += sum(Decimal(str(v)) for v in custom_pkg.values())
 
         # Overheads & Subtotal
         direct_cost = material_cost_per_unit + labor_cost_per_unit + run_cost_per_unit + setup_cost_per_unit
-        overhead_cost_per_unit = direct_cost * Decimal(str(overhead_factors.get('rate_percent', 0.20)))
+        
+        overhead_rate = Decimal(str(overhead_factors.get('rate_percent', 0.20)))
+        # Add custom overhead surcharges
+        custom_overheads = overhead_factors.get('custom_sections', {})
+        overhead_rate += sum(Decimal(str(v)) for v in custom_overheads.values())
+        
+        overhead_cost_per_unit = direct_cost * overhead_rate
         subtotal_cost = direct_cost + overhead_cost_per_unit + tooling_cost_per_unit + engineering_cost_per_unit + qc_cost_per_unit + pkg_cost_per_unit + logistics_cost_per_unit
         
         # Urgency & Margin & Risk
@@ -227,11 +253,18 @@ def calculate_quote_price(design: Design, manufacturer: Manufacturer) -> Pricing
         # Final Price
         final_unit_price = subtotal_cost + urgency_premium + profit_margin + risk_cost
         details.price_usd = (final_unit_price * quantity).quantize(Decimal("0.01"))
+        
+        # Terms custom sections
+        custom_terms = terms_factors.get('custom_sections', {})
+        terms_payment = terms_factors.get('payment_terms', "Standard")
+        if custom_terms:
+            terms_payment += " (" + ", ".join(f"{k}: {v}" for k, v in custom_terms.items()) + ")"
+
         details.calculation_details.update({
             'final_price': f"{details.price_usd:.2f}",
             'unit_price': f"{final_unit_price:.2f}",
             'terms_validity': f"{terms_factors.get('validity_days', 30)} Days",
-            'terms_payment': terms_factors.get('payment_terms', "Standard"),
+            'terms_payment': terms_payment,
             'breakdown': f"Mat: {material_cost_per_unit:.2f}, Lab: {labor_cost_per_unit:.2f}, Mach: {run_cost_per_unit:.2f}, Setup: {setup_cost_per_unit:.2f}, Overhead: {overhead_cost_per_unit:.2f}, Pkg/Log: {(pkg_cost_per_unit+logistics_cost_per_unit):.2f}, Risk/Margin: {(risk_cost+profit_margin):.2f}, Urgency: {urgency_premium:.2f}"
         })
 
