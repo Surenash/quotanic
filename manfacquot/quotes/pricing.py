@@ -153,21 +153,25 @@ def calculate_quote_price(design: Design, manufacturer: Manufacturer) -> Pricing
         process_steps = [] # To store the step-by-step flow
         feature_sequences = {} # To store sequence per feature
 
-        if 'fbm_operations' in geometric_data and geometric_data['fbm_operations']:
+        # FBMAnalyzer returns 'operations' and 'features'
+        fbm_ops = geometric_data.get('operations', [])
+        fbm_feats = geometric_data.get('features', [])
+
+        if fbm_ops:
             # Precise Feature Pricing
             total_machining_cost = Decimal("0.0")
             
             # Group operations by feature_id for sequence description
             ops_by_feature = {}
             
-            for op in geometric_data['fbm_operations']:
+            for op in fbm_ops:
                 op_time_min = Decimal(str(op.get('estimated_time', 0)))
                 total_estimated_min += op_time_min
                 
                 op_cost = (op_time_min / Decimal("60")) * hourly_rate
                 
                 # Use real feature type name instead of Generic
-                feature_type = op.get('feature_type', op.get('name', 'Generic Machining'))
+                feature_type = op.get('feature_type', op.get('operation_name', 'Generic Machining'))
                 feature_id = op.get('feature_id', 'unknown')
                 
                 if 'Thread' in feature_type or 'Tap' in feature_type: 
@@ -178,7 +182,7 @@ def calculate_quote_price(design: Design, manufacturer: Manufacturer) -> Pricing
                 
                 # Build the step-by-step process flow
                 step_data = {
-                    'step': op.get('operation_name', op.get('name', 'Machining Step')),
+                    'step': op.get('operation_name', 'Machining Step'),
                     'tool': op.get('tool_type', 'Standard Tool') + (f" Ø{op.get('tool_diameter')}mm" if op.get('tool_diameter') else ""),
                     'time': f"{op_time_min:.1f} min",
                     'cost': f"${op_cost:.2f}"
@@ -188,14 +192,14 @@ def calculate_quote_price(design: Design, manufacturer: Manufacturer) -> Pricing
                 # Build feature sequences
                 if feature_id not in ops_by_feature:
                     ops_by_feature[feature_id] = []
-                ops_by_feature[feature_id].append(op.get('operation_name', op.get('name', 'Machining Step')))
+                ops_by_feature[feature_id].append(op.get('operation_name', 'Machining Step'))
 
             # Convert grouped ops to readable sequences
             for fid, ops in ops_by_feature.items():
                 feature_name = "Unknown Feature"
-                # Find feature name from fbm_features
-                for f in geometric_data.get('fbm_features', []):
-                    if f.get('feature_id') == fid:
+                # Find feature name from features
+                for f in fbm_feats:
+                    if str(f.get('feature_id')) == str(fid):
                         feature_name = f.get('feature_type', 'Feature')
                         break
                 feature_sequences[f"{feature_name} #{fid}"] = " -> ".join(ops)
