@@ -1,18 +1,17 @@
 version: 1
-applications:
-  - appRoot: manfacquot
-    frontend:
-      phases:
-        preBuild:
-          commands:
-            - npm ci
-        build:
-          commands:
-            - npm run build
-      artifacts:
-        baseDirectory: dist
-        files:
-          - '**/*'
-      cache:
-        paths:
-          - node_modules/**/*
+frontend:
+  phases:
+    preBuild:
+      commands:
+        - cd manfacquot
+        - npm ci
+    build:
+      commands:
+        - npm run build
+  artifacts:
+    baseDirectory: manfacquot/dist
+    files:
+      - '**/*'
+  cache:
+    paths:
+      - manfacquot/node_modules/**/*
