@@ -153,9 +153,9 @@ def calculate_quote_price(design: Design, manufacturer: Manufacturer) -> Pricing
         process_steps = [] # To store the step-by-step flow
         feature_sequences = {} # To store sequence per feature
 
-        # FBMAnalyzer returns 'operations' and 'features'
-        fbm_ops = geometric_data.get('operations', [])
-        fbm_feats = geometric_data.get('features', [])
+        # Check for operations in both possible key formats
+        fbm_ops = geometric_data.get('fbm_operations') or geometric_data.get('operations', [])
+        fbm_feats = geometric_data.get('fbm_features') or geometric_data.get('features', [])
 
         if fbm_ops:
             # Precise Feature Pricing
