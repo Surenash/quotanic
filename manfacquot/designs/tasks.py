@@ -592,55 +592,66 @@ def analyze_cad_file(self, design_id):
                         analysis_successful = True
                         logger.info(f"CAD analysis successful for Design ID: {design_id}. Status set to ANALYSIS_COMPLETE.")
                         
-                        # Automatically generate quotes after successful analysis
-                        try:
-                            logger.info(f"Triggering automatic quote generation for Design ID: {design_id}")
-                            from .views import GenerateQuotesView
-                            from rest_framework.test import APIRequestFactory, force_authenticate
-                            
-                            # Create request context
-                            factory = APIRequestFactory()
-                            request = factory.post(f'/api/designs/{design_id}/generate-quotes/')
-                            
-                            # CRITICAL: Properly authenticate the request
-                            force_authenticate(request, user=design.customer)
-                            
-                            # Call the view
-                            view = GenerateQuotesView.as_view()
-                            response = view(request, id=design_id)
-                            
-                            if response.status_code == 200:
-                                response_data = response.data
-                                quotes_count = response_data.get('message', '').split()[0]
-                                logger.info(f"✅ Successfully auto-generated {quotes_count} quotes for Design ID: {design_id}")
-                            else:
-                                logger.warning(f"❌ Quote generation returned status {response.status_code} for Design ID: {design_id}: {response.data}")
-                        except Exception as quote_error:
-                            logger.error(f"❌ Failed to auto-generate quotes for Design ID: {design_id}: {quote_error}", exc_info=True)
-                            # Don't fail the entire task if quote generation fails
-
-
+                        # We will trigger auto-quoting OUTSIDE the transaction block
+                        run_auto_quote = True
 
                     else:
                         design.status = DesignStatus.ANALYSIS_FAILED
                         design.geometric_data = {"error": error_message or "Unknown analysis error."}
+                        run_auto_quote = False
 
                 except ValueError as ve:
                     logger.error(f"CAD analysis failed for Design ID {design_id}: {ve}")
                     design.status = DesignStatus.ANALYSIS_FAILED
                     design.geometric_data = {"error": f"Analysis failed: {str(ve)}"}
+                    run_auto_quote = False
                 except RuntimeError as rte:
                      logger.error(f"CAD analysis runtime error for Design ID {design_id}: {rte}")
                      design.status = DesignStatus.ANALYSIS_FAILED
                      design.geometric_data = {"error": f"Analysis runtime error: {str(rte)}"}
+                     run_auto_quote = False
                 except Exception as analysis_exc:
                     logger.error(f"Unexpected CAD analysis error for Design ID {design_id}: {analysis_exc}")
                     design.status = DesignStatus.ANALYSIS_FAILED
                     design.geometric_data = {"error": f"Unexpected analysis error: {str(analysis_exc)}"}
+                    run_auto_quote = False
                 finally:
                     design.save() # Ensure status and geometric_data are saved
 
+            # End of transaction.atomic()
             logger.info(f"Successfully processed Design ID: {design_id}. Final status: {design.status}")
+            
+            # Automatically generate quotes after successful analysis and transaction commit
+            if locals().get('run_auto_quote', False):
+                try:
+                    logger.info(f"Triggering automatic quote generation for Design ID: {design_id}")
+                    from .views import GenerateQuotesView
+                    from rest_framework.test import APIRequestFactory, force_authenticate
+                    
+                    # Create request context
+                    factory = APIRequestFactory()
+                    request = factory.post(f'/api/designs/{design_id}/generate-quotes/')
+                    
+                    # IMPORTANT: Re-fetch design outside transaction to reflect exact DB state
+                    committed_design = Design.objects.get(id=design_id)
+                    
+                    # CRITICAL: Properly authenticate the request
+                    force_authenticate(request, user=committed_design.customer)
+                    
+                    # Call the view
+                    view = GenerateQuotesView.as_view()
+                    response = view(request, id=design_id)
+                    
+                    if response.status_code == 200:
+                        response_data = response.data
+                        quotes_count = response_data.get('message', '').split()[0]
+                        logger.info(f"✅ Successfully auto-generated {quotes_count} quotes for Design ID: {design_id}")
+                    else:
+                        logger.warning(f"❌ Quote generation returned status {response.status_code} for Design ID: {design_id}: {response.data}")
+                except Exception as quote_error:
+                    logger.error(f"❌ Failed to auto-generate quotes for Design ID: {design_id}: {quote_error}", exc_info=True)
+                    # Don't fail the entire analysis task if quote generation fails
+            
             return f"Successfully processed Design ID: {design_id}. Final status: {design.status}"
 
     except Design.DoesNotExist:

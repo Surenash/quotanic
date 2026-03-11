@@ -301,7 +301,7 @@ class GenerateQuotesView(APIView):
             match_score = smart_matcher.calculate_match_score(design, requirements, mf_profile)
             logger.info(f"Mf {mf_profile.user.email} match score: {match_score}")
             
-            if match_score > 20.0: # Lowered threshold to ensure visibility
+            if match_score > 20.0: # Matcher threshold
                 eligible_manufacturers_with_scores.append((mf_profile, match_score))
             else:
                 logger.info(f"Mf {mf_profile.user.email} filtered out: Score {match_score} below threshold 20.0")
