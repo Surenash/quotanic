@@ -7,7 +7,7 @@ Welcome to the Quotanic project repository. This project consists of two main co
 
 ---
 
-## 🚀 Getting Started
+## Getting Started
 
 To get the entire project up and running, you will need to start the respective servers for the components you wish to work on.
 
@@ -60,24 +60,7 @@ The application frontend will be available at `http://localhost:5173` (or the po
 
 ---
 
-### 2. AI Studio App (`front end `)
-
-If you need to run the AI Studio frontend prototype:
-
-```bash
-cd "front end "
-
-# Install dependencies
-npm install
-
-# Start the local development server
-npm run dev
-```
-The AI studio UI will run at `http://localhost:5173` (make sure the other frontend is running on a different port if running both simultaneously).
-
----
-
-## 📚 Further Documentation
+##  Further Documentation
 
 - For detailed backend and API documentation, refer to `manfacquot/README.md` and `manfacquot/FBM/API_DOCUMENTATION.md`.
 - Ensure all environment variables are correctly set up. You can refer to `manfacquot/.env.example` to create your `.env` file for the main application.
