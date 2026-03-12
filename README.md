@@ -1,5 +1,24 @@
-# Quotanic
+# Quotanic (ManfacQuot)
 
+**Quotanic** is an advanced AI-driven manufacturing quotation and management system designed to streamline the interaction between customers and manufacturers. It features a powerful **Feature-Based Manufacturing (FBM)** engine that automatically analyzes CAD files to estimate costs, select tools, and generate manufacturing plans.
+
+## Key Features
+
+*   **Automated CAD Analysis**:
+    *   Supports **STEP** and **IGES** file formats.
+    *   **Feature Recognition**: Automatically detects holes, pockets, slots, and other geometric features.
+    *   **Geometry Analysis**: Calculates volume, surface area, bounding boxes, and stock requirements.
+*   **Smart Quotation Engine**:
+    *   **Dynamic Cost Estimation**: Real-time pricing based on material costs, machine time, labor, and overhead.
+    *   **14-Point Costing Model**: Detailed breakdown including setup, tooling, and inspection costs.
+*   **Manufacturer Portal**:
+    *   Manage incoming RFQs (Requests for Quotation).
+    *   Track active orders and production status.
+*   **Order Management**:
+    *   End-to-end order tracking from placement to delivery.
+    *   Integrated **Razorpay** payment gateway.
+*   **Interactive 3D Viewer**: Visualize CAD models directly in the browser.
+  
 Welcome to the Quotanic project repository. This project consists of two main components:
 
 1. **`manfacquot`**: The core Quotanic application. It is an advanced AI-driven manufacturing quotation and management system. It features a powerful Feature-Based Manufacturing (FBM) engine that automatically analyzes CAD files to estimate costs and generate manufacturing plans. It is built using **Django** for the backend and **React+Vite** for the frontend within the same directory.
