@@ -1818,13 +1818,39 @@ const ManufacturerProfileManagementPage = () => {
             // Refresh local state with updated data from backend
             const updatedProfile = await api.getManufacturerProfile();
             if (updatedProfile) {
-                // Trigger a local state update to ensure "persistence" during the session
                 const caps = updatedProfile.capabilities || {};
-                setFormData({
+                const normalizedData = {
                     ...updatedProfile,
-                    companyName: updatedProfile.company_name,
-                    // ... re-normalize as above if needed, but the current UI state is already "saved"
-                });
+                    companyName: updatedProfile.company_name || '',
+                    email: updatedProfile.email || '',
+                    location: updatedProfile.location || '',
+                    website: updatedProfile.website_url || '',
+                    about: updatedProfile.about || '',
+                    logoUrl: updatedProfile.logoUrl || '',
+                    backgroundUrl: updatedProfile.backgroundUrl || '',
+                    
+                    // Unpack capabilities into flat fields for the form
+                    supportedMaterials: caps.selected_materials || caps.materials_supported || [],
+                    productionVolume: caps.production_volume || '',
+                    leadTimeRange: caps.lead_time_range || '',
+                    moq: caps.moq || 0,
+                    otherCertifications: caps.other_certifications || '',
+                    qualityControlProcesses: caps.quality_control || '',
+                    materialTesting: caps.material_testing || '',
+
+                    // Capability groups
+                    machining: caps.machining || caps.cnc_machining || [],
+                    sheetmetal: caps.sheetmetal || caps.sheet_metal_fabrication || [],
+                    casting: caps.casting || [],
+                    forging: caps.forging || [],
+                    injectionmolding: caps.injectionmolding || caps.injection_molding || [],
+                    '3dprinting': caps['3dprinting'] || caps.three_d_printing || [],
+                    weldingandjoining: caps.weldingandjoining || [],
+
+                    portfolio: updatedProfile.portfolio || [],
+                    certifications: updatedProfile.certifications || [],
+                };
+                setFormData(normalizedData);
             }
         } catch (err) {
             setNotification({ show: true, message: err.message, type: 'error' });
@@ -1856,7 +1882,7 @@ const ManufacturerProfileManagementPage = () => {
                         <CtaButton text="Upload New Items" onClick={() => portfolioFileInputRef.current?.click()} type="button" />
 
                         <div style={styles.portfolioManagementGrid}>
-                            {formData.portfolio.map(item => (
+                            {(formData.portfolio || []).map(item => (
                                 <div key={item.id} style={styles.portfolioManagementItem}>
                                     {item.type === 'video' ? (
                                         <div style={styles.portfolioVideoPlaceholder}><VideoCameraIcon style={{ width: '32px', height: '32px', color: '#fff' }} /></div>
@@ -1871,9 +1897,9 @@ const ManufacturerProfileManagementPage = () => {
                     </div>
                 </fieldset>
 
-                <fieldset style={styles.fieldset}><legend style={styles.legend}>General Capabilities</legend><div style={styles.formRow}><div style={styles.formGroup}><label htmlFor="productionVolume" style={styles.label}>Production Volume Capacity</label><select name="productionVolume" value={formData.productionVolume} onChange={handleInputChange} style={styles.input} required><option value="">Select volume...</option>{PRODUCTION_VOLUMES.map(v => <option key={v} value={v}>{v}</option>)}</select></div><div style={styles.formGroup}><label htmlFor="leadTimeRange" style={styles.label}>Typical Lead Time Range</label><input type="text" name="leadTimeRange" value={formData.leadTimeRange} onChange={handleInputChange} style={styles.input} required placeholder="e.g., 5-10 days" /></div></div><div style={styles.formRow}><div style={styles.formGroup}><label htmlFor="moq" style={styles.label}>Minimum Order Quantity (MOQ)</label><input type="number" name="moq" value={formData.moq} onChange={handleInputChange} style={styles.input} required min="0" /></div><div style={styles.formGroup}><label htmlFor="otherCertifications" style={styles.label}>Other Certs (comma-separated)</label><input type="text" name="otherCertifications" value={formData.otherCertifications} onChange={handleInputChange} style={styles.input} /></div></div><CheckboxGroup title="Certifications" options={CERTIFICATIONS} selected={formData.certifications} onChange={(v) => handleCheckboxGroupChange('certifications', v)} /><div style={styles.formGroup}><label htmlFor="qualityControlProcesses" style={styles.label}>Quality Control Processes</label><textarea name="qualityControlProcesses" value={formData.qualityControlProcesses} onChange={handleInputChange} style={styles.input} rows={3}></textarea></div><div style={styles.formGroup}><label htmlFor="materialTesting" style={styles.label}>Material Testing / Inspection Equipment</label><textarea name="materialTesting" value={formData.materialTesting} onChange={handleInputChange} style={styles.input} rows={3}></textarea></div></fieldset>
+                <fieldset style={styles.fieldset}><legend style={styles.legend}>General Capabilities</legend><div style={styles.formRow}><div style={styles.formGroup}><label htmlFor="productionVolume" style={styles.label}>Production Volume Capacity</label><select name="productionVolume" value={formData.productionVolume} onChange={handleInputChange} style={styles.input} required><option value="">Select volume...</option>{PRODUCTION_VOLUMES.map(v => <option key={v} value={v}>{v}</option>)}</select></div><div style={styles.formGroup}><label htmlFor="leadTimeRange" style={styles.label}>Typical Lead Time Range</label><input type="text" name="leadTimeRange" value={formData.leadTimeRange} onChange={handleInputChange} style={styles.input} required placeholder="e.g., 5-10 days" /></div></div><div style={styles.formRow}><div style={styles.formGroup}><label htmlFor="moq" style={styles.label}>Minimum Order Quantity (MOQ)</label><input type="number" name="moq" value={formData.moq} onChange={handleInputChange} style={styles.input} required min="0" /></div><div style={styles.formGroup}><label htmlFor="otherCertifications" style={styles.label}>Other Certs (comma-separated)</label><input type="text" name="otherCertifications" value={formData.otherCertifications} onChange={handleInputChange} style={styles.input} /></div></div><CheckboxGroup title="Certifications" options={CERTIFICATIONS} selected={formData.certifications || []} onChange={(v) => handleCheckboxGroupChange('certifications', v)} /><div style={styles.formGroup}><label htmlFor="qualityControlProcesses" style={styles.label}>Quality Control Processes</label><textarea name="qualityControlProcesses" value={formData.qualityControlProcesses} onChange={handleInputChange} style={styles.input} rows={3}></textarea></div><div style={styles.formGroup}><label htmlFor="materialTesting" style={styles.label}>Material Testing / Inspection Equipment</label><textarea name="materialTesting" value={formData.materialTesting} onChange={handleInputChange} style={styles.input} rows={3}></textarea></div></fieldset>
                 <fieldset style={styles.fieldset}><legend style={styles.legend}>Manufacturing Processes Supported</legend>{ALL_CAPABILITIES_GROUPS.map(group => <CheckboxGroup key={group.title} title={group.title} options={group.processes} selected={formData[group.title.toLowerCase().replace(/ & /g, 'and').replace(/ /g, '')] || []} onChange={(v) => handleCheckboxGroupChange(group.title.toLowerCase().replace(/ & /g, 'and').replace(/ /g, ''), v)} />)}</fieldset>
-                <fieldset style={styles.fieldset}><legend style={styles.legend}>Material Capabilities</legend><CheckboxGroup title="Metals" options={MATERIALS_METALS} selected={formData.supportedMaterials} onChange={(v) => handleCheckboxGroupChange('supportedMaterials', v)} /><CheckboxGroup title="Plastics" options={MATERIALS_PLASTICS} selected={formData.supportedMaterials} onChange={(v) => handleCheckboxGroupChange('supportedMaterials', v)} /><CheckboxGroup title="Composites" options={MATERIALS_COMPOSITES} selected={formData.supportedMaterials} onChange={(v) => handleCheckboxGroupChange('supportedMaterials', v)} /><CheckboxGroup title="Others" options={MATERIALS_OTHERS} selected={formData.supportedMaterials} onChange={(v) => handleCheckboxGroupChange('supportedMaterials', v)} /></fieldset>
+                <fieldset style={styles.fieldset}><legend style={styles.legend}>Material Capabilities</legend><CheckboxGroup title="Metals" options={MATERIALS_METALS} selected={formData.supportedMaterials || []} onChange={(v) => handleCheckboxGroupChange('supportedMaterials', v)} /><CheckboxGroup title="Plastics" options={MATERIALS_PLASTICS} selected={formData.supportedMaterials || []} onChange={(v) => handleCheckboxGroupChange('supportedMaterials', v)} /><CheckboxGroup title="Composites" options={MATERIALS_COMPOSITES} selected={formData.supportedMaterials || []} onChange={(v) => handleCheckboxGroupChange('supportedMaterials', v)} /><CheckboxGroup title="Others" options={MATERIALS_OTHERS} selected={formData.supportedMaterials || []} onChange={(v) => handleCheckboxGroupChange('supportedMaterials', v)} /></fieldset>
                 <div style={{ marginTop: '24px' }}><CtaButton text={loading ? "Saving..." : "Save Changes"} primary type="submit" disabled={loading} /></div>
             </form>
         </div>
