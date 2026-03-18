@@ -55,7 +55,7 @@ class ManufacturerProfileSerializer(serializers.ModelSerializer):
     # We can expose some user details if needed, e.g. email or company_name
     email = serializers.EmailField(source='user.email', read_only=True)
     # Use source for company_name to correctly retrieve it from the User model
-    company_name = serializers.CharField(source='user.company_name', required=False, allow_blank=False) 
+    company_name = serializers.CharField(source='user.company_name', read_only=True) 
     
     # Frontend aliases mapped to backend fields
     website = serializers.URLField(source='website_url', required=False, allow_blank=True)
@@ -94,15 +94,8 @@ class ManufacturerProfileSerializer(serializers.ModelSerializer):
         read_only_fields = ['user_id', 'email', 'average_rating', 'created_at', 'updated_at']
 
     def update(self, instance, validated_data):
-        # Extract company_name from initial_data (since it's not in Manufacturer model)
-        # We also check validated_data because with source='user.company_name', DRF might put it there
-        user_data = validated_data.pop('user', {})
-        company_name = user_data.get('company_name') or self.initial_data.get('companyName') or self.initial_data.get('company_name')
-        
-        # Update User model fields
-        if company_name:
-            instance.user.company_name = company_name
-            instance.user.save()
+        # company_name and user data are now read-only or handled during registration
+        validated_data.pop('user', None)
         
         # Handle capabilities - ensure it's properly stored
         if 'capabilities' in validated_data:
@@ -117,6 +110,14 @@ class ManufacturerProfileSerializer(serializers.ModelSerializer):
         
         instance.save()
         return instance
+
+    def to_representation(self, instance):
+        ret = super().to_representation(instance)
+        # Ensure company_name is explicitly added from the User model if it's missing
+        if 'company_name' not in ret or not ret['company_name']:
+            if instance.user and hasattr(instance.user, 'company_name'):
+                ret['company_name'] = instance.user.company_name
+        return ret
 
     def validate_markup_factor(self, value):
         if value <= 0:
@@ -359,6 +360,7 @@ class UserSerializer(serializers.ModelSerializer):
     role_display = serializers.CharField(source='get_role_display', read_only=True) # Renamed from 'role' to avoid clash
     role = serializers.ChoiceField(choices=UserRole.choices, write_only=True) # Kept 'role' for writing
     manufacturer_profile = ManufacturerProfileSerializer(read_only=True, required=False)
+    company_name = serializers.CharField(required=False, allow_blank=True) # Ensure it's explicitly included
 
     class Meta:
         model = User
