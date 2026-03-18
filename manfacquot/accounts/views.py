@@ -133,8 +133,8 @@ class ManufacturerProfileUpdateView(generics.RetrieveUpdateAPIView):
 
     def get_object(self):
         # Ensure the manufacturer profile exists, or create if it doesn't (should be created on registration)
-        # This also handles the case where a user might have been switched to manufacturer role later.
-        manufacturer_profile, created = Manufacturer.objects.get_or_create(user=self.request.user)
+        # Using select_related('user') to optimize and avoid multiple DB queries
+        manufacturer_profile, created = Manufacturer.objects.select_related('user').get_or_create(user=self.request.user)
         if created:
             # If created, it means it wasn't made during registration for some reason.
             # Log this or handle as an edge case. For now, just return it.
@@ -142,9 +142,8 @@ class ManufacturerProfileUpdateView(generics.RetrieveUpdateAPIView):
         return manufacturer_profile
 
     def get_queryset(self):
-        # This method is not strictly necessary for RetrieveUpdateAPIView if get_object is overridden
-        # but it's good practice to define it.
-        return Manufacturer.objects.filter(user=self.request.user)
+        # Optimize by fetching user details in the same query
+        return Manufacturer.objects.filter(user=self.request.user).select_related('user')
     
     def update(self, request, *args, **kwargs):
         """Override to add better error logging"""
