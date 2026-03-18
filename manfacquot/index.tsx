@@ -3740,6 +3740,7 @@ const App = () => {
     const [pageParams, setPageParams] = useState(null);
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [user, setUser] = useState(null);
+    const [authLoading, setAuthLoading] = useState(true);
     const [loginReasonMessage, setLoginReasonMessage] = useState('');
     const [pendingUploadData, setPendingUploadData] = useState(null);
     const [fileViewerState, setFileViewerState] = useState({ isOpen: false, design: null });
@@ -3752,6 +3753,12 @@ const App = () => {
                     const user = await api.getMe();
                     setUser(user);
                     setIsAuthenticated(true);
+                    
+                    // If user is authenticated and on landing/login, redirect to dashboard
+                    const path = window.location.pathname;
+                    if (path === '/' || path === '/login' || path === '/landing') {
+                        setPage('dashboard');
+                    }
                 } catch (error) {
                     console.error("Auth check failed", error);
                     clearTokens();
@@ -3759,6 +3766,7 @@ const App = () => {
                     setUser(null);
                 }
             }
+            setAuthLoading(false);
         };
         checkAuth();
     }, []);
@@ -3903,6 +3911,14 @@ const App = () => {
             default: return <LandingPageContent onNavigate={handleNavigate} />;
         }
     };
+
+    if (authLoading) {
+        return (
+            <div style={{ backgroundColor: bg_deep_space, height: '100vh', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                <div style={{ color: neon_cyan, fontSize: '18px', fontWeight: 500 }}>Initializing application...</div>
+            </div>
+        );
+    }
 
     return (
         <div style={{ backgroundColor: bg_deep_space }}>
