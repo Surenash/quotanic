@@ -54,8 +54,8 @@ class ManufacturerProfileSerializer(serializers.ModelSerializer):
     # user_id is the PK of Manufacturer model, which is user.id
     # We can expose some user details if needed, e.g. email or company_name
     email = serializers.EmailField(source='user.email', read_only=True)
-    # Don't use source for company_name since we need to handle it manually in update()
-    company_name = serializers.CharField(required=False, allow_blank=False) 
+    # Use source for company_name to correctly retrieve it from the User model
+    company_name = serializers.CharField(source='user.company_name', required=False, allow_blank=False) 
     
     # Frontend aliases mapped to backend fields
     website = serializers.URLField(source='website_url', required=False, allow_blank=True)
@@ -95,15 +95,14 @@ class ManufacturerProfileSerializer(serializers.ModelSerializer):
 
     def update(self, instance, validated_data):
         # Extract company_name from initial_data (since it's not in Manufacturer model)
-        company_name = self.initial_data.get('companyName') or self.initial_data.get('company_name')
+        # We also check validated_data because with source='user.company_name', DRF might put it there
+        user_data = validated_data.pop('user', {})
+        company_name = user_data.get('company_name') or self.initial_data.get('companyName') or self.initial_data.get('company_name')
         
         # Update User model fields
         if company_name:
             instance.user.company_name = company_name
             instance.user.save()
-        
-        # Remove company_name from validated_data if it's there (it shouldn't be in Manufacturer model)
-        validated_data.pop('company_name', None)
         
         # Handle capabilities - ensure it's properly stored
         if 'capabilities' in validated_data:

@@ -9,6 +9,27 @@ class ManufacturerSmartMatcher:
     Intelligent engine to match Design Requirements to Manufacturer Capabilities.
     Calculates a 'Suitability Score' (0-100) and filters ineligible partners.
     """
+    
+    # Map FBM internal enum values to the UI labels stored in Manufacturer Capabilities
+    PROCESS_MAP = {
+        "milling_3_axis": ["CNC Milling (3-axis)"],
+        "milling_4_axis": ["CNC Milling (4-axis)", "CNC Milling (5-axis)"], # 5-axis can definitely do 4-axis
+        "milling_5_axis": ["CNC Milling (5-axis)"],
+        "turning_standard": ["CNC Turning (Lathe)", "CNC Lathe with Live Tooling"],
+        "turning_live_tooling": ["CNC Lathe with Live Tooling", "Swiss Machining"],
+        "swiss_turning": ["Swiss Machining"],
+        "edm_wire": ["Wire EDM"],
+        "edm_sinker": ["EDM (Electrical Discharge Machining)"],
+        "grinding_surface": ["Grinding (Surface, Cylindrical)"],
+        "grinding_cylindrical": ["Grinding (Surface, Cylindrical)"],
+        "broaching": ["Broaching"],
+        "gear_hobbing": ["Gear Hobbing"],
+        "sheet_laser_cut": ["Laser Cutting"],
+        "sheet_waterjet": ["Waterjet Cutting"],
+        "sheet_punch": ["Punching / Blanking"],
+        "sheet_bend_brake": ["Bending / Forming (Press Brake)"],
+        "stamping": ["Stamping"],
+    }
 
     def calculate_match_score(self, design, requirements, manufacturer) -> float:
         """
@@ -39,13 +60,16 @@ class ManufacturerSmartMatcher:
         required_process_str = required_process.value if hasattr(required_process, 'value') else str(required_process)
         
         # Check Primary
-        if required_process and required_process_str not in mf_processes:
+        mapped_labels = self.PROCESS_MAP.get(required_process_str, [required_process_str])
+        
+        if required_process and not any(label in mf_processes for label in mapped_labels):
             # Check alternatives
             alternatives = requirements.get('alternative_processes', [])
             found_alt = False
             for alt in alternatives:
                 alt_str = alt.value if hasattr(alt, 'value') else str(alt)
-                if alt_str in mf_processes:
+                alt_mapped = self.PROCESS_MAP.get(alt_str, [alt_str])
+                if any(al in mf_processes for al in alt_mapped):
                     found_alt = True
                     score -= 15 # Penalty for using alternative process
                     break
