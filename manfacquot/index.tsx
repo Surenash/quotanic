@@ -1642,7 +1642,7 @@ const DashboardOverview = ({ user }) => {
     );
 };
 
-const ManufacturerProfileManagementPage = () => {
+const ManufacturerProfileManagementPage = ({ user: initialUser }: { user?: any }) => {
     const [formData, setFormData] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
@@ -1657,7 +1657,7 @@ const ManufacturerProfileManagementPage = () => {
                     const caps = profile.capabilities || {};
                     const normalizedData = {
                         ...profile,
-                        companyName: profile.company_name || '',
+                        companyName: profile.company_name || profile.companyName || initialUser?.company_name || '',
                         email: profile.email || '',
                         location: profile.location || '',
                         website: profile.website_url || '',
@@ -1821,7 +1821,7 @@ const ManufacturerProfileManagementPage = () => {
                 const caps = updatedProfile.capabilities || {};
                 const normalizedData = {
                     ...updatedProfile,
-                    companyName: updatedProfile.company_name || '',
+                    companyName: updatedProfile.company_name || updatedProfile.companyName || initialUser?.company_name || '',
                     email: updatedProfile.email || '',
                     location: updatedProfile.location || '',
                     website: updatedProfile.website_url || '',
@@ -2513,7 +2513,7 @@ const ManufacturerDashboard = ({ user, onViewFiles }) => {
     const renderActiveView = () => {
         switch (activeView) {
             case 'settings': return <ManufacturerSettingsPage />;
-            case 'profile': return <ManufacturerProfileManagementPage />;
+            case 'profile': return <ManufacturerProfileManagementPage user={user} />;
             case 'quotes': return <QuoteRequestsPage onViewFiles={onViewFiles} />;
             case 'orders': return <ActiveOrdersPage onViewFiles={onViewFiles} />;
             case 'overview':
