@@ -13,6 +13,7 @@ import {
 } from '../utils/constants';
 import CtaButton from './CtaButton';
 import Notification from './Notification';
+import { useCurrency } from '../utils/currency';
 
 const ManufacturerSettingsPage = () => {
     const [activeTab, setActiveTab] = useState('material-selection');
@@ -21,6 +22,8 @@ const ManufacturerSettingsPage = () => {
     const [saving, setSaving] = useState(false);
     const [notification, setNotification] = useState({ show: false, message: '', type: 'success' as 'success' | 'error' });
     const [rateUnit, setRateUnit] = useState<'min' | 'hour'>('min');
+    const { formatPrice, currency, rates } = useCurrency();
+    const rate = rates[currency] || 1;
 
     const DEFAULT_QC = {
         "Standard Dimensional Inspection": 0,
@@ -286,7 +289,7 @@ const ManufacturerSettingsPage = () => {
                                                     <input type="text" value={props.density_g_cm3 ?? ''} onChange={(e) => handleSmartInput(['pricing_factors', 'material_properties', material, 'density_g_cm3'], e)} onKeyDown={(e) => handleSmartInput(['pricing_factors', 'material_properties', material, 'density_g_cm3'], e)} style={{ ...styles.input, width: '100%', padding: '8px' }} />
                                                 </div>
                                                 <div>
-                                                    <label style={{ fontSize: '11px', color: 'var(--text-secondary)', display: 'block', marginBottom: '4px' }}>Cost (USD/kg)</label>
+                                                    <label style={{ fontSize: '11px', color: 'var(--text-secondary)', display: 'block', marginBottom: '4px' }}>Cost ({currency}/kg)</label>
                                                     <input type="text" value={props.cost_usd_kg ?? ''} onChange={(e) => handleSmartInput(['pricing_factors', 'material_properties', material, 'cost_usd_kg'], e)} onKeyDown={(e) => handleSmartInput(['pricing_factors', 'material_properties', material, 'cost_usd_kg'], e)} style={{ ...styles.input, width: '100%', padding: '8px' }} />
                                                 </div>
                                                 <div style={{ gridColumn: 'span 2' }}>
@@ -349,8 +352,8 @@ const ManufacturerSettingsPage = () => {
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
                                 <h3 style={{ color: 'var(--neon-cyan)', margin: 0 }}>Machine Rates</h3>
                                 <div style={{ display: 'flex', background: 'rgba(255,255,255,0.05)', borderRadius: '8px', padding: '4px' }}>
-                                    <button onClick={() => setRateUnit('min')} style={{ padding: '6px 12px', border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold', background: rateUnit === 'min' ? 'var(--neon-cyan)' : 'transparent', color: rateUnit === 'min' ? 'black' : '#CBD5E1' }}>USD/Min</button>
-                                    <button onClick={() => setRateUnit('hour')} style={{ padding: '6px 12px', border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold', background: rateUnit === 'hour' ? 'var(--neon-cyan)' : 'transparent', color: rateUnit === 'hour' ? 'black' : '#CBD5E1' }}>USD/Hour</button>
+                                    <button onClick={() => setRateUnit('min')} style={{ padding: '6px 12px', border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold', background: rateUnit === 'min' ? 'var(--neon-cyan)' : 'transparent', color: rateUnit === 'min' ? 'black' : '#CBD5E1' }}>{currency}/Min</button>
+                                    <button onClick={() => setRateUnit('hour')} style={{ padding: '6px 12px', border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold', background: rateUnit === 'hour' ? 'var(--neon-cyan)' : 'transparent', color: rateUnit === 'hour' ? 'black' : '#CBD5E1' }}>{currency}/Hour</button>
                                 </div>
                             </div>
                             <div style={{ display: 'grid', gap: '12px' }}>
@@ -362,7 +365,7 @@ const ManufacturerSettingsPage = () => {
                                             <span style={{ color: '#CBD5E1', fontSize: '14px' }}>{machine}</span>
                                             <input type="text" value={displayValue ?? ''} onChange={(e) => handleSmartInput(['pricing_factors', 'machining', 'rates', machine], e, false, true)} onKeyDown={(e) => handleSmartInput(['pricing_factors', 'machining', 'rates', machine], e, false, true)} style={{ ...styles.input, width: '100%', padding: '6px' }} />
                                             <div style={{ color: 'var(--neon-cyan)', fontSize: '12px', fontWeight: 'bold' }}>
-                                                {rateUnit === 'hour' ? `≈ $${(parseFloat(displayValue || "0") / 60).toFixed(3)}/min` : `≈ $${(parseFloat(displayValue || "0") * 60).toFixed(2)}/hr`}
+                                                {rateUnit === 'hour' ? `≈ ${formatPrice((parseFloat(displayValue || "0") / 60))}/min` : `≈ ${formatPrice((parseFloat(displayValue || "0") * 60))}/hr`}
                                             </div>
                                         </div>
                                     );
@@ -372,7 +375,7 @@ const ManufacturerSettingsPage = () => {
                                 <div>
                                     <h4 style={{ color: '#E2E8F0', marginBottom: '12px', fontSize: '14px' }}>Labor</h4>
                                     <div style={{ display: 'grid', gap: '12px' }}>
-                                        <label style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>Skilled Rate (USD/hr)</label>
+                                        <label style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>Skilled Rate ({currency}/hr)</label>
                                         <input type="text" value={pf.labor?.skilled_rate_hourly ?? ''} onChange={(e) => handleSmartInput(['pricing_factors', 'labor', 'skilled_rate_hourly'], e)} onKeyDown={(e) => handleSmartInput(['pricing_factors', 'labor', 'skilled_rate_hourly'], e)} style={{ ...styles.input, width: '100%' }} />
                                         <label style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>Efficiency (0.1 - 1.0)</label>
                                         <input type="text" value={pf.labor?.efficiency_factor ?? ''} onChange={(e) => handleSmartInput(['pricing_factors', 'labor', 'efficiency_factor'], e)} onKeyDown={(e) => handleSmartInput(['pricing_factors', 'labor', 'efficiency_factor'], e)} style={{ ...styles.input, width: '100%' }} />
@@ -436,11 +439,11 @@ const ManufacturerSettingsPage = () => {
                                             <h4 style={{ margin: '0 0 12px 0', color: '#E2E8F0', fontSize: '15px' }}>{op}</h4>
                                             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                                                 <div>
-                                                    <label style={{ fontSize: '11px', color: 'var(--text-secondary)', display: 'block', marginBottom: '4px' }}>Min Lot (USD)</label>
+                                                    <label style={{ fontSize: '11px', color: 'var(--text-secondary)', display: 'block', marginBottom: '4px' }}>Min Lot ({currency})</label>
                                                     <input type="text" value={props.min_lot_usd ?? ''} onChange={(e) => handleSmartInput(['pricing_factors', 'finishing', op, 'min_lot_usd'], e)} onKeyDown={(e) => handleSmartInput(['pricing_factors', 'finishing', op, 'min_lot_usd'], e)} style={{ ...styles.input, width: '100%' }} />
                                                 </div>
                                                 <div>
-                                                    <label style={{ fontSize: '11px', color: 'var(--text-secondary)', display: 'block', marginBottom: '4px' }}>USD / sq cm</label>
+                                                    <label style={{ fontSize: '11px', color: 'var(--text-secondary)', display: 'block', marginBottom: '4px' }}>{currency} / sq cm</label>
                                                     <input type="text" value={props.cost_sq_cm ?? ''} onChange={(e) => handleSmartInput(['pricing_factors', 'finishing', op, 'cost_sq_cm'], e)} onKeyDown={(e) => handleSmartInput(['pricing_factors', 'finishing', op, 'cost_sq_cm'], e)} style={{ ...styles.input, width: '100%' }} />
                                                 </div>
                                             </div>
@@ -491,10 +494,10 @@ const ManufacturerSettingsPage = () => {
                             </div>
                             <div style={{ display: 'grid', gap: '20px', maxWidth: '600px' }}>
                                 <div>
-                                    <label style={{ fontSize: '14px', color: '#CBD5E1', display: 'block', marginBottom: '8px' }}>Eng. Review (USD)</label>
+                                    <label style={{ fontSize: '14px', color: '#CBD5E1', display: 'block', marginBottom: '8px' }}>Eng. Review ({currency})</label>
                                     <input type="text" value={pf.engineering?.review_fee_usd ?? ''} onChange={(e) => handleSmartInput(['pricing_factors', 'engineering', 'review_fee_usd'], e)} onKeyDown={(e) => handleSmartInput(['pricing_factors', 'engineering', 'review_fee_usd'], e)} style={{ ...styles.input, width: '100%' }} />
                                 </div>
-                                <h4 style={{ color: '#E2E8F0', marginTop: '12px' }}>Inspection Fees (USD)</h4>
+                                <h4 style={{ color: '#E2E8F0', marginTop: '12px' }}>Inspection Fees ({currency})</h4>
                                 {Object.entries(pf.qc?.inspection_costs || {}).map(([type, cost]: [string, any]) => (
                                     <div key={type} style={{ display: 'grid', gridTemplateColumns: '1fr 120px', gap: '12px', alignItems: 'center', padding: '12px', background: 'rgba(255,255,255,0.02)', borderRadius: '8px' }}>
                                         <span style={{ color: 'var(--text-secondary)', fontSize: '12px' }}>{type}</span>
@@ -520,26 +523,26 @@ const ManufacturerSettingsPage = () => {
                             </div>
                             <div style={{ display: 'grid', gap: '20px', maxWidth: '600px' }}>
                                 <div>
-                                    <label style={{ fontSize: '14px', color: '#CBD5E1', display: 'block', marginBottom: '8px' }}>Std. Packaging (USD/unit)</label>
+                                    <label style={{ fontSize: '14px', color: '#CBD5E1', display: 'block', marginBottom: '8px' }}>Std. Packaging ({currency}/unit)</label>
                                     <input type="text" value={pf.packaging?.standard_cost_unit ?? ''} onChange={(e) => handleSmartInput(['pricing_factors', 'packaging', 'standard_cost_unit'], e)} onKeyDown={(e) => handleSmartInput(['pricing_factors', 'packaging', 'standard_cost_unit'], e)} style={{ ...styles.input, width: '100%' }} />
                                 </div>
                                 <div>
-                                    <label style={{ fontSize: '14px', color: '#CBD5E1', display: 'block', marginBottom: '8px' }}>Custom Packaging (USD/unit)</label>
+                                    <label style={{ fontSize: '14px', color: '#CBD5E1', display: 'block', marginBottom: '8px' }}>Custom Packaging ({currency}/unit)</label>
                                     <input type="text" value={pf.packaging?.custom_cost_unit ?? ''} onChange={(e) => handleSmartInput(['pricing_factors', 'packaging', 'custom_cost_unit'], e)} onKeyDown={(e) => handleSmartInput(['pricing_factors', 'packaging', 'custom_cost_unit'], e)} style={{ ...styles.input, width: '100%' }} />
                                 </div>
                                 {Object.entries(pf.packaging?.custom_sections || {}).map(([name, value]: [string, any]) => (
                                     <div key={name}>
                                         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
-                                            <label style={{ fontSize: '14px', color: 'var(--neon-cyan)' }}>{name} (USD)</label>
+                                            <label style={{ fontSize: '14px', color: 'var(--neon-cyan)' }}>{name} ({currency})</label>
                                             <button onClick={() => deleteSetting(['pricing_factors', 'packaging', 'custom_sections', name])} style={{ color: '#EF4444', background: 'transparent', border: 'none', cursor: 'pointer' }}><Trash2 size={12} /></button>
                                         </div>
                                         <input type="text" value={value ?? ''} onChange={(e) => handleSmartInput(['pricing_factors', 'packaging', 'custom_sections', name], e)} onKeyDown={(e) => handleSmartInput(['pricing_factors', 'packaging', 'custom_sections', name], e)} style={{ ...styles.input, width: '100%' }} />
                                     </div>
                                 ))}
                                 <div style={{ borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '20px' }}>
-                                    <label style={{ fontSize: '14px', color: '#CBD5E1', display: 'block', marginBottom: '8px' }}>Base Logistics (USD)</label>
+                                    <label style={{ fontSize: '14px', color: '#CBD5E1', display: 'block', marginBottom: '8px' }}>Base Logistics ({currency})</label>
                                     <input type="text" value={pf.logistics?.base_fee_usd ?? ''} onChange={(e) => handleSmartInput(['pricing_factors', 'logistics', 'base_fee_usd'], e)} onKeyDown={(e) => handleSmartInput(['pricing_factors', 'logistics', 'base_fee_usd'], e)} style={{ ...styles.input, width: '100%' }} />
-                                    <label style={{ fontSize: '14px', color: '#CBD5E1', display: 'block', marginBottom: '8px', marginTop: '16px' }}>Cost per kg (USD)</label>
+                                    <label style={{ fontSize: '14px', color: '#CBD5E1', display: 'block', marginBottom: '8px', marginTop: '16px' }}>Cost per kg ({currency})</label>
                                     <input type="text" value={pf.logistics?.cost_per_kg ?? ''} onChange={(e) => handleSmartInput(['pricing_factors', 'logistics', 'cost_per_kg'], e)} onKeyDown={(e) => handleSmartInput(['pricing_factors', 'logistics', 'cost_per_kg'], e)} style={{ ...styles.input, width: '100%' }} />
                                 </div>
                             </div>
