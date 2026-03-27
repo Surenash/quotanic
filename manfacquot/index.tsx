@@ -3899,6 +3899,60 @@ const App = () => {
     const [pendingUploadData, setPendingUploadData] = useState(null);
     const [fileViewerState, setFileViewerState] = useState({ isOpen: false, design: null });
 
+    // --- Routing Logic ---
+    const getPageFromPath = (path: string) => {
+        if (path === '/' || path === '/landing') return 'landing';
+        if (path === '/directory') return 'directory';
+        if (path === '/signup') return 'signup';
+        if (path === '/signup/customer') return 'signup-customer';
+        if (path === '/signup/manufacturer') return 'signup-manufacturer';
+        if (path === '/login') return 'login';
+        if (path === '/login/customer') return 'login-customer';
+        if (path === '/login/manufacturer') return 'login-manufacturer';
+        if (path === '/dashboard') return 'dashboard';
+        if (path === '/how-it-works') return 'how-it-works-detailed';
+        if (path === '/trust-and-security') return 'trust-and-security';
+        if (path === '/about') return 'about';
+        if (path === '/contact') return 'contact';
+        if (path === '/faq') return 'faq';
+        if (path === '/privacy') return 'privacy';
+        if (path === '/terms') return 'terms';
+        if (path === '/upload') return 'upload';
+        if (path.startsWith('/manufacturer/')) return 'manufacturer-profile';
+        return 'landing';
+    };
+
+    const getParamsFromPath = (path: string) => {
+        if (path.startsWith('/manufacturer/')) {
+            return path.split('/manufacturer/')[1];
+        }
+        return null;
+    };
+
+    const getPathFromPage = (page: string, params: any) => {
+        switch (page) {
+            case 'landing': return '/';
+            case 'directory': return '/directory';
+            case 'signup': return '/signup';
+            case 'signup-customer': return '/signup/customer';
+            case 'signup-manufacturer': return '/signup/manufacturer';
+            case 'login': return '/login';
+            case 'login-customer': return '/login/customer';
+            case 'login-manufacturer': return '/login/manufacturer';
+            case 'dashboard': return '/dashboard';
+            case 'how-it-works-detailed': return '/how-it-works';
+            case 'trust-and-security': return '/trust-and-security';
+            case 'about': return '/about';
+            case 'contact': return '/contact';
+            case 'faq': return '/faq';
+            case 'privacy': return '/privacy';
+            case 'terms': return '/terms';
+            case 'upload': return '/upload';
+            case 'manufacturer-profile': return `/manufacturer/${params}`;
+            default: return '/';
+        }
+    };
+
     useEffect(() => {
         const checkAuth = async () => {
             const { access } = getTokens();
@@ -3911,7 +3965,7 @@ const App = () => {
                     // If user is authenticated and on landing/login, redirect to dashboard
                     const path = window.location.pathname;
                     if (path === '/' || path === '/login' || path === '/landing') {
-                        setPage('dashboard');
+                        handleNavigate('dashboard');
                     }
                 } catch (error) {
                     console.error("Auth check failed", error);
@@ -3925,21 +3979,29 @@ const App = () => {
         checkAuth();
     }, []);
 
-    // Handle initial routing based on URL path
+    // Handle initial routing and back/forward buttons
     useEffect(() => {
-        const path = window.location.pathname;
-        if (path === '/directory') {
-            setPage('directory');
-        } else if (path === '/signup') {
-            setPage('signup');
-        } else if (path === '/login') {
-            setPage('login');
-        } else if (path === '/dashboard') {
-            setPage('dashboard');
-        }
+        const handlePopState = () => {
+            const path = window.location.pathname;
+            setPage(getPageFromPath(path));
+            setPageParams(getParamsFromPath(path));
+        };
+
+        window.addEventListener('popstate', handlePopState);
+        
+        // Set initial page based on URL
+        const initialPath = window.location.pathname;
+        setPage(getPageFromPath(initialPath));
+        setPageParams(getParamsFromPath(initialPath));
+
+        return () => window.removeEventListener('popstate', handlePopState);
     }, []);
 
     const handleNavigate = (newPage, params = null) => {
+        const path = getPathFromPage(newPage, params);
+        if (window.location.pathname !== path) {
+            window.history.pushState({ page: newPage, params }, '', path);
+        }
         setPage(newPage);
         setPageParams(params);
         window.scrollTo(0, 0);
