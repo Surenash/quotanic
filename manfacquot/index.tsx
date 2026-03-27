@@ -18,6 +18,8 @@ import {
     Search as LucideSearch,
     MapPin as LucideMapPin,
     Star as LucideStar,
+    Download as LucideDownload,
+    Eye as LucideEye,
     Building as LucideBuilding,
     X as LucideX,
     UserCircle2 as LucideUserCircle,
@@ -43,6 +45,8 @@ import CtaButton from './components/CtaButton';
 import Notification from './components/Notification';
 import CheckboxGroup from './components/CheckboxGroup';
 import ManufacturerSettingsPage from './components/ManufacturerSettings';
+import Viewer from './components/Viewer';
+import { ViewPreset } from './types/types';
 
 import './index.css';
 
@@ -115,9 +119,18 @@ const WrenchScrewdriverIcon = ({ style }: { style?: React.CSSProperties }) => (
     <LucideWrench style={{ width: '32px', height: '32px', ...style }} />
 );
 
-const TwitterIcon = ({ style }: { style?: React.CSSProperties }) => (
-    <LucideTwitter style={{ width: '24px', height: '24px', ...style }} />
+const VideoCameraIcon = ({ style }: { style?: React.CSSProperties }) => (
+    <LucideVideo style={{ width: '24px', height: '24px', ...style }} />
 );
+
+const DownloadIcon = ({ style }: { style?: React.CSSProperties }) => (
+    <LucideDownload style={{ width: '24px', height: '24px', ...style }} />
+);
+
+const EyeIcon = ({ style }: { style?: React.CSSProperties }) => (
+    <LucideEye style={{ width: '24px', height: '24px', ...style }} />
+);
+
 
 const GithubIcon = ({ style }: { style?: React.CSSProperties }) => (
     <LucideGithub style={{ width: '24px', height: '24px', ...style }} />
@@ -184,49 +197,183 @@ const iconStyle = { width: '48px', height: '48px', color: 'currentColor', margin
 
 
 const FileViewerModal = ({ design, onClose }) => {
-    if (!design || !design.files) return null;
+    const [view, setView] = useState(ViewPreset.ISO);
+    const [isViewLocked, setIsViewLocked] = useState(true);
+    const [activeTab, setActiveTab] = useState('viewer'); // 'viewer' or 'details'
 
-    const { primary, supporting } = design.files;
+    if (!design) return null;
+
+    const fileExtension = design.s3_file_key?.split('.').pop()?.toLowerCase() || 'stl';
+    const isSupported = ['stl', 'obj', 'gltf', 'glb', 'step', 'stp', 'iges', 'igs'].includes(fileExtension);
 
     return (
         <div style={styles.modalBackdrop}>
-            <div style={{ ...styles.modalContent, maxWidth: '700px' }}>
-                <div style={styles.modalHeader}>
-                    <h3 style={styles.modalTitle}>Files for: {design.name}</h3>
-                    <button onClick={onClose} style={styles.modalCloseButton}><XMarkIcon style={{ width: '24px', height: '24px' }} /></button>
-                </div>
-                <div style={styles.modalBody}>
-                    <div style={{ marginBottom: '24px' }}>
-                        <h4 style={styles.subLegend}>Primary CAD File</h4>
-                        <div style={styles.fileListItem}>
-                            <CubeIcon style={{ width: '24px', height: '24px', color: 'var(--neon-cyan)', flexShrink: 0 }} />
-                            <div style={styles.fileInfo}>
-                                <span style={styles.fileName}>{primary.name}</span>
-                                <span style={styles.fileSize}>{primary.size}</span>
-                            </div>
-                            <CtaButton text="Download" onClick={() => console.log('Downloading', primary.name)} />
+            <div style={{ ...styles.modalContent, maxWidth: '1000px', width: '95vw', height: '90vh', display: 'flex', flexDirection: 'column', padding: 0, overflow: 'hidden' }}>
+                <div style={{ ...styles.modalHeader, padding: '16px 24px', borderBottom: `1px solid ${border_color}` }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                        <div style={{ padding: '8px', borderRadius: '8px', background: 'rgba(10, 240, 240, 0.1)', color: neon_cyan }}>
+                            <CubeIcon style={{ width: '20px', height: '20px' }} />
+                        </div>
+                        <div>
+                            <h3 style={{ ...styles.modalTitle, margin: 0 }}>{design.design_name}</h3>
+                            <p style={{ fontSize: '12px', color: text_secondary, margin: 0 }}>{fileExtension.toUpperCase()} • {design.material} • Qty: {design.quantity}</p>
                         </div>
                     </div>
-                    {supporting && supporting.length > 0 && (
-                        <div>
-                            <h4 style={styles.subLegend}>Supporting Documents</h4>
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                                {supporting.map((file, index) => (
-                                    <div key={index} style={styles.fileListItem}>
-                                        <DocumentTextIcon style={{ width: '24px', height: '24px', color: 'var(--text-primary)', flexShrink: 0 }} />
-                                        <div style={styles.fileInfo}>
-                                            <span style={styles.fileName}>{file.name}</span>
-                                            <span style={styles.fileSize}>{file.size}</span>
-                                        </div>
-                                        <CtaButton text="Download" onClick={() => console.log('Downloading', file.name)} />
+                    <div style={{ display: 'flex', gap: '8px' }}>
+                        <button 
+                            onClick={() => setActiveTab('viewer')} 
+                            style={{ 
+                                padding: '8px 16px', 
+                                borderRadius: '6px', 
+                                border: 'none', 
+                                background: activeTab === 'viewer' ? 'rgba(10, 240, 240, 0.1)' : 'transparent',
+                                color: activeTab === 'viewer' ? neon_cyan : text_secondary,
+                                cursor: 'pointer',
+                                fontWeight: 600,
+                                transition: 'all 0.2s'
+                            }}
+                        >
+                            3D Viewer
+                        </button>
+                        <button 
+                            onClick={() => setActiveTab('details')} 
+                            style={{ 
+                                padding: '8px 16px', 
+                                borderRadius: '6px', 
+                                border: 'none', 
+                                background: activeTab === 'details' ? 'rgba(10, 240, 240, 0.1)' : 'transparent',
+                                color: activeTab === 'details' ? neon_cyan : text_secondary,
+                                cursor: 'pointer',
+                                fontWeight: 600,
+                                transition: 'all 0.2s'
+                            }}
+                        >
+                            Details
+                        </button>
+                        <div style={{ width: '1px', background: border_color, margin: '0 8px' }} />
+                        <button onClick={onClose} style={styles.modalCloseButton}><LucideX style={{ width: '24px', height: '24px' }} /></button>
+                    </div>
+                </div>
+
+                <div style={{ flex: 1, display: 'flex', overflow: 'hidden', position: 'relative' }}>
+                    {activeTab === 'viewer' ? (
+                        <>
+                            <div style={{ flex: 1, background: '#0a0a0f', position: 'relative' }}>
+                                {isSupported ? (
+                                    <Viewer 
+                                        modelUrl={design.view_url} 
+                                        fileExtension={(['step', 'stp', 'iges', 'igs'].includes(fileExtension) ? 'glb' : fileExtension) as any} 
+                                        view={view}
+                                        isViewLocked={isViewLocked}
+                                        onUserInteraction={() => setIsViewLocked(false)}
+                                    />
+                                ) : (
+                                    <div style={{ height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: text_secondary, gap: '16px' }}>
+                                        <LucideFile style={{ width: '64px', height: '64px', opacity: 0.5 }} />
+                                        <p>3D Preview not available for .{fileExtension} files</p>
+                                        <CtaButton text="Download to View" onClick={() => window.open(design.view_url, '_blank')} />
                                     </div>
-                                ))}
+                                )}
+
+                                {/* Viewer Controls Overlay */}
+                                {isSupported && (
+                                    <div style={{ position: 'absolute', bottom: '24px', left: '50%', transform: 'translateX(-50%)', display: 'flex', gap: '8px', background: 'rgba(15, 23, 42, 0.8)', padding: '6px', borderRadius: '12px', border: `1px solid ${border_color}`, backdropFilter: 'blur(8px)', zIndex: 10 }}>
+                                        {[
+                                            { id: ViewPreset.ISO, label: 'ISO' },
+                                            { id: ViewPreset.TOP, label: 'Top' },
+                                            { id: ViewPreset.FRONT, label: 'Front' },
+                                            { id: ViewPreset.RIGHT, label: 'Right' },
+                                            { id: ViewPreset.LEFT, label: 'Left' },
+                                        ].map(preset => (
+                                            <button
+                                                key={preset.id}
+                                                onClick={() => { setView(preset.id); setIsViewLocked(true); }}
+                                                style={{
+                                                    padding: '6px 12px',
+                                                    borderRadius: '8px',
+                                                    border: 'none',
+                                                    background: view === preset.id && isViewLocked ? neon_cyan : 'transparent',
+                                                    color: view === preset.id && isViewLocked ? '#000' : '#fff',
+                                                    fontSize: '12px',
+                                                    fontWeight: 700,
+                                                    cursor: 'pointer',
+                                                    transition: 'all 0.2s'
+                                                }}
+                                            >
+                                                {preset.label}
+                                            </button>
+                                        ))}
+                                    </div>
+                                )}
+                                
+                                {/* Info Badge */}
+                                <div style={{ position: 'absolute', top: '24px', left: '24px', background: 'rgba(15, 23, 42, 0.6)', padding: '8px 16px', borderRadius: '20px', border: `1px solid ${border_color}`, backdropFilter: 'blur(4px)', pointerEvents: 'none' }}>
+                                    <span style={{ fontSize: '12px', fontWeight: 600, color: neon_cyan, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                        <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: neon_cyan, boxShadow: `0 0 8px ${neon_cyan}` }} />
+                                        LIVE 3D INSPECTION
+                                    </span>
+                                </div>
+                            </div>
+                        </>
+                    ) : (
+                        <div style={{ flex: 1, padding: '32px', overflowY: 'auto', background: 'var(--bg-panel)' }}>
+                            <div style={{ maxWidth: '800px', margin: '0 auto' }}>
+                                <h4 style={{ ...styles.subLegend, marginTop: 0 }}>Design Specifications</h4>
+                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '24px', marginBottom: '40px' }}>
+                                    <div><p style={{ fontSize: '13px', color: text_secondary, margin: '0 0 4px 0' }}>Material</p><p style={{ fontWeight: 600, margin: 0 }}>{design.material}</p></div>
+                                    <div><p style={{ fontSize: '13px', color: text_secondary, margin: '0 0 4px 0' }}>Quantity</p><p style={{ fontWeight: 600, margin: 0 }}>{design.quantity} pcs</p></div>
+                                    <div><p style={{ fontSize: '13px', color: text_secondary, margin: '0 0 4px 0' }}>Process</p><p style={{ fontWeight: 600, margin: 0 }}>{design.manufacturing_process || 'CNC Machining'}</p></div>
+                                    <div><p style={{ fontSize: '13px', color: text_secondary, margin: '0 0 4px 0' }}>Finish</p><p style={{ fontWeight: 600, margin: 0 }}>{design.surface_finish}</p></div>
+                                </div>
+
+                                <h4 style={styles.subLegend}>Geometric Analysis</h4>
+                                {design.geometric_data ? (
+                                    <div style={{ background: 'rgba(255,255,255,0.03)', borderRadius: '12px', border: `1px solid ${border_color}`, padding: '24px' }}>
+                                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '24px' }}>
+                                            <div>
+                                                <p style={{ fontSize: '13px', color: text_secondary, margin: '0 0 4px 0' }}>Volume</p>
+                                                <p style={{ fontWeight: 700, fontSize: '18px', color: neon_magenta, margin: 0 }}>{design.geometric_data.volume_cm3} <span style={{ fontSize: '12px', fontWeight: 400 }}>cm³</span></p>
+                                            </div>
+                                            <div>
+                                                <p style={{ fontSize: '13px', color: text_secondary, margin: '0 0 4px 0' }}>Surface Area</p>
+                                                <p style={{ fontWeight: 700, fontSize: '18px', color: neon_cyan, margin: 0 }}>{design.geometric_data.surface_area_cm2} <span style={{ fontSize: '12px', fontWeight: 400 }}>cm²</span></p>
+                                            </div>
+                                            <div>
+                                                <p style={{ fontSize: '13px', color: text_secondary, margin: '0 0 4px 0' }}>Complexity</p>
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                                    <div style={{ flex: 1, height: '6px', background: 'rgba(255,255,255,0.1)', borderRadius: '3px', overflow: 'hidden' }}>
+                                                        <div style={{ width: `${design.geometric_data.complexity_score * 100}%`, height: '100%', background: neon_orange }} />
+                                                    </div>
+                                                    <span style={{ fontWeight: 700, color: neon_orange }}>{(design.geometric_data.complexity_score * 10).toFixed(1)}</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        {design.geometric_data.bbox_mm && (
+                                            <div style={{ marginTop: '24px', paddingTop: '24px', borderTop: `1px solid ${border_color}` }}>
+                                                <p style={{ fontSize: '13px', color: text_secondary, margin: '0 0 8px 0' }}>Bounding Box (L x W x H)</p>
+                                                <p style={{ fontWeight: 600, fontSize: '16px', margin: 0, fontFamily: 'monospace' }}>
+                                                    {design.geometric_data.bbox_mm[0]} x {design.geometric_data.bbox_mm[1]} x {design.geometric_data.bbox_mm[2]} mm
+                                                </p>
+                                            </div>
+                                        )}
+                                    </div>
+                                ) : (
+                                    <div style={{ padding: '40px', textAlign: 'center', color: text_secondary, background: 'rgba(255,255,255,0.02)', borderRadius: '12px', border: `1px dashed ${border_color}` }}>
+                                        Analysis data will appear once processing is complete.
+                                    </div>
+                                )}
                             </div>
                         </div>
                     )}
-                    <div style={styles.modalFooter}>
-                        <CtaButton text="Close" primary onClick={onClose} />
+                </div>
+
+                <div style={{ ...styles.modalFooter, padding: '16px 24px', background: 'rgba(15, 23, 42, 0.4)' }}>
+                    <div style={{ display: 'flex', gap: '12px' }}>
+                        <CtaButton text="Download Original" onClick={() => window.open(design.view_url, '_blank')}>
+                            <DownloadIcon style={{ width: '18px', height: '18px', marginRight: '8px' }} />
+                        </CtaButton>
                     </div>
+                    <CtaButton text="Close Window" primary onClick={onClose} />
                 </div>
             </div>
         </div>
@@ -1428,7 +1575,7 @@ const ManufacturerProfilePage = ({ manufacturerId, onNavigate }) => {
 
 // --- Manufacturer Dashboard Components ---
 
-const DashboardOverview = ({ user }) => {
+const DashboardOverview = ({ user, onViewFiles }: { user: any, onViewFiles: (id: string) => void }) => {
     const [stats, setStats] = useState(null);
     const [activity, setActivity] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -1654,21 +1801,30 @@ const DashboardOverview = ({ user }) => {
                                                     {new Date(item.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
                                                 </td>
                                                 <td style={{ ...styles.dashboardActivityCell, textAlign: 'right' }}>
-                                                    <span style={{
-                                                        padding: '4px 10px',
-                                                        borderRadius: '12px',
-                                                        fontSize: '11px',
-                                                        fontWeight: 600,
-                                                        textTransform: 'uppercase',
-                                                        letterSpacing: '0.05em',
-                                                        backgroundColor: item.status === 'pending' ? 'rgba(var(--status-warning-rgb), 0.1)' :
-                                                            item.status === 'completed' ? 'rgba(var(--status-success-rgb), 0.1)' : 'rgba(var(--neon-cyan-rgb), 0.1)',
-                                                        color: item.status === 'pending' ? 'var(--status-warning)' :
-                                                            item.status === 'completed' ? 'var(--status-success)' : neon_cyan,
-                                                        border: `1px solid ${item.status === 'pending' ? 'rgba(var(--status-warning-rgb), 0.3)' : item.status === 'completed' ? 'rgba(var(--status-success-rgb), 0.3)' : `rgba(var(--neon-cyan-rgb), 0.3)`}`
-                                                    }}>
-                                                        {item.status.replace('_', ' ')}
-                                                    </span>
+                                                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '8px' }}>
+                                                        <button 
+                                                            onClick={() => onViewFiles(item.design || item.design_id)} 
+                                                            style={{ background: 'none', border: 'none', color: neon_cyan, cursor: 'pointer', padding: '4px', display: 'flex', alignItems: 'center' }}
+                                                            title=\"View Design\"
+                                                        >
+                                                            <EyeIcon style={{ width: '16px', height: '16px' }} />
+                                                        </button>
+                                                        <span style={{
+                                                            padding: '4px 10px',
+                                                            borderRadius: '12px',
+                                                            fontSize: '11px',
+                                                            fontWeight: 600,
+                                                            textTransform: 'uppercase',
+                                                            letterSpacing: '0.05em',
+                                                            backgroundColor: item.status === 'pending' ? 'rgba(var(--status-warning-rgb), 0.1)' :
+                                                                item.status === 'completed' ? 'rgba(var(--status-success-rgb), 0.1)' : 'rgba(var(--neon-cyan-rgb), 0.1)',
+                                                            color: item.status === 'pending' ? 'var(--status-warning)' :
+                                                                item.status === 'completed' ? 'var(--status-success)' : neon_cyan,
+                                                            border: `1px solid ${item.status === 'pending' ? 'rgba(var(--status-warning-rgb), 0.3)' : item.status === 'completed' ? 'rgba(var(--status-success-rgb), 0.3)' : `rgba(var(--neon-cyan-rgb), 0.3)`}`
+                                                        }}>
+                                                            {item.status.replace('_', ' ')}
+                                                        </span>
+                                                    </div>
                                                 </td>
                                             </tr>
                                         ))}
@@ -2668,7 +2824,7 @@ const ManufacturerDashboard = ({ user, onViewFiles }) => {
             case 'orders': return <ActiveOrdersPage onViewFiles={onViewFiles} />;
             case 'overview':
             default:
-                return <DashboardOverview user={user} />;
+                return <DashboardOverview user={user} onViewFiles={onViewFiles} />;
         }
     };
 
@@ -2895,7 +3051,7 @@ const DesignAnalysisResults = ({ designId, onContinue }) => {
 
 // --- Quotation Viewing Page ---
 
-const DesignQuotationsPage = ({ designId, onNavigate }) => {
+const DesignQuotationsPage = ({ designId, onNavigate, onViewFiles }: { designId: string, onNavigate: (page: string, params?: any) => void, onViewFiles: (id: string) => void }) => {
     const [quotes, setQuotes] = useState([]);
     const [design, setDesign] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -2994,6 +3150,15 @@ const DesignQuotationsPage = ({ designId, onNavigate }) => {
                     <div>
                         <p style={{ fontSize: '14px', color: 'var(--text-secondary)', marginBottom: '4px' }}>Quotes Received</p>
                         <p style={{ fontSize: '16px', fontWeight: '600' }}>{quotes.length}</p>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'flex-end' }}>
+                        <CtaButton 
+                            text=\"View 3D Design\" 
+                            onClick={() => onViewFiles(designId)} 
+                            className=\"button-small\"
+                        >
+                            <EyeIcon style={{ width: '18px', height: '18px', marginRight: '8px' }} />
+                        </CtaButton>
                     </div>
                 </div>
             </div>
@@ -3367,7 +3532,7 @@ const ManufacturingIntelligencePanel = ({ designId, onClose }) => {
 // --- Customer Dashboard Components ---
 
 
-const CustomerDashboardOverview = ({ user, onNavigate }) => {
+const CustomerDashboardOverview = ({ user, onNavigate, onViewFiles }: { user: any, onNavigate: (page: string, params?: any) => void, onViewFiles: (id: string) => void }) => {
     const [stats, setStats] = useState({ designs: 0, orders: 0, totalSpent: 0, newQuotes: 0 });
     const [loading, setLoading] = useState(true);
     const { formatPrice } = useCurrency();
@@ -3528,10 +3693,10 @@ const CustomerDesignsPage = ({ onViewFiles, onNavigate }) => {
     };
 
     const handleDelete = async (design) => {
-        if (window.confirm(`Are you sure you want to delete the design "${design.name}"?`)) {
+        if (window.confirm(`Are you sure you want to delete the design "${design.design_name}"?`)) {
             try {
                 await api.deleteCustomerDesign(design.id);
-                setNotification({ show: true, message: `Design "${design.name}" deleted successfully.`, type: 'success' });
+                setNotification({ show: true, message: `Design "${design.design_name}" deleted successfully.`, type: 'success' });
                 setDesigns(prev => prev.filter(d => d.id !== design.id));
             } catch (err) {
                 setNotification({ show: true, message: `Error deleting design: ${err.message}`, type: 'error' });
@@ -3702,7 +3867,7 @@ const CustomerDashboard = ({ user, onViewFiles, onNavigate }) => {
             case 'profile': return <CustomerProfilePage />;
             case 'overview':
             default:
-                return <CustomerDashboardOverview user={user} onNavigate={onNavigate} />;
+                return <CustomerDashboardOverview user={user} onNavigate={onNavigate} onViewFiles={onViewFiles} />;
         }
     };
 
@@ -4138,7 +4303,7 @@ const App = () => {
             case 'signup-customer': return <CustomerSignupPage onLogin={handleLogin} onNavigate={handleNavigate} />;
             case 'signup-manufacturer': return <ManufacturerSignupPage onLogin={handleLogin} onNavigate={handleNavigate} />;
             case 'upload': return <UploadPage onProceedToLogin={handleProceedToLogin} onNavigate={handleNavigate} isAuthenticated={isAuthenticated} user={user} targetManufacturerId={pageParams} />;
-            case 'view-quotes': return <DesignQuotationsPage designId={pageParams?.designId} onNavigate={handleNavigate} />;
+            case 'view-quotes': return <DesignQuotationsPage designId={pageParams?.designId} onNavigate={handleNavigate} onViewFiles={handleViewFiles} />;
             case 'dashboard':
                 if (!isAuthenticated) {
                     handleNavigate('login');

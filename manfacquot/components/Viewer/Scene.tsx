@@ -4,7 +4,7 @@ import { useFrame, useThree } from '@react-three/fiber';
 import { OrbitControls, Grid } from '@react-three/drei';
 import * as THREE from 'three';
 import Model from './Model';
-import { ViewPreset, SupportedExtensions } from './types';
+import { ViewPreset, SupportedExtensions } from '../../types/types';
 import { CAMERA_VIEW_DIRECTIONS } from '../constants';
 
 interface SceneProps {
