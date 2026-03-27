@@ -468,15 +468,17 @@ const ForWhom = ({ onNavigate }: { onNavigate: (page: string, params?: any) => v
 const SocialProof = () => (
     <section style={styles.features}>
         <div style={styles.container}>
-            <h2 style={styles.sectionTitle}>Trusted by Innovators Worldwide</h2>
+            <h2 style={styles.sectionTitle}>Built for the Future of Manufacturing</h2>
             <div style={styles.socialProofGrid}>
-                <div style={styles.testimonialCard}><p style={styles.testimonialText}>"The instant quoting engine is a game-changer. We cut our sourcing time by 90% and got our product to market weeks ahead of schedule."</p><p style={styles.testimonialAuthor}>- Sarah J., Lead Engineer at Innovate Robotics</p></div>
-                <div style={styles.testimonialCard}><p style={styles.testimonialText}>"Joining the Quotanic network filled our excess capacity within three months. The quality of the incoming jobs is excellent."</p><p style={styles.testimonialAuthor}>- Mike P., Owner of Precision Parts Co.</p></div>
+                <div style={{ ...styles.testimonialCard, gridColumn: '1 / -1', maxWidth: '800px', margin: '0 auto' }}>
+                    <p style={styles.testimonialText}>"Quotanic was built to bridge the gap between complex engineering designs and efficient manufacturing. Our mission is to make custom part sourcing as instant and transparent as possible through intelligent matching and live conversion."</p>
+                    <p style={styles.testimonialAuthor}>- Surena, Creator of Quotanic</p>
+                </div>
             </div>
             <div style={styles.metricsContainer}>
-                <div style={styles.metricItem}><span style={styles.metricValue}>500+</span><span style={styles.metricLabel}>Manufacturers on Platform</span></div>
-                <div style={styles.metricItem}><span style={styles.metricValue}>10,000+</span><span style={styles.metricLabel}>Parts Quoted</span></div>
-                <div style={styles.metricItem}><span style={styles.metricValue}>42</span><span style={styles.metricLabel}>Countries Served</span></div>
+                <div style={styles.metricItem}><span style={styles.metricValue}>50+</span><span style={styles.metricLabel}>Manufacturers on Platform</span></div>
+                <div style={styles.metricItem}><span style={styles.metricValue}>1,000+</span><span style={styles.metricLabel}>Parts Quoted</span></div>
+                <div style={styles.metricItem}><span style={styles.metricValue}>24/7</span><span style={styles.metricLabel}>AI Analysis</span></div>
             </div>
         </div>
     </section>
