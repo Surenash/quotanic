@@ -31,7 +31,8 @@ import {
     CircleDot as LucideCircleDot,
     Cylinder as LucideCylinder,
     Factory as LucideFactory,
-    PieChart as LucidePieChart
+    PieChart as LucidePieChart,
+    Sparkles as LucideSparkles
 } from 'lucide-react';
 
 // --- API Client ---
@@ -100,6 +101,10 @@ const ScaleIcon = ({ style }: { style?: React.CSSProperties }) => (
 
 const LightningBoltIcon = ({ style }: { style?: React.CSSProperties }) => (
     <LucideZap style={{ width: '48px', height: '48px', ...style }} />
+);
+
+const SparklesIcon = ({ style }: { style?: React.CSSProperties }) => (
+    <LucideSparkles style={{ width: '48px', height: '48px', ...style }} />
 );
 
 const CodeBracketIcon = ({ style }: { style?: React.CSSProperties }) => (
@@ -484,11 +489,127 @@ const SocialProof = () => (
     </section>
 );
 
-const PlaceholderPage = ({ title, subtitle }) => (
-    <div style={{ ...styles.container, padding: '96px 24px', textAlign: 'center', flexGrow: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center' }}>
-        <h1 style={{ ...styles.heroTitle, fontSize: '48px' }}>{title}</h1>
-        <p style={{ ...styles.heroSubtitle, fontSize: '18px' }}>{subtitle}</p>
-        <p style={{ color: 'var(--text-secondary)' }}>This page is under construction. Check back soon for more updates!</p>
+const AboutUsPage = () => (
+    <div style={{ ...styles.container, padding: '64px 24px' }}>
+        <div style={{ maxWidth: '800px', margin: '0 auto', textAlign: 'center' }}>
+            <SparklesIcon style={{ width: '64px', height: '64px', color: 'var(--neon-magenta)', marginBottom: '24px', filter: 'drop-shadow(0 0 10px var(--neon-magenta))' }} />
+            <h1 style={styles.heroTitle}>About Quotanic</h1>
+            <p style={styles.heroSubtitle}>Revolutionizing custom manufacturing through artificial intelligence and global connectivity.</p>
+        </div>
+        <div style={{ maxWidth: '800px', margin: '48px auto 0', textAlign: 'left', display: 'flex', flexDirection: 'column', gap: '40px' }}>
+            <section>
+                <h3 style={{ ...styles.featureTitle, color: 'var(--neon-cyan)' }}>Our Mission</h3>
+                <p style={{ ...styles.stepText, fontSize: '18px', lineHeight: '1.6' }}>
+                    Quotanic was founded with a single goal: to make the procurement of custom manufactured parts as easy as buying something off a shelf. 
+                    We believe that the future of manufacturing lies in the seamless integration of engineering intelligence and production capacity.
+                </p>
+            </section>
+            <div style={styles.socialProofGrid}>
+                <div style={styles.testimonialCard}>
+                    <h4 style={{ color: 'var(--neon-magenta)', marginBottom: '12px' }}>Intelligent Matching</h4>
+                    <p style={styles.testimonialText}>Our proprietary AI analyzes 3D geometry in real-time to find the perfect manufacturer for every project, regardless of complexity.</p>
+                </div>
+                <div style={styles.testimonialCard}>
+                    <h4 style={{ color: 'var(--neon-cyan)', marginBottom: '12px' }}>Global Network</h4>
+                    <p style={styles.testimonialText}>We connect engineers with a vetted network of specialized manufacturers, from local machine shops to high-volume production facilities.</p>
+                </div>
+            </div>
+            <section style={{ background: 'rgba(255,255,255,0.03)', padding: '32px', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.1)' }}>
+                <h3 style={styles.featureTitle}>The Surena Vision</h3>
+                <p style={styles.stepText}>
+                    Quotanic is the result of years of experience in both software engineering and industrial manufacturing. 
+                    Created by Surena, the platform represents a commitment to transparency, speed, and technical excellence. 
+                    We are not just a marketplace; we are an OS for the physical world.
+                </p>
+            </section>
+        </div>
+    </div>
+);
+
+const HowItWorksDetailedPage = ({ onNavigate }: { onNavigate: (p: string) => void }) => (
+    <div style={{ ...styles.container, padding: '64px 24px' }}>
+        <div style={{ maxWidth: '800px', margin: '0 auto', textAlign: 'center' }}>
+            <h1 style={styles.heroTitle}>How It Works</h1>
+            <p style={styles.heroSubtitle}>A deeper dive into the Quotanic ecosystem.</p>
+        </div>
+        <div style={{ maxWidth: '900px', margin: '64px auto 0', display: 'grid', gap: '48px' }}>
+            <div style={{ display: 'flex', gap: '32px', alignItems: 'flex-start' }}>
+                <div style={{ ...styles.stepIcon, minWidth: '64px', height: '64px', fontSize: '24px' }}>1</div>
+                <div>
+                    <h3 style={styles.featureTitle}>Upload & AI Analysis</h3>
+                    <p style={styles.stepText}>When you upload an STL or STEP file, our Feature-Based Manufacturing (FBM) engine immediately goes to work. It calculates volume, surface area, detects undercuts, and assesses machinability. This data forms the basis of your instant quote.</p>
+                </div>
+            </div>
+            <div style={{ display: 'flex', gap: '32px', alignItems: 'flex-start' }}>
+                <div style={{ ...styles.stepIcon, minWidth: '64px', height: '64px', fontSize: '24px', background: 'var(--neon-magenta)' }}>2</div>
+                <div>
+                    <h3 style={styles.featureTitle}>Smart Matching</h3>
+                    <p style={styles.stepText}>We don't just broadcast your design to everyone. Our system matches your part's requirements (material, tolerances, volume) against our manufacturers' verified capabilities. You only receive quotes from shops that can actually deliver.</p>
+                </div>
+            </div>
+            <div style={{ display: 'flex', gap: '32px', alignItems: 'flex-start' }}>
+                <div style={{ ...styles.stepIcon, minWidth: '64px', height: '64px', fontSize: '24px', background: 'var(--neon-orange)' }}>3</div>
+                <div>
+                    <h3 style={styles.featureTitle}>Secure Production</h3>
+                    <p style={styles.stepText}>Once you accept a quote, the manufacturer receives the production files. All communication, status updates, and shipping tracking happen through your dashboard. Your payment is held securely until the project milestones are met.</p>
+                </div>
+            </div>
+            <div style={{ textAlign: 'center', marginTop: '32px' }}>
+                <CtaButton text="Get Started Now" onClick={() => onNavigate('upload')} primary />
+            </div>
+        </div>
+    </div>
+);
+
+const FAQPage = () => (
+    <div style={{ ...styles.container, padding: '64px 24px' }}>
+        <div style={{ maxWidth: '800px', margin: '0 auto', textAlign: 'center' }}>
+            <h1 style={styles.heroTitle}>Frequently Asked Questions</h1>
+            <p style={styles.heroSubtitle}>Everything you need to know about Quotanic.</p>
+        </div>
+        <div style={{ maxWidth: '800px', margin: '48px auto 0', display: 'grid', gap: '24px' }}>
+            {[
+                { q: "What file formats do you support?", a: "We currently support STL and STEP files for automated analysis. For 2D drawings or other formats, you can upload them as supporting documentation." },
+                { q: "How are shipping costs calculated?", a: "Shipping is calculated based on the weight/dimensions of your part and the distance between you and the manufacturer. You will see the total cost before placing your order." },
+                { q: "Can I use my own material?", a: "Yes, you can specify custom materials during the upload process. Manufacturers will review these requests and provide quotes based on their ability to source or handle your material." },
+                { q: "Is my data secure?", a: "Absolutely. We use end-to-end encryption and restrict file access to only the manufacturers you engage with. Check our Trust & Security page for more details." }
+            ].map((faq, i) => (
+                <div key={i} style={{ ...styles.featureCard, textAlign: 'left' }}>
+                    <h4 style={{ color: 'var(--neon-cyan)', marginBottom: '8px', fontSize: '18px' }}>{faq.q}</h4>
+                    <p style={styles.stepText}>{faq.a}</p>
+                </div>
+            ))}
+        </div>
+    </div>
+);
+
+const ContactPage = () => (
+    <div style={{ ...styles.container, padding: '64px 24px' }}>
+        <div style={{ maxWidth: '600px', margin: '0 auto', textAlign: 'center' }}>
+            <h1 style={styles.heroTitle}>Contact Us</h1>
+            <p style={styles.heroSubtitle}>Have a question or feedback? We'd love to hear from you.</p>
+            <div style={{ ...styles.featureCard, marginTop: '48px', textAlign: 'left' }}>
+                <form onSubmit={(e) => { e.preventDefault(); alert('Message sent! We will get back to you shortly.'); }}>
+                    <div style={styles.formGroup}><label style={styles.label}>Name</label><input type="text" style={styles.input} required /></div>
+                    <div style={styles.formGroup}><label style={styles.label}>Email</label><input type="email" style={styles.input} required /></div>
+                    <div style={styles.formGroup}><label style={styles.label}>Message</label><textarea style={{ ...styles.input, height: '120px' }} required></textarea></div>
+                    <CtaButton text="Send Message" type="submit" primary />
+                </form>
+            </div>
+            <div style={{ marginTop: '48px', color: 'var(--text-secondary)' }}>
+                <p>Direct Email: support@quotanic.com</p>
+                <p>Office: Mumbai, India</p>
+            </div>
+        </div>
+    </div>
+);
+
+const LegalPage = ({ title, content }: { title: string, content: React.ReactNode }) => (
+    <div style={{ ...styles.container, padding: '64px 24px' }}>
+        <div style={{ maxWidth: '800px', margin: '0 auto', textAlign: 'left' }}>
+            <h1 style={{ ...styles.heroTitle, textAlign: 'center', marginBottom: '48px' }}>{title}</h1>
+            <div style={{ color: 'var(--text-primary)', lineHeight: '1.8' }}>{content}</div>
+        </div>
     </div>
 );
 
@@ -3910,16 +4031,43 @@ const App = () => {
     const renderPage = () => {
         switch (page) {
             case 'landing': return <LandingPageContent onNavigate={handleNavigate} />;
-            case 'how-it-works-detailed': return <PlaceholderPage title="How It Works" subtitle="A detailed breakdown of our simple, three-step process." />;
+            case 'how-it-works-detailed': return <HowItWorksDetailedPage onNavigate={handleNavigate} />;
             case 'directory': return <ManufacturerDirectoryPage onNavigate={handleNavigate} />;
             case 'manufacturer-profile': return <ManufacturerProfilePage manufacturerId={pageParams} onNavigate={handleNavigate} />;
             case 'trust-and-security': return <TrustAndSecurityPage />;
-            case 'about': return <PlaceholderPage title="About Us" subtitle="Learn more about our mission to revolutionize manufacturing." />;
-            case 'blog': return <PlaceholderPage title="Blog" subtitle="Insights and articles from the manufacturing world." />;
-            case 'contact': return <PlaceholderPage title="Contact Us" subtitle="Get in touch with the Quotanic team." />;
-            case 'faq': return <PlaceholderPage title="Frequently Asked Questions" subtitle="Find answers to common questions." />;
-            case 'privacy': return <PlaceholderPage title="Privacy Policy" subtitle="How we handle your data." />;
-            case 'terms': return <PlaceholderPage title="Terms of Service" subtitle="The rules of our platform." />;
+            case 'about': return <AboutUsPage />;
+            case 'contact': return <ContactPage />;
+            case 'faq': return <FAQPage />;
+            case 'privacy': return (
+                <LegalPage 
+                    title="Privacy Policy" 
+                    content={
+                        <>
+                            <h3>1. Information We Collect</h3>
+                            <p>We collect information you provide directly to us when you create an account, upload designs, or communicate with manufacturers. This includes your name, email address, and any technical data contained in your manufacturing files.</p>
+                            <h3>2. How We Use Your Information</h3>
+                            <p>We use your information to facilitate the quoting and manufacturing process, improve our AI matching engine, and ensure the security of our platform.</p>
+                            <h3>3. Data Security</h3>
+                            <p>We implement industry-standard security measures to protect your intellectual property and personal data. Your files are only shared with manufacturers you choose to engage with.</p>
+                        </>
+                    } 
+                />
+            );
+            case 'terms': return (
+                <LegalPage 
+                    title="Terms of Service" 
+                    content={
+                        <>
+                            <h3>1. Acceptance of Terms</h3>
+                            <p>By using Quotanic, you agree to comply with and be bound by these Terms of Service. If you do not agree, please do not use our platform.</p>
+                            <h3>2. User Responsibilities</h3>
+                            <p>You are responsible for the accuracy of the designs you upload and for ensuring you have the legal right to manufacture those designs.</p>
+                            <h3>3. Platform Role</h3>
+                            <p>Quotanic is a marketplace that connects customers and manufacturers. While we vet partners, the final contract for production is between the user and the manufacturer.</p>
+                        </>
+                    } 
+                />
+            );
             case 'login': return <LoginRoleSelector onNavigate={handleNavigate} reasonMessage={loginReasonMessage} />;
             case 'login-customer': return <LoginPage onLogin={handleLogin} onNavigate={handleNavigate} role="customer" />;
             case 'login-manufacturer': return <LoginPage onLogin={handleLogin} onNavigate={handleNavigate} role="manufacturer" />;
