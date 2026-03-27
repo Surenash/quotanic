@@ -36,6 +36,13 @@ try:
     from OCC.Core.TopLoc import TopLoc_Location
     from OCC.Core.gp import gp_Trsf
     from OCC.Extend.TopologyUtils import TopologyExplorer # Useful for iterating subshapes
+    from OCC.Core.RWGltf import RWGltf_CafWriter
+    from OCC.Core.TDocStd import TDocStd_Document
+    from OCC.Core.XCAFApp import XCAFApp_Application
+    from OCC.Core.TCollection import TCollection_AsciiString
+    from OCC.Core.BRepMesh import BRepMesh_IncrementalMesh
+    from OCC.Core.TDF import TDF_Label
+    from OCC.Core.XCAFDoc import XCAFDoc_DocumentTool, XCAFDoc_ColorGen
     PYTHONOCC_AVAILABLE = True
 except ImportError:
     PYTHONOCC_AVAILABLE = False
@@ -469,6 +476,73 @@ def perform_fbm_analysis(file_path, file_extension):
 
 
 
+def generate_glb_from_step(file_path):
+    \"\"\"
+    Converts a STEP/IGES file to GLB format for 3D viewing.
+    Uses OpenCASCADE (pythonocc-core) for tessellation and export.
+    \"\"\"
+    if not PYTHONOCC_AVAILABLE:
+        logger.error(\"pythonocc-core not available for GLB conversion.\")
+        return None
+
+    logger.info(f\"GLB Conversion: Starting for {file_path}...\")
+    
+    try:
+        # 1. Load the shape
+        file_ext = os.path.splitext(file_path)[1].lower()
+        if file_ext in ['.step', '.stp']:
+            from OCC.Extend.DataExchange import read_step_file
+            shape = read_step_file(file_path)
+        elif file_ext in ['.iges', '.igs']:
+            from OCC.Extend.DataExchange import read_iges_file
+            shape = read_iges_file(file_path)
+        else:
+            logger.error(f\"Unsupported file extension for GLB conversion: {file_ext}\")
+            return None
+
+        if not shape:
+            logger.error(\"Failed to load shape for GLB conversion.\")
+            return None
+
+        # 2. Tessellate the shape
+        # Deflection controls mesh quality (smaller = better/more triangles)
+        linear_deflection = 0.1
+        angular_deflection = 0.5
+        mesh = BRepMesh_IncrementalMesh(shape, linear_deflection, False, angular_deflection, True)
+        mesh.Perform()
+
+        # 3. Create XCAF Document
+        app = XCAFApp_Application.GetApplication()
+        doc = TDocStd_Document(TCollection_AsciiString(\"BinXCAF\"))
+        app.InitDocument(doc)
+        
+        shape_tool = XCAFDoc_DocumentTool.ShapeTool(doc.Main())
+        # color_tool = XCAFDoc_DocumentTool.ColorTool(doc.Main())
+        
+        # Add shape to document
+        shape_label = shape_tool.AddShape(shape, False)
+        
+        # 4. Export to GLTF/GLB
+        output_path = file_path.rsplit('.', 1)[0] + '.glb'
+        
+        writer = RWGltf_CafWriter(TCollection_AsciiString(output_path), True)
+        # Configure writer to export as binary GLB
+        # In newer pythonocc/OCCT, binary export is handled by the second parameter of the constructor or specific methods
+        
+        success = writer.Perform(doc, TCollection_AsciiString(\"QuotanicModel\"))
+        
+        if success:
+            logger.info(f\"GLB Conversion: Successfully saved to {output_path}\")
+            return output_path
+        else:
+            logger.error(\"GLB Conversion: writer.Perform failed.\")
+            return None
+
+    except Exception as e:
+        logger.error(f\"GLB Conversion: Unexpected error: {e}\", exc_info=True)
+        return None
+
+
 @shared_task(bind=True, max_retries=3, default_retry_delay=60)
 def analyze_cad_file(self, design_id):
     """
@@ -542,10 +616,32 @@ def analyze_cad_file(self, design_id):
                             logger.info(f"Attempting FBM analysis for {file_extension} file...")
                             geometric_data = perform_fbm_analysis(local_file_path, file_extension)
                             analysis_successful = True
-                            logger.info("FBM analysis successful")
+                            logger.info(\"FBM analysis successful\")
                         except Exception as fbm_error:
-                            error_message = f"FBM analysis failed: {fbm_error}"
+                            error_message = f\"FBM analysis failed: {fbm_error}\"
                             logger.error(error_message)
+
+                        # Generate GLB for 3D viewing
+                        try:
+                            glb_path = generate_glb_from_step(local_file_path)
+                            if glb_path and os.path.exists(glb_path):
+                                # Save GLB key in geometric_data
+                                glb_key = design.s3_file_key.rsplit('.', 1)[0] + '.glb'
+                                geometric_data['glb_file_key'] = glb_key
+
+                                # Upload GLB to S3 if not using local storage
+                                if not settings.USE_LOCAL_STORAGE:
+                                    try:
+                                        s3_client.upload_file(glb_path, settings.AWS_STORAGE_BUCKET_NAME, glb_key)
+                                        logger.info(f\"Successfully uploaded GLB to S3: {glb_key}\")
+                                    except Exception as s3_err:
+                                        logger.error(f\"Failed to upload GLB to S3: {s3_err}\")
+
+                                logger.info(f\"Successfully generated GLB: {glb_key}\")
+                        except Exception as glb_error:
+                            logger.warning(f\"GLB conversion failed (non-critical): {glb_error}\")
+
+
                     else:
                         error_message = f"Unsupported file type: {file_extension}."
 

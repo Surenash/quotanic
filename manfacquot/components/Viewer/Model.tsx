@@ -4,7 +4,7 @@ import { Center, useGLTF } from '@react-three/drei';
 import * as THREE from 'three';
 import { STLLoader } from 'three/examples/jsm/loaders/STLLoader';
 import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader';
-import { SupportedExtensions } from '../types';
+import { SupportedExtensions } from '../../types/types';
 
 interface LoadedModelProps {
   modelUrl: string;
