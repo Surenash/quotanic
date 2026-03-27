@@ -1,4 +1,6 @@
 // Cost Breakdown Modal Component
+import { useCurrency } from './utils/currency';
+
 const CostBreakdownModal = ({ request, onClose }) => {
     // Parse the notes field to extract breakdown data
     const parseBreakdown = (notes) => {
@@ -18,10 +20,7 @@ const CostBreakdownModal = ({ request, onClose }) => {
 
     const breakdown = parseBreakdown(request.notes);
 
-    const formatCurrency = (value) => {
-        const num = parseFloat(value);
-        return isNaN(num) ? 'N/A' : `$${num.toFixed(2)}`;
-    };
+    const { formatPrice } = useCurrency();
 
     return (
         <div style={{ ...styles.modalOverlay }}>
@@ -58,11 +57,11 @@ const CostBreakdownModal = ({ request, onClose }) => {
                                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '16px' }}>
                                     <div>
                                         <p style={{ fontSize: '12px', color: 'var(--text-secondary)', margin: '0 0 4px 0' }}>Total Price</p>
-                                        <p style={{ fontSize: '24px', fontWeight: '700', color: 'var(--neon-cyan)', margin: 0 }}>{formatCurrency(breakdown.final_price)}</p>
+                                        <p style={{ fontSize: '24px', fontWeight: '700', color: 'var(--neon-cyan)', margin: 0 }}>{formatPrice(breakdown.final_price)}</p>
                                     </div>
                                     <div>
                                         <p style={{ fontSize: '12px', color: 'var(--text-secondary)', margin: '0 0 4px 0' }}>Unit Price</p>
-                                        <p style={{ fontSize: '24px', fontWeight: '700', margin: 0 }}>{formatCurrency(breakdown.unit_price)}</p>
+                                        <p style={{ fontSize: '24px', fontWeight: '700', margin: 0 }}>{formatPrice(breakdown.unit_price)}</p>
                                     </div>
                                 </div>
                             </div>
@@ -74,13 +73,13 @@ const CostBreakdownModal = ({ request, onClose }) => {
                                     {breakdown.material_cost_per_unit && (
                                         <div style={{ display: 'flex', justifyContent: 'space-between', padding: '12px', background: 'var(--bg-panel)', borderRadius: '6px' }}>
                                             <span>Material Cost</span>
-                                            <span style={{ fontWeight: '600' }}>{formatCurrency(breakdown.material_cost_per_unit)}</span>
+                                            <span style={{ fontWeight: '600' }}>{formatPrice(breakdown.material_cost_per_unit)}</span>
                                         </div>
                                     )}
                                     {breakdown.labor_cost_per_unit && (
                                         <div style={{ display: 'flex', justifyContent: 'space-between', padding: '12px', background: 'var(--bg-panel)', borderRadius: '6px' }}>
                                             <span>Labor Cost <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>({breakdown.labor_cost_per_unit.split('(')[1]?.replace(')', '')})</span></span>
-                                            <span style={{ fontWeight: '600' }}>{formatCurrency(breakdown.labor_cost_per_unit.split(' ')[0].replace('$', ''))}</span>
+                                            <span style={{ fontWeight: '600' }}>{formatPrice(breakdown.labor_cost_per_unit.split(' ')[0].replace('$', ''))}</span>
                                         </div>
                                     )}
                                     {breakdown.applied_hourly_rate && (
@@ -92,7 +91,7 @@ const CostBreakdownModal = ({ request, onClose }) => {
                                     {breakdown.finishing_cost_per_unit && (
                                         <div style={{ display: 'flex', justifyContent: 'space-between', padding: '12px', background: 'var(--bg-panel)', borderRadius: '6px' }}>
                                             <span>Finishing <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>{breakdown.finishing_details ? `(${breakdown.finishing_details.substring(0, 30)}...)` : ''}</span></span>
-                                            <span style={{ fontWeight: '600' }}>{formatCurrency(breakdown.finishing_cost_per_unit)}</span>
+                                            <span style={{ fontWeight: '600' }}>{formatPrice(breakdown.finishing_cost_per_unit)}</span>
                                         </div>
                                     )}
                                 </div>
@@ -171,7 +170,7 @@ const CostBreakdownModal = ({ request, onClose }) => {
                     ) : (
                         <div style={{ padding: '40px', textAlign: 'center', color: 'var(--text-secondary)' }}>
                             <p>Detailed cost breakdown not available for this quote.</p>
-                            <p style={{ fontSize: '14px', marginTop: '8px' }}>Total Price: <strong style={{ color: 'var(--neon-cyan)', fontSize: '20px' }}>{formatCurrency(request.price)}</strong></p>
+                            <p style={{ fontSize: '14px', marginTop: '8px' }}>Total Price: <strong style={{ color: 'var(--neon-cyan)', fontSize: '20px' }}>{formatPrice(request.price)}</strong></p>
                         </div>
                     )}
 

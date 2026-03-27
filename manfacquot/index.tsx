@@ -36,6 +36,7 @@ import {
 
 // --- API Client ---
 import { api, setTokens, getTokens, clearTokens } from './utils/api';
+import { useCurrency, CurrencyProvider } from './utils/currency';
 import { styles, bg_deep_space, text_primary, text_secondary, border_color, border_color_strong, neon_cyan, neon_magenta, neon_orange } from './types/theme';
 import CtaButton from './components/CtaButton';
 import Notification from './components/Notification';
@@ -280,6 +281,7 @@ const ImageUpload = ({ label, currentImageUrl, onImageSelected, onImageRemoved }
 type HeaderProps = { isAuthenticated: boolean; onLogout: () => void; onNavigate: (page: string, params?: any) => void; };
 const Header = ({ isAuthenticated, onLogout, onNavigate }: HeaderProps) => {
     const [hoveredLink, setHoveredLink] = useState('');
+    const { currency, setCurrency } = useCurrency();
     const [theme, setTheme] = useState(() => {
         return localStorage.getItem('theme') || 'dark';
     });
@@ -292,6 +294,16 @@ const Header = ({ isAuthenticated, onLogout, onNavigate }: HeaderProps) => {
     const toggleTheme = () => {
         setTheme(prev => prev === 'dark' ? 'light' : 'dark');
     };
+
+    const currencies = [
+        { code: 'USD', symbol: '$', name: 'US Dollar' },
+        { code: 'EUR', symbol: '€', name: 'Euro' },
+        { code: 'GBP', symbol: '£', name: 'British Pound' },
+        { code: 'INR', symbol: '₹', name: 'Indian Rupee' },
+        { code: 'JPY', symbol: '¥', name: 'Japanese Yen' },
+        { code: 'CAD', symbol: 'C$', name: 'Canadian Dollar' },
+        { code: 'AUD', symbol: 'A$', name: 'Australian Dollar' },
+    ];
 
     return (
         <header style={styles.header} role="banner">
@@ -310,7 +322,30 @@ const Header = ({ isAuthenticated, onLogout, onNavigate }: HeaderProps) => {
                             </a>
                         ))}
                     </nav>
-                    <div style={{ ...styles.headerActions, gap: '24px' }}>
+                    <div style={{ ...styles.headerActions, gap: '20px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <LucideDollarSign style={{ width: '16px', height: '16px', color: neon_cyan }} />
+                            <select
+                                value={currency}
+                                onChange={(e) => setCurrency(e.target.value)}
+                                style={{
+                                    background: 'rgba(255,255,255,0.05)',
+                                    color: 'var(--text-primary)',
+                                    border: '1px solid var(--border-color)',
+                                    borderRadius: '4px',
+                                    padding: '4px 8px',
+                                    fontSize: '14px',
+                                    cursor: 'pointer',
+                                    outline: 'none'
+                                }}
+                            >
+                                {currencies.map(c => (
+                                    <option key={c.code} value={c.code} style={{ background: bg_deep_space }}>
+                                        {c.code} ({c.symbol})
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
                         <button
                             onClick={toggleTheme}
                             style={{
@@ -1314,13 +1349,7 @@ const DashboardOverview = ({ user }) => {
     const completeness = stats?.profile_completeness || 0;
     const completenessColor = completeness >= 75 ? 'var(--status-success)' : completeness >= 50 ? 'var(--status-warning)' : 'var(--status-error)';
 
-    // Revenue formatter (e.g. 1.2K instead of 1200)
-    const formatCurrency = (val) => {
-        if (!val) return '$0';
-        if (val >= 1000000) return `$${(val / 1000000).toFixed(1)}M`;
-        if (val >= 1000) return `$${(val / 1000).toFixed(1)}K`;
-        return `$${val.toFixed(0)}`;
-    };
+    const { formatPrice } = useCurrency();
 
     // Calculate max values for bar charts
     const maxRevenue = stats?.revenue_trend ? Math.max(...stats.revenue_trend.map(d => d.revenue), 100) : 100;
@@ -1354,13 +1383,13 @@ const DashboardOverview = ({ user }) => {
                 <div style={styles.dashboardHeroCard}>
                     <p style={styles.dashboardMetricLabel}>Revenue (This Month)</p>
                     <h3 style={{ ...styles.dashboardMetricValue, color: neon_magenta, textShadow: `0 0 10px ${neon_magenta}` }}>
-                        {formatCurrency(stats?.monthly_revenue)}
+                        {formatPrice(stats?.monthly_revenue)}
                     </h3>
                     <div style={{ display: 'flex', gap: '12px', alignItems: 'center', marginTop: '12px' }}>
                         {/* Mock comparison for demonstration */}
                         <span style={styles.dashboardComparisonUp}>↑ 12% vs last month</span>
                         <span style={{ fontSize: '13px', color: text_secondary }}>
-                            {formatCurrency(stats?.total_revenue)} all-time
+                            {formatPrice(stats?.total_revenue)} all-time
                         </span>
                     </div>
                 </div>
@@ -1419,7 +1448,7 @@ const DashboardOverview = ({ user }) => {
                                 const heightPct = Math.max((data.revenue / maxRevenue) * 100, 2); // min 2%
                                 return (
                                     <div key={i} style={styles.dashboardVerticalBarGroup}>
-                                        <span style={styles.dashboardBarValueLabel}>{formatCurrency(data.revenue)}</span>
+                                        <span style={styles.dashboardBarValueLabel}>{formatPrice(data.revenue)}</span>
                                         <div style={{ ...styles.dashboardVerticalBarFill, height: `${heightPct}%`, backgroundColor: i === stats.revenue_trend.length - 1 ? neon_magenta : neon_cyan }} />
                                         <span style={{ ...styles.dashboardBarLabel, color: i === stats.revenue_trend.length - 1 ? text_primary : text_secondary }}>{data.month}</span>
                                     </div>
@@ -1598,7 +1627,7 @@ const DashboardOverview = ({ user }) => {
                                         </div>
                                         <span style={{ fontWeight: 500, color: text_primary }}>{customer.name}</span>
                                     </div>
-                                    <span style={{ fontWeight: 600, color: text_primary }}>{formatCurrency(customer.spend)}</span>
+                                    <span style={{ fontWeight: 600, color: text_primary }}>{formatPrice(customer.spend)}</span>
                                 </div>
                             ))}
                         </div>
@@ -2000,10 +2029,7 @@ const CostBreakdownModal = ({ request, onClose }) => {
 
     const breakdown = parseBreakdown(request.notes);
 
-    const formatCurrency = (value) => {
-        const num = parseFloat(value);
-        return isNaN(num) ? 'N/A' : `$${num.toFixed(2)}`;
-    };
+    const { formatPrice } = useCurrency();
 
     return (
         <div style={{ ...styles.modalOverlay }}>
@@ -2040,11 +2066,11 @@ const CostBreakdownModal = ({ request, onClose }) => {
                                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '16px' }}>
                                     <div>
                                         <p style={{ fontSize: '12px', color: 'var(--text-secondary)', margin: '0 0 4px 0' }}>Total Price</p>
-                                        <p style={{ fontSize: '24px', fontWeight: '700', color: 'var(--neon-cyan)', margin: 0 }}>{formatCurrency(breakdown.final_price)}</p>
+                                        <p style={{ fontSize: '24px', fontWeight: '700', color: 'var(--neon-cyan)', margin: 0 }}>{formatPrice(breakdown.final_price)}</p>
                                     </div>
                                     <div>
                                         <p style={{ fontSize: '12px', color: 'var(--text-secondary)', margin: '0 0 4px 0' }}>Unit Price</p>
-                                        <p style={{ fontSize: '24px', fontWeight: '700', margin: 0 }}>{formatCurrency(breakdown.unit_price)}</p>
+                                        <p style={{ fontSize: '24px', fontWeight: '700', margin: 0 }}>{formatPrice(breakdown.unit_price)}</p>
                                     </div>
                                 </div>
                             </div>
@@ -2056,13 +2082,13 @@ const CostBreakdownModal = ({ request, onClose }) => {
                                     {breakdown.material_cost_per_unit && (
                                         <div style={{ display: 'flex', justifyContent: 'space-between', padding: '12px', background: 'var(--bg-panel)', borderRadius: '6px' }}>
                                             <span>Material Cost</span>
-                                            <span style={{ fontWeight: '600' }}>{formatCurrency(breakdown.material_cost_per_unit)}</span>
+                                            <span style={{ fontWeight: '600' }}>{formatPrice(breakdown.material_cost_per_unit)}</span>
                                         </div>
                                     )}
                                     {breakdown.labor_cost_per_unit && (
                                         <div style={{ display: 'flex', justifyContent: 'space-between', padding: '12px', background: 'var(--bg-panel)', borderRadius: '6px' }}>
                                             <span>Labor Cost <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>({breakdown.labor_cost_per_unit.split('(')[1]?.replace(')', '')})</span></span>
-                                            <span style={{ fontWeight: '600' }}>{formatCurrency(breakdown.labor_cost_per_unit.split(' ')[0].replace('$', ''))}</span>
+                                            <span style={{ fontWeight: '600' }}>{formatPrice(breakdown.labor_cost_per_unit.split(' ')[0].replace('$', ''))}</span>
                                         </div>
                                     )}
                                     {breakdown.applied_hourly_rate && (
@@ -2074,7 +2100,7 @@ const CostBreakdownModal = ({ request, onClose }) => {
                                     {breakdown.finishing_cost_per_unit && (
                                         <div style={{ display: 'flex', justifyContent: 'space-between', padding: '12px', background: 'var(--bg-panel)', borderRadius: '6px' }}>
                                             <span>Finishing <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>({breakdown.finishing_details ? `(${breakdown.finishing_details.substring(0, 30)}...)` : ''}</span></span>
-                                            <span style={{ fontWeight: '600' }}>{formatCurrency(breakdown.finishing_cost_per_unit)}</span>
+                                            <span style={{ fontWeight: '600' }}>{formatPrice(breakdown.finishing_cost_per_unit)}</span>
                                         </div>
                                     )}
                                 </div>
@@ -2175,7 +2201,7 @@ const CostBreakdownModal = ({ request, onClose }) => {
                     ) : (
                         <div style={{ padding: '40px', textAlign: 'center', color: 'var(--text-secondary)' }}>
                             <p>Detailed cost breakdown not available for this quote.</p>
-                            <p style={{ fontSize: '14px', marginTop: '8px' }}>Total Price: <strong style={{ color: 'var(--neon-cyan)', fontSize: '20px' }}>{formatCurrency(request.price)}</strong></p>
+                            <p style={{ fontSize: '14px', marginTop: '8px' }}>Total Price: <strong style={{ color: 'var(--neon-cyan)', fontSize: '20px' }}>{formatPrice(request.price)}</strong></p>
                         </div>
                     )}
 
@@ -2364,7 +2390,7 @@ const UpdateOrderModal = ({ order, onClose, onUpdate }) => {
                         <div><p style={styles.quoteDetailLabel}>Customer</p><p style={styles.quoteDetailValue}>{order.customer}</p></div>
                         <div><p style={styles.quoteDetailLabel}>Order Date</p><p style={styles.quoteDetailValue}>{new Date(order.dateCreated).toLocaleDateString()}</p></div>
                         <div><p style={styles.quoteDetailLabel}>Quantity</p><p style={styles.quoteDetailValue}>{order.quantity}</p></div>
-                        <div><p style={styles.quoteDetailLabel}>Price</p><p style={styles.quoteDetailValue}>${order.quotePrice.toFixed(2)}</p></div>
+                        <div><p style={styles.quoteDetailLabel}>Price</p><p style={styles.quoteDetailValue}>{formatPrice(order.quotePrice)}</p></div>
                     </div>
                     <div style={{ borderTop: `1px solid var(--border-color)`, margin: '16px 0' }}></div>
                     <form onSubmit={handleSubmit}>
@@ -2752,6 +2778,8 @@ const DesignQuotationsPage = ({ designId, onNavigate }) => {
     const [error, setError] = useState('');
     const [sortBy, setSortBy] = useState('price'); // 'price' or 'lead_time'
     const [acceptingQuoteId, setAcceptingQuoteId] = useState(null);
+
+    const { formatPrice } = useCurrency();
     const [breakdownModalInfo, setBreakdownModalInfo] = useState({ isOpen: false, request: null });
 
     useEffect(() => {
@@ -2908,7 +2936,7 @@ const DesignQuotationsPage = ({ designId, onNavigate }) => {
                                             </td>
                                             <td style={styles.tableCell}>
                                                 <strong style={{ color: 'var(--neon-cyan)', fontSize: '16px' }}>
-                                                    ${parseFloat(quote.price_usd || 0).toFixed(2)}
+                                                    {formatPrice(quote.price_usd || 0)}
                                                 </strong>
                                             </td>
                                             <td style={styles.tableCell}>
@@ -2975,6 +3003,7 @@ const ManufacturingIntelligencePanel = ({ designId, onClose }) => {
     const [intelligence, setIntelligence] = useState(null);
     const [loading, setLoading] = useState(true);
     const [showOperations, setShowOperations] = useState(false);
+    const { formatPrice } = useCurrency();
 
     useEffect(() => {
         const fetchIntelligence = async () => {
@@ -3052,7 +3081,7 @@ const ManufacturingIntelligencePanel = ({ designId, onClose }) => {
                         <div style={styles.intelCard}>
                             <h4 style={{ fontSize: '16px', color: 'var(--text-secondary)', margin: '0 0 8px 0' }}>Tool Cost</h4>
                             <p style={{ fontSize: '20px', fontWeight: 700, margin: 0, color: 'var(--neon-cyan)' }}>
-                                ${summary.total_tool_cost_estimate?.toFixed(2) || '0.00'}
+                                {formatPrice(summary.total_tool_cost_estimate || 0)}
                             </p>
                         </div>
 
@@ -3084,8 +3113,8 @@ const ManufacturingIntelligencePanel = ({ designId, onClose }) => {
                                         <p style={{ margin: 0, fontSize: '13px', color: 'var(--text-secondary)' }}>{tool.recommendation}</p>
                                     </div>
                                     <div style={styles.toolCost}>
-                                        <span>Cost: ${tool.cost_usd}</span>
-                                        <span>Wear: ${tool.estimated_wear_cost?.toFixed(2)}</span>
+                                        <span>Cost: {formatPrice(tool.cost_usd)}</span>
+                                        <span>Wear: {formatPrice(tool.estimated_wear_cost || 0)}</span>
                                         <span>Used: {tool.usage_time_minutes?.toFixed(1)}min</span>
                                     </div>
                                 </div>
@@ -3193,8 +3222,8 @@ const ManufacturingIntelligencePanel = ({ designId, onClose }) => {
                                     <h4 style={{ margin: '0 0 8px 0', fontSize: '15px', color: 'var(--text-primary)' }}>{opp.type}</h4>
                                     <p style={{ margin: '0 0 12px 0', fontSize: '14px', color: 'var(--text-secondary)' }}>{opp.description}</p>
                                     <div style={styles.oppStats}>
-                                        <span>Per Part: ${opp.estimated_savings_per_part}</span>
-                                        <span>Total: ${opp.total_savings_for_batch}</span>
+                                        <span>Per Part: {formatPrice(opp.estimated_savings_per_part)}</span>
+                                        <span>Total: {formatPrice(opp.total_savings_for_batch)}</span>
                                         <span>Effort: {opp.implementation_effort}</span>
                                     </div>
                                 </div>
@@ -3217,6 +3246,7 @@ const ManufacturingIntelligencePanel = ({ designId, onClose }) => {
 const CustomerDashboardOverview = ({ user, onNavigate }) => {
     const [stats, setStats] = useState({ designs: 0, orders: 0, totalSpent: 0, newQuotes: 0 });
     const [loading, setLoading] = useState(true);
+    const { formatPrice } = useCurrency();
 
     useEffect(() => {
         const fetchStats = async () => {
@@ -3268,7 +3298,7 @@ const CustomerDashboardOverview = ({ user, onNavigate }) => {
                     <p style={styles.statLabel}>Open Orders</p>
                 </div>
                 <div style={styles.statCard}>
-                    <h3 style={styles.statValue}>{loading ? '...' : `$${stats.totalSpent.toFixed(2)}`}</h3>
+                    <h3 style={styles.statValue}>{loading ? '...' : formatPrice(stats.totalSpent)}</h3>
                     <p style={styles.statLabel}>Total Spent</p>
                 </div>
                 <div style={styles.statCard}>
@@ -3453,6 +3483,7 @@ const CustomerOrdersPage = ({ onViewFiles }) => {
     const [orders, setOrders] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
+    const { formatPrice } = useCurrency();
 
     useEffect(() => {
         const fetchOrders = async () => {
@@ -3507,7 +3538,7 @@ const CustomerOrdersPage = ({ onViewFiles }) => {
                                 <td style={{ ...styles.tableCell, fontFamily: 'monospace' }}>{order.id}</td>
                                 <td style={styles.tableCell}>{order.designName}</td>
                                 <td style={styles.tableCell}>{order.manufacturer}</td>
-                                <td style={styles.tableCell}>${order.price.toFixed(2)}</td>
+                                <td style={styles.tableCell}>{formatPrice(order.price)}</td>
                                 <td style={styles.tableCell}><span style={getStatusStyle(order.status)}>{order.status}</span></td>
                                 <td style={{ ...styles.tableCell, fontFamily: 'monospace' }}>
                                     {order.trackingNumber ? (
@@ -3939,6 +3970,8 @@ const App = () => {
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
     <React.StrictMode>
-        <App />
+        <CurrencyProvider>
+            <App />
+        </CurrencyProvider>
     </React.StrictMode>
 );
