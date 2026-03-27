@@ -67,11 +67,13 @@ export const styles: { [key: string]: React.CSSProperties } = {
         textDecoration: 'none',
         fontWeight: 500,
         fontSize: '15px',
-        transition: 'color 0.3s, text-shadow 0.3s'
+        transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+        display: 'inline-block'
     },
     navLinkHover: {
         color: neon_cyan,
-        textShadow: `0 0 8px ${neon_cyan}`
+        textShadow: `0 0 8px ${neon_cyan}`,
+        transform: 'translateY(-1px)'
     },
     headerActions: { display: 'flex', alignItems: 'center', gap: '16px' },
     button: {
@@ -260,11 +262,12 @@ export const styles: { [key: string]: React.CSSProperties } = {
         borderRadius: '8px',
         border: `1px solid ${border_color_strong}`,
         fontSize: '16px',
-        transition: 'border-color 0.2s, box-shadow 0.2s',
+        transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
         backgroundColor: 'rgba(0,0,0,0.3)',
         color: text_primary,
         width: '100%',
-        boxSizing: 'border-box'
+        boxSizing: 'border-box',
+        outline: 'none'
     },
     loginLinks: { display: 'flex', justifyContent: 'space-between', marginTop: '24px', fontSize: '14px' },
     loginLink: { color: neon_cyan, textDecoration: 'none', transition: 'filter 0.2s', filter: 'brightness(0.9)' },
@@ -475,7 +478,8 @@ export const styles: { [key: string]: React.CSSProperties } = {
         borderRadius: '16px',
         border: `1px solid ${border_color}`,
         display: 'flex',
-        flexDirection: 'column'
+        flexDirection: 'column',
+        transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
     },
     dashboardHeroCard: {
         backgroundColor: 'var(--bg-panel)',
@@ -485,7 +489,8 @@ export const styles: { [key: string]: React.CSSProperties } = {
         boxShadow: `0 0 20px rgba(var(--neon-cyan-rgb), 0.1), inset 0 0 20px rgba(var(--neon-cyan-rgb), 0.05)`,
         display: 'flex',
         flexDirection: 'column',
-        justifyContent: 'center'
+        justifyContent: 'center',
+        transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
     },
     dashboardMetricValue: {
         fontSize: '48px',

@@ -391,16 +391,16 @@ const Header = ({ isAuthenticated, onLogout, onNavigate }: HeaderProps) => {
 };
 
 const Hero = ({ onNavigate }: { onNavigate: (page: string, params?: any) => void }) => (
-    <section style={styles.hero}>
+    <section style={styles.hero} className="animate-fade-in">
         <div style={{ ...styles.container, position: 'relative', zIndex: 1 }}>
             <div style={styles.heroContent}>
-                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: '40px' }}>
-                    <img src="/media/quotanic-logo.png" alt="Quotanic Logo" style={{ height: '300px', width: 'auto', marginBottom: '1px', filter: `drop-shadow(0 0 20px ${neon_cyan})` }} />
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: '40px' }} className="animate-slide-up">
+                    <img src="/media/quotanic-logo.png" alt="Quotanic Logo" style={{ height: '300px', width: 'auto', marginBottom: '1px', filter: `drop-shadow(0 0 20px ${neon_cyan})` }} className="animate-float" />
                     <h1 style={{ fontSize: '76px', fontWeight: '900', margin: 0, background: `linear-gradient(to right, ${neon_cyan}, var(--logo-center, var(--text-primary)), ${neon_magenta})`, WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', textShadow: '0 0 30px rgba(var(--neon-cyan-rgb), 0.5)', letterSpacing: '-2px' }}>QUOTANIC</h1>
                 </div>
-                <h1 style={styles.heroTitle}>From Design to Production, Faster Than Ever.</h1>
-                <p style={styles.heroSubtitle}>Get instant quotes from a global network of vetted manufacturers. Upload your design and compare prices, lead times, and quality in one place.</p>
-                <div style={styles.heroActions}>
+                <h1 style={styles.heroTitle} className="animate-slide-up stagger-child-1">From Design to Production, Faster Than Ever.</h1>
+                <p style={styles.heroSubtitle} className="animate-slide-up stagger-child-2">Get instant quotes from a global network of vetted manufacturers. Upload your design and compare prices, lead times, and quality in one place.</p>
+                <div style={styles.heroActions} className="animate-slide-up stagger-child-3">
                     <CtaButton text="Get an Instant Quote" primary onClick={() => onNavigate('upload')} />
                     <CtaButton text="Join as a Manufacturer" onClick={() => onNavigate('signup-manufacturer')} />
                 </div>
@@ -412,11 +412,11 @@ const Hero = ({ onNavigate }: { onNavigate: (page: string, params?: any) => void
 const HowItWorks = () => (
     <section style={styles.howItWorks}>
         <div style={styles.container}>
-            <h2 style={styles.sectionTitle}>Get Your Parts Made in 3 Simple Steps</h2>
+            <h2 style={styles.sectionTitle} className="animate-slide-up">Get Your Parts Made in 3 Simple Steps</h2>
             <div style={styles.stepsGrid}>
-                <div style={styles.step}><UploadIcon style={{ ...iconStyle, color: 'var(--neon-cyan)' }} /><h3 style={styles.stepTitle}>1. Upload Your Design</h3><p style={styles.stepText}>Securely upload your CAD files (STEP, IGES, STL, etc.) and specify your requirements.</p></div>
-                <div style={styles.step}><QuoteIcon style={{ ...iconStyle, color: 'var(--neon-cyan)' }} /><h3 style={styles.stepTitle}>2. Compare Instant Quotes</h3><p style={styles.stepText}>Our AI engine provides instant pricing. Compare quotes from suppliers based on cost, lead time, and ratings.</p></div>
-                <div style={styles.step}><ManufactureIcon style={{ ...iconStyle, color: 'var(--neon-cyan)' }} /><h3 style={styles.stepTitle}>3. Order and Manufacture</h3><p style={styles.stepText}>Accept your preferred quote to start production. Track your order until it's delivered to your door.</p></div>
+                <div style={styles.step} className="animate-slide-up stagger-child-1 hover-lift"><UploadIcon style={{ ...iconStyle, color: 'var(--neon-cyan)' }} /><h3 style={styles.stepTitle}>1. Upload Your Design</h3><p style={styles.stepText}>Securely upload your CAD files (STEP, IGES, STL, etc.) and specify your requirements.</p></div>
+                <div style={styles.step} className="animate-slide-up stagger-child-2 hover-lift"><QuoteIcon style={{ ...iconStyle, color: 'var(--neon-cyan)' }} /><h3 style={styles.stepTitle}>2. Compare Instant Quotes</h3><p style={styles.stepText}>Our AI engine provides instant pricing. Compare quotes from suppliers based on cost, lead time, and ratings.</p></div>
+                <div style={styles.step} className="animate-slide-up stagger-child-3 hover-lift"><ManufactureIcon style={{ ...iconStyle, color: 'var(--neon-cyan)' }} /><h3 style={styles.stepTitle}>3. Order and Manufacture</h3><p style={styles.stepText}>Accept your preferred quote to start production. Track your order until it's delivered to your door.</p></div>
             </div>
         </div>
     </section>
@@ -434,11 +434,11 @@ const ValueProposition = () => {
     return (
         <section style={styles.features}>
             <div style={styles.container}>
-                <h2 style={styles.sectionTitle}>The Smartest Way to Manufacture</h2>
+                <h2 style={styles.sectionTitle} className="animate-slide-up">The Smartest Way to Manufacture</h2>
                 <div style={styles.valueGrid}>
                     {valueProps.map((prop, index) => (
-                        <div key={index} style={{ ...styles.valueCard, ...(hoveredCard === index && styles.valueCardHover) }} onMouseEnter={() => setHoveredCard(index)} onMouseLeave={() => setHoveredCard(null)}>
-                            {React.cloneElement(prop.icon, { style: { ...iconStyle, color: hoveredCard === index ? 'var(--neon-cyan)' : 'var(--neon-magenta)' } })}
+                        <div key={index} style={{ ...styles.valueCard, ...(hoveredCard === index && styles.valueCardHover) }} onMouseEnter={() => setHoveredCard(index)} onMouseLeave={() => setHoveredCard(null)} className={`animate-slide-up stagger-child-${index + 1} hover-lift`}>
+                            {React.cloneElement(prop.icon as React.ReactElement, { style: { ...iconStyle, color: hoveredCard === index ? 'var(--neon-cyan)' : 'var(--neon-magenta)' } })}
                             <h3 style={styles.stepTitle}>{prop.title}</h3>
                             <p style={styles.stepText}>{prop.text}</p>
                         </div>
@@ -453,13 +453,13 @@ const ForWhom = ({ onNavigate }: { onNavigate: (page: string, params?: any) => v
     <section style={styles.howItWorks}>
         <div style={styles.container}>
             <div style={styles.forWhomGrid}>
-                <div style={styles.forWhomCard}>
+                <div style={styles.forWhomCard} className="animate-slide-up hover-lift">
                     <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}><CodeBracketIcon style={{ ...styles.forWhomIcon, color: 'var(--neon-cyan)' }} /><h3 style={styles.featureTitle}>For Engineers & Designers</h3></div>
                     <p style={styles.forWhomText}>Tired of manual searches and slow quote turnaround? Streamline your procurement process, reduce time-to-market, and find the perfect manufacturing partner without the hassle.</p>
                     <ul style={styles.featureList}><li>✓ Fast & Competitive Quotes</li><li>✓ Global Network of Suppliers</li><li>✓ Secure IP Protection</li><li>✓ Streamlined Ordering</li></ul>
                     <CtaButton text="Get an Instant Quote" primary onClick={() => onNavigate('upload')} />
                 </div>
-                <div style={styles.forWhomCard}>
+                <div style={styles.forWhomCard} className="animate-slide-up stagger-child-1 hover-lift">
                     <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}><WrenchScrewdriverIcon style={{ ...styles.forWhomIcon, color: 'var(--neon-magenta)' }} /><h3 style={styles.featureTitle}>For Manufacturers</h3></div>
                     <p style={styles.forWhomText}>Access a global customer base, streamline your quoting workflow, and fill your production capacity. Let us bring the jobs to you so you can focus on what you do best: making things.</p>
                     <ul style={styles.featureList}><li>✓ Access a New Stream of Orders</li><li>✓ Automate Your Quoting Process</li><li>✓ Reduce Administrative Overhead</li><li>✓ Grow Your Business</li></ul>
@@ -473,17 +473,17 @@ const ForWhom = ({ onNavigate }: { onNavigate: (page: string, params?: any) => v
 const SocialProof = () => (
     <section style={styles.features}>
         <div style={styles.container}>
-            <h2 style={styles.sectionTitle}>Built for the Future of Manufacturing</h2>
+            <h2 style={styles.sectionTitle} className="animate-slide-up">Built for the Future of Manufacturing</h2>
             <div style={styles.socialProofGrid}>
-                <div style={{ ...styles.testimonialCard, gridColumn: '1 / -1', maxWidth: '800px', margin: '0 auto' }}>
+                <div style={{ ...styles.testimonialCard, gridColumn: '1 / -1', maxWidth: '800px', margin: '0 auto' }} className="animate-slide-up hover-lift">
                     <p style={styles.testimonialText}>"Quotanic was built to bridge the gap between complex engineering designs and efficient manufacturing. Our mission is to make custom part sourcing as instant and transparent as possible through intelligent matching and live conversion."</p>
                     <p style={styles.testimonialAuthor}>- Surena, Creator of Quotanic</p>
                 </div>
             </div>
             <div style={styles.metricsContainer}>
-                <div style={styles.metricItem}><span style={styles.metricValue}>50+</span><span style={styles.metricLabel}>Manufacturers on Platform</span></div>
-                <div style={styles.metricItem}><span style={styles.metricValue}>1,000+</span><span style={styles.metricLabel}>Parts Quoted</span></div>
-                <div style={styles.metricItem}><span style={styles.metricValue}>24/7</span><span style={styles.metricLabel}>AI Analysis</span></div>
+                <div style={styles.metricItem} className="animate-slide-up stagger-child-1"><span style={styles.metricValue}>50+</span><span style={styles.metricLabel}>Manufacturers on Platform</span></div>
+                <div style={styles.metricItem} className="animate-slide-up stagger-child-2"><span style={styles.metricValue}>1,000+</span><span style={styles.metricLabel}>Parts Quoted</span></div>
+                <div style={styles.metricItem} className="animate-slide-up stagger-child-3"><span style={styles.metricValue}>24/7</span><span style={styles.metricLabel}>AI Analysis</span></div>
             </div>
         </div>
     </section>
@@ -505,11 +505,11 @@ const AboutUsPage = () => (
                 </p>
             </section>
             <div style={styles.socialProofGrid}>
-                <div style={styles.testimonialCard}>
+                <div className="hover-lift">
                     <h4 style={{ color: 'var(--neon-magenta)', marginBottom: '12px' }}>Intelligent Matching</h4>
                     <p style={styles.testimonialText}>Our proprietary AI analyzes 3D geometry in real-time to find the perfect manufacturer for every project, regardless of complexity.</p>
                 </div>
-                <div style={styles.testimonialCard}>
+                <div className="hover-lift">
                     <h4 style={{ color: 'var(--neon-cyan)', marginBottom: '12px' }}>Global Network</h4>
                     <p style={styles.testimonialText}>We connect engineers with a vetted network of specialized manufacturers, from local machine shops to high-volume production facilities.</p>
                 </div>
@@ -621,9 +621,9 @@ const TrustAndSecurityPage = () => (
             <p style={styles.heroSubtitle}>Your intellectual property and data are our top priority. Learn about the measures we take to keep you secure.</p>
         </div>
         <div style={{ maxWidth: '800px', margin: '48px auto 0', textAlign: 'left', display: 'flex', flexDirection: 'column', gap: '32px' }}>
-            <div style={styles.featureCard}><h3 style={styles.featureTitle}>Intellectual Property (IP) Protection</h3><p style={styles.stepText}>We understand that your designs are your most valuable asset. Our platform is built with multiple layers of security to ensure your IP is protected from the moment you upload it.</p><ul style={{ ...styles.featureList, marginTop: '16px', listStyle: 'disc', paddingLeft: '20px', gap: '8px' }}><li><strong>Secure Uploads:</strong> All file transfers are encrypted using industry-standard SSL/TLS protocols.</li><li><strong>Access Control:</strong> Your design files are only accessible to you and the manufacturers you choose to request quotes from.</li><li><strong>In-Browser 3D Viewer:</strong> Manufacturers can inspect your 3D models securely in their browser without downloading the source file, preventing unauthorized distribution.</li><li><strong>Integrated NDAs:</strong> We facilitate standardized Non-Disclosure Agreements that you can execute with manufacturers directly on the platform before sharing sensitive details.</li></ul></div>
-            <div style={styles.featureCard}><h3 style={styles.featureTitle}>Manufacturer Vetting & Quality Assurance</h3><p style={styles.stepText}>We maintain a high-quality network by carefully vetting every manufacturer who joins our platform. This ensures you're working with professional and reliable partners.</p><ul style={{ ...styles.featureList, marginTop: '16px', listStyle: 'disc', paddingLeft: '20px', gap: '8px' }}><li><strong>Verification Process:</strong> We verify the business information and operational history of all manufacturers.</li><li><strong>Capability Audits:</strong> We review manufacturer-submitted information about their equipment, processes, and certifications.</li><li><strong>Community Reviews:</strong> Our transparent review system allows you to see ratings and feedback from other customers before placing an order.</li></ul></div>
-            <div style={styles.featureCard}><h3 style={styles.featureTitle}>Secure Payments & Transactions</h3><p style={styles.stepText}>Our platform ensures that financial transactions are secure and transparent, protecting both customers and manufacturers.</p><ul style={{ ...styles.featureList, marginTop: '16px', listStyle: 'disc', paddingLeft: '20px', gap: '8px' }}><li><strong>Secure Payment Gateway:</strong> We partner with leading payment processors to handle all transactions securely. Your financial data is never stored on our servers.</li><li><strong>Escrow System (Coming Soon):</strong> We plan to implement an escrow system where payments are held securely and released to the manufacturer upon reaching agreed-upon project milestones.</li><li><strong>Clear Dispute Resolution:</strong> We provide a structured process to mediate and resolve any disputes related to payments or order fulfillment.</li></ul></div>
+            <div className="hover-lift"><h3 style={styles.featureTitle}>Intellectual Property (IP) Protection</h3><p style={styles.stepText}>We understand that your designs are your most valuable asset. Our platform is built with multiple layers of security to ensure your IP is protected from the moment you upload it.</p><ul style={{ ...styles.featureList, marginTop: '16px', listStyle: 'disc', paddingLeft: '20px', gap: '8px' }}><li><strong>Secure Uploads:</strong> All file transfers are encrypted using industry-standard SSL/TLS protocols.</li><li><strong>Access Control:</strong> Your design files are only accessible to you and the manufacturers you choose to request quotes from.</li><li><strong>In-Browser 3D Viewer:</strong> Manufacturers can inspect your 3D models securely in their browser without downloading the source file, preventing unauthorized distribution.</li><li><strong>Integrated NDAs:</strong> We facilitate standardized Non-Disclosure Agreements that you can execute with manufacturers directly on the platform before sharing sensitive details.</li></ul></div>
+            <div className="hover-lift"><h3 style={styles.featureTitle}>Manufacturer Vetting & Quality Assurance</h3><p style={styles.stepText}>We maintain a high-quality network by carefully vetting every manufacturer who joins our platform. This ensures you're working with professional and reliable partners.</p><ul style={{ ...styles.featureList, marginTop: '16px', listStyle: 'disc', paddingLeft: '20px', gap: '8px' }}><li><strong>Verification Process:</strong> We verify the business information and operational history of all manufacturers.</li><li><strong>Capability Audits:</strong> We review manufacturer-submitted information about their equipment, processes, and certifications.</li><li><strong>Community Reviews:</strong> Our transparent review system allows you to see ratings and feedback from other customers before placing an order.</li></ul></div>
+            <div className="hover-lift"><h3 style={styles.featureTitle}>Secure Payments & Transactions</h3><p style={styles.stepText}>Our platform ensures that financial transactions are secure and transparent, protecting both customers and manufacturers.</p><ul style={{ ...styles.featureList, marginTop: '16px', listStyle: 'disc', paddingLeft: '20px', gap: '8px' }}><li><strong>Secure Payment Gateway:</strong> We partner with leading payment processors to handle all transactions securely. Your financial data is never stored on our servers.</li><li><strong>Escrow System (Coming Soon):</strong> We plan to implement an escrow system where payments are held securely and released to the manufacturer upon reaching agreed-upon project milestones.</li><li><strong>Clear Dispute Resolution:</strong> We provide a structured process to mediate and resolve any disputes related to payments or order fulfillment.</li></ul></div>
         </div>
     </div>
 );
@@ -1121,7 +1121,7 @@ const UploadPage = ({ onProceedToLogin, onNavigate, isAuthenticated, user, pendi
 const ManufacturerCard = ({ manufacturer, onNavigate }) => {
     const [hover, setHover] = useState(false);
     return (
-        <div style={{ ...styles.mfgCard, ...(hover && styles.mfgCardHover) }} onMouseEnter={() => setHover(true)} onMouseLeave={() => setHover(false)} onClick={() => onNavigate('manufacturer-profile', manufacturer.id)}>
+        <div style={{ ...styles.mfgCard, ...(hover && styles.mfgCardHover) }} onMouseEnter={() => setHover(true)} onMouseLeave={() => setHover(false)} onClick={() => onNavigate('manufacturer-profile', manufacturer.id)} className="hover-lift">
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px' }}>
                 <img src={manufacturer.logoUrl} alt={`${manufacturer.company_name} logo`} style={styles.mfgCardLogo} />
                 <div style={{ flex: 1 }}>
@@ -1480,8 +1480,8 @@ const DashboardOverview = ({ user }) => {
     const maxFunnel = quoteFunnel.total || 1;
 
     return (
-        <div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+        <div className="animate-fade-in">
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }} className="animate-slide-up">
                 <div>
                     <h2 style={styles.dashboardPageTitle}>Overview</h2>
                     <p style={{ ...styles.stepText, fontSize: '18px' }}>
@@ -1501,9 +1501,10 @@ const DashboardOverview = ({ user }) => {
             </div>
 
             {/* 1. Hero KPI Row */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'minmax(300px, 1.5fr) repeat(3, 1fr)', gap: '24px', marginBottom: '32px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'minmax(300px, 1.5fr) repeat(3, 1fr)', gap: '20px', marginBottom: '32px' }} className="animate-slide-up stagger-child-1">
+
                 {/* Primary KPI: Revenue */}
-                <div style={styles.dashboardHeroCard}>
+                <div className="dashboard-hero-card-hover" style={styles.dashboardHeroCard}>
                     <p style={styles.dashboardMetricLabel}>Revenue (This Month)</p>
                     <h3 style={{ ...styles.dashboardMetricValue, color: neon_magenta, textShadow: `0 0 10px ${neon_magenta}` }}>
                         {formatPrice(stats?.monthly_revenue)}
@@ -1518,7 +1519,7 @@ const DashboardOverview = ({ user }) => {
                 </div>
 
                 {/* Secondary KPIs */}
-                <div style={styles.dashboardCard}>
+                <div className="dashboard-card-hover" style={styles.dashboardCard}>
                     <p style={styles.dashboardMetricLabel}>Active Orders</p>
                     <h3 style={styles.dashboardMetricValue}>{stats?.active_orders || 0}</h3>
                     <span style={{ fontSize: '13px', color: text_secondary, marginTop: 'auto' }}>
@@ -1537,7 +1538,7 @@ const DashboardOverview = ({ user }) => {
                     </span>
                 </div>
 
-                <div style={styles.dashboardCard}>
+                <div className="dashboard-card-hover" style={styles.dashboardCard}>
                     <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                         <p style={styles.dashboardMetricLabel}>Acceptance Rate</p>
                         <p style={{ ...styles.dashboardMetricLabel, textAlign: 'right' }}>On-Time Rate</p>
@@ -1561,7 +1562,7 @@ const DashboardOverview = ({ user }) => {
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '24px', marginBottom: '32px' }}>
 
                 {/* Revenue Trend */}
-                <div style={styles.dashboardCard}>
+                <div className="dashboard-card-hover" style={styles.dashboardCard}>
                     <div style={styles.dashboardSectionHeader}>
                         <span>Revenue Trend (6mo)</span>
                     </div>
@@ -1586,7 +1587,7 @@ const DashboardOverview = ({ user }) => {
                 </div>
 
                 {/* Quote Pipeline */}
-                <div style={styles.dashboardCard}>
+                <div className="dashboard-card-hover" style={styles.dashboardCard}>
                     <div style={styles.dashboardSectionHeader}>
                         <span>Quote Pipeline</span>
                     </div>
@@ -1627,7 +1628,7 @@ const DashboardOverview = ({ user }) => {
             <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '24px' }}>
 
                 {/* Recent Activity Table */}
-                <div style={styles.dashboardCard}>
+                <div className="dashboard-card-hover" style={styles.dashboardCard}>
                     <div style={styles.dashboardSectionHeader}>
                         <span>Recent Activity</span>
                         <a href="#quotes" style={{ fontSize: '13px', color: neon_cyan, textDecoration: 'none' }}>View All</a>
@@ -1678,7 +1679,7 @@ const DashboardOverview = ({ user }) => {
                 </div>
 
                 {/* Quick Actions */}
-                <div style={styles.dashboardCard}>
+                <div className="dashboard-card-hover" style={styles.dashboardCard}>
                     <div style={styles.dashboardSectionHeader}>
                         <span>Quick Actions</span>
                     </div>
@@ -1732,7 +1733,7 @@ const DashboardOverview = ({ user }) => {
             {/* 4. Bottom Row: Top Customers & Upcoming Deadlines */}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px', marginTop: '32px' }}>
                 {/* Top Customers */}
-                <div style={styles.dashboardCard}>
+                <div className="dashboard-card-hover" style={styles.dashboardCard}>
                     <div style={styles.dashboardSectionHeader}>
                         <span>Top Customers (All Time)</span>
                     </div>
@@ -1758,7 +1759,7 @@ const DashboardOverview = ({ user }) => {
                 </div>
 
                 {/* Upcoming Deadlines */}
-                <div style={styles.dashboardCard}>
+                <div className="dashboard-card-hover" style={styles.dashboardCard}>
                     <div style={styles.dashboardSectionHeader}>
                         <span>Upcoming Deadlines</span>
                         <a href="#orders" style={{ fontSize: '13px', color: neon_cyan, textDecoration: 'none' }}>View Orders</a>
@@ -2828,19 +2829,19 @@ const DesignAnalysisResults = ({ designId, onContinue }) => {
 
             {/* Summary Cards */}
             <div style={styles.analysisSummary}>
-                <div style={styles.statCard}>
+                <div style={styles.statCard} className="hover-lift">
                     <h4 style={styles.statValue}>{fbm_summary?.total_features || 0}</h4>
                     <p style={styles.statLabel}>Features Detected</p>
                 </div>
-                <div style={styles.statCard}>
+                <div style={styles.statCard} className="hover-lift">
                     <h4 style={styles.statValue}>{fbm_summary?.total_operations || 0}</h4>
                     <p style={styles.statLabel}>Machining Operations</p>
                 </div>
-                <div style={styles.statCard}>
+                <div style={styles.statCard} className="hover-lift">
                     <h4 style={styles.statValue}>{fbm_summary?.estimated_machining_time_hours?.toFixed(1) || '0'}h</h4>
                     <p style={styles.statLabel}>Estimated Time</p>
                 </div>
-                <div style={styles.statCard}>
+                <div style={styles.statCard} className="hover-lift">
                     <h4 style={styles.statValue}>{fbm_summary?.number_of_setups || 1}</h4>
                     <p style={styles.statLabel}>Setup{fbm_summary?.number_of_setups > 1 ? 's' : ''}</p>
                 </div>
@@ -3397,8 +3398,8 @@ const CustomerDashboardOverview = ({ user, onNavigate }) => {
     }, []);
 
     return (
-        <div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+        <div className="animate-fade-in">
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }} className="animate-slide-up">
                 <div>
                     <h2 style={styles.dashboardPageTitle}>Overview</h2>
                     <p style={{ ...styles.stepText, fontSize: '18px' }}>Welcome back, {user?.company_name}!</p>
@@ -3411,20 +3412,20 @@ const CustomerDashboardOverview = ({ user, onNavigate }) => {
                     <UploadIcon style={{ width: '20px', height: '20px', marginRight: '8px' }} />
                 </CtaButton>
             </div>
-            <div style={styles.statsGrid}>
-                <div style={styles.statCard}>
+            <div style={styles.statsGrid} className="animate-slide-up stagger-child-1">
+                <div style={styles.statCard} className="hover-lift">
                     <h3 style={styles.statValue}>{loading ? '...' : stats.designs}</h3>
                     <p style={styles.statLabel}>Active Designs</p>
                 </div>
-                <div style={styles.statCard}>
+                <div style={styles.statCard} className="hover-lift">
                     <h3 style={styles.statValue}>{loading ? '...' : stats.orders}</h3>
                     <p style={styles.statLabel}>Open Orders</p>
                 </div>
-                <div style={styles.statCard}>
+                <div style={styles.statCard} className="hover-lift">
                     <h3 style={styles.statValue}>{loading ? '...' : formatPrice(stats.totalSpent)}</h3>
                     <p style={styles.statLabel}>Total Spent</p>
                 </div>
-                <div style={styles.statCard}>
+                <div style={styles.statCard} className="hover-lift">
                     <h3 style={styles.statValue}>{loading ? '...' : stats.newQuotes}</h3>
                     <p style={styles.statLabel}>New Quote Received</p>
                 </div>

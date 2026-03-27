@@ -24,7 +24,8 @@ const CtaButton = ({ text, href = "#", onClick, primary = false, type = "button"
     const dangerHoverStyle = className.includes('button-small-danger') && !disabled ? styles.buttonDangerHover : {};
 
     const style = { ...styles.button, ...variantStyle, ...(hover ? hoverStyle : {}), ...dangerStyle, ...(hover ? dangerHoverStyle : {}), ...disabledStyle };
-    const commonProps = { style: style, onMouseEnter: () => setHover(true), onMouseLeave: () => setHover(false), disabled: disabled, className: className };
+    const combinedClassName = `${className} ${!disabled ? 'hover-lift' : ''}`.trim();
+    const commonProps = { style: style, onMouseEnter: () => setHover(true), onMouseLeave: () => setHover(false), disabled: disabled, className: combinedClassName };
 
     if (type === 'submit' || type === 'reset' || onClick) {
         return (<button type={type} onClick={onClick} {...commonProps}>{children}{text}</button>);
