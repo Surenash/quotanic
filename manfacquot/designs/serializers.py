@@ -45,11 +45,11 @@ class DesignSerializer(serializers.ModelSerializer):
         ]
 
     def get_view_url(self, obj):
-        \"\"\"
+        """
         Returns the URL for the 3D viewer.
         If it's an STL, returns the original file.
         If it's STEP/IGES, returns the generated GLB if available.
-        \"\"\"
+        """
         from django.conf import settings
         
         # Get base media URL
@@ -68,7 +68,7 @@ class DesignSerializer(serializers.ModelSerializer):
                 target_key = obj.geometric_data['glb_file_key']
         
         if settings.USE_LOCAL_STORAGE:
-            return f\"{media_url}{target_key}\"
+            return f"{media_url}{target_key}"
         else:
             # Generate pre-signed S3 URL
             import boto3
