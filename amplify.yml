@@ -3,14 +3,13 @@ frontend:
   phases:
     preBuild:
       commands:
-        - nvm use 18 || nvm install 18
+        - nvm use 20 || nvm install 20
         - node -v
         - cd manfacquot
         - npm install
     build:
       commands:
         - export NODE_OPTIONS="--max-old-space-size=4096"
-        - cd manfacquot
         - npm run build
   artifacts:
     baseDirectory: manfacquot/dist
