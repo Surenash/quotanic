@@ -192,6 +192,7 @@ const FileViewerModal = ({ design, onClose }) => {
 
     const fileExtension = design.s3_file_key?.split('.').pop()?.toLowerCase() || 'stl';
     const isSupported = ['stl', 'obj', 'gltf', 'glb', 'step', 'stp', 'iges', 'igs'].includes(fileExtension);
+    const modelUrl = design.view_url?.startsWith('http') ? design.view_url : `${MEDIA_BASE_URL}${design.view_url}`;
 
     return (
         <div style={styles.modalBackdrop}>
@@ -248,7 +249,7 @@ const FileViewerModal = ({ design, onClose }) => {
                             <div style={{ flex: 1, background: '#0a0a0f', position: 'relative' }}>
                                 {isSupported ? (
                                     <Viewer 
-                                        modelUrl={design.view_url} 
+                                        modelUrl={modelUrl} 
                                         fileExtension={(['step', 'stp', 'iges', 'igs'].includes(fileExtension) ? 'glb' : fileExtension) as any} 
                                         view={view}
                                         isViewLocked={isViewLocked}
@@ -258,7 +259,7 @@ const FileViewerModal = ({ design, onClose }) => {
                                     <div style={{ height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: text_secondary, gap: '16px' }}>
                                         <LucideFile style={{ width: '64px', height: '64px', opacity: 0.5 }} />
                                         <p>3D Preview not available for .{fileExtension} files</p>
-                                        <CtaButton text="Download to View" onClick={() => window.open(design.view_url, '_blank')} />
+                                        <CtaButton text="Download to View" onClick={() => window.open(modelUrl, '_blank')} />
                                     </div>
                                 )}
 
@@ -356,7 +357,7 @@ const FileViewerModal = ({ design, onClose }) => {
 
                 <div style={{ ...styles.modalFooter, padding: '16px 24px', background: 'rgba(15, 23, 42, 0.4)' }}>
                     <div style={{ display: 'flex', gap: '12px' }}>
-                        <CtaButton text="Download Original" onClick={() => window.open(design.view_url, '_blank')}>
+                        <CtaButton text="Download Original" onClick={() => window.open(modelUrl, '_blank')}>
                             <DownloadIcon style={{ width: '18px', height: '18px', marginRight: '8px' }} />
                         </CtaButton>
                     </div>
