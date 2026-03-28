@@ -131,6 +131,10 @@ const LinkedInIcon = ({ style }: { style?: React.CSSProperties }) => (
     <LucideLinkedin style={{ width: '24px', height: '24px', ...style }} />
 );
 
+const TwitterIcon = ({ style }: { style?: React.CSSProperties }) => (
+    <LucideTwitter style={{ width: '24px', height: '24px', ...style }} />
+);
+
 const SearchIcon = ({ style }: { style?: React.CSSProperties }) => (
     <LucideSearch style={style} />
 );
@@ -173,6 +177,14 @@ const DocumentTextIcon = ({ style }: { style?: React.CSSProperties }) => (
 
 const VideoCameraIcon = ({ style }: { style?: React.CSSProperties }) => (
     <LucideVideo style={style} />
+);
+
+const DownloadIcon = ({ style }: { style?: React.CSSProperties }) => (
+    <LucideDownload style={style} />
+);
+
+const EyeIcon = ({ style }: { style?: React.CSSProperties }) => (
+    <LucideEye style={style} />
 );
 
 // Default icon style for components that use iconStyle
