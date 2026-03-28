@@ -6,46 +6,58 @@ import { STLLoader } from 'three/examples/jsm/loaders/STLLoader';
 import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader';
 import { SupportedExtensions } from '../../types/types';
 
+interface ModelComponentProps {
+  url: string;
+}
+
+// STL Loader Component
+const STLModel: React.FC<ModelComponentProps> = ({ url }) => {
+  const geometry = useLoader(STLLoader, url);
+  return (
+    <mesh geometry={geometry} castShadow receiveShadow>
+      <meshStandardMaterial color="#3b82f6" metalness={0.6} roughness={0.4} />
+    </mesh>
+  );
+};
+
+// OBJ Loader Component
+const OBJModel: React.FC<ModelComponentProps> = ({ url }) => {
+  const model = useLoader(OBJLoader, url);
+  model.traverse((child) => {
+    if ((child as THREE.Mesh).isMesh) {
+      child.castShadow = true;
+      child.receiveShadow = true;
+    }
+  });
+  return <primitive object={model} />;
+};
+
+// GLTF/GLB Loader Component
+const GLTFModel: React.FC<ModelComponentProps> = ({ url }) => {
+  const { scene } = useGLTF(url);
+  scene.traverse((child) => {
+    if ((child as THREE.Mesh).isMesh) {
+      child.castShadow = true;
+      child.receiveShadow = true;
+    }
+  });
+  return <primitive object={scene} />;
+};
+
 interface LoadedModelProps {
   modelUrl: string;
   fileExtension: SupportedExtensions;
 }
 
 const LoadedModel: React.FC<LoadedModelProps> = ({ modelUrl, fileExtension }) => {
-  let geometry;
-  let model;
-
   switch (fileExtension) {
     case 'stl':
-      geometry = useLoader(STLLoader, modelUrl);
-      return (
-        <mesh geometry={geometry} castShadow receiveShadow>
-          <meshStandardMaterial color="royalblue" />
-        </mesh>
-      );
+      return <STLModel url={modelUrl} />;
     case 'obj':
-      model = useLoader(OBJLoader, modelUrl);
-      // OBJLoader can return a Group, so traverse and apply materials/shadows
-       model.traverse((child) => {
-        if ((child as THREE.Mesh).isMesh) {
-            child.castShadow = true;
-            child.receiveShadow = true;
-            // You can assign a material here if needed
-            // ((child as THREE.Mesh).material as THREE.MeshStandardMaterial) = new THREE.MeshStandardMaterial({color: 'lightgray'});
-        }
-      });
-      return <primitive object={model} />;
+      return <OBJModel url={modelUrl} />;
     case 'gltf':
     case 'glb':
-      const { scene } = useGLTF(modelUrl);
-      // GLTF/GLB models often come with materials, let's just make sure they cast shadows
-      scene.traverse((child) => {
-        if ((child as THREE.Mesh).isMesh) {
-            child.castShadow = true;
-            child.receiveShadow = true;
-        }
-      });
-      return <primitive object={scene} />;
+      return <GLTFModel url={modelUrl} />;
     default:
       return null;
   }
@@ -57,7 +69,6 @@ interface ModelProps {
   onLoad: (payload: { boundingBox: THREE.Box3 }) => void;
 }
 
-
 const Model: React.FC<ModelProps> = ({ modelUrl, fileExtension, onLoad }) => {
   return (
     <Center onCentered={onLoad}>
@@ -65,6 +76,5 @@ const Model: React.FC<ModelProps> = ({ modelUrl, fileExtension, onLoad }) => {
     </Center>
   );
 };
-
 
 export default Model;
