@@ -47,26 +47,26 @@ class DesignSerializer(serializers.ModelSerializer):
     def get_view_url(self, obj):
         """
         Returns the URL for the 3D viewer.
-        If it's an STL, returns the original file.
-        If it's STEP/IGES, returns the generated GLB if available.
+        Supports STL directly. For STEP/IGES, returns GLB if available, 
+        otherwise returns None to prevent frontend parsing errors.
         """
         from django.conf import settings
-        
-        # Get base media URL
-        media_url = settings.MEDIA_URL
-        # Ensure it's absolute if needed (or let the frontend handle relative)
         
         file_key = obj.s3_file_key
         file_ext = os.path.splitext(file_key)[1].lower()
         
-        # Default to original file for STL
-        target_key = file_key
+        target_key = None
         
-        # Use GLB for STEP/IGES if analysis is complete
-        if file_ext in ['.step', '.stp', '.iges', '.igs']:
+        if file_ext == '.stl':
+            target_key = file_key
+        elif file_ext in ['.step', '.stp', '.iges', '.igs']:
             if obj.geometric_data and 'glb_file_key' in obj.geometric_data:
                 target_key = obj.geometric_data['glb_file_key']
         
+        if not target_key:
+            return None
+
+        media_url = settings.MEDIA_URL
         if settings.USE_LOCAL_STORAGE:
             return f"{media_url}{target_key}"
         else:
