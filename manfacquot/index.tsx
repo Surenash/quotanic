@@ -34,7 +34,8 @@ import {
     Cylinder as LucideCylinder,
     Factory as LucideFactory,
     PieChart as LucidePieChart,
-    Sparkles as LucideSparkles
+    Sparkles as LucideSparkles,
+    AlertTriangle as LucideAlertTriangle
 } from 'lucide-react';
 
 // --- API Client ---
@@ -45,7 +46,7 @@ import CtaButton from './components/CtaButton';
 import Notification from './components/Notification';
 import CheckboxGroup from './components/CheckboxGroup';
 import ManufacturerSettingsPage from './components/ManufacturerSettings';
-import Viewer from './components/Viewer';
+import Viewer, { ErrorBoundary } from './components/Viewer';
 import { ViewPreset } from './types/types';
 
 import './index.css';
@@ -260,13 +261,22 @@ const FileViewerModal = ({ design, onClose }) => {
                         <>
                             <div style={{ flex: 1, background: '#0a0a0f', position: 'relative' }}>
                                 {isSupported ? (
-                                    <Viewer 
-                                        modelUrl={modelUrl} 
-                                        fileExtension={(['step', 'stp', 'iges', 'igs'].includes(fileExtension) ? 'glb' : fileExtension) as any} 
-                                        view={view}
-                                        isViewLocked={isViewLocked}
-                                        onUserInteraction={() => setIsViewLocked(false)}
-                                    />
+                                    <ErrorBoundary fallback={(error) => (
+                                        <div style={{ height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: 'var(--status-error)', padding: '24px', textAlign: 'center' }}>
+                                            <LucideAlertTriangle style={{ width: '48px', height: '48px', marginBottom: '16px' }} />
+                                            <p>Failed to load 3D preview.</p>
+                                            <p style={{ fontSize: '12px', color: text_secondary, marginTop: '8px' }}>{error.message}</p>
+                                            <CtaButton text="Download to View Externally" onClick={() => window.open(modelUrl, '_blank')} style={{ marginTop: '16px' }} />
+                                        </div>
+                                    )}>
+                                        <Viewer 
+                                            modelUrl={modelUrl} 
+                                            fileExtension={(['step', 'stp', 'iges', 'igs'].includes(fileExtension) ? 'glb' : fileExtension) as any} 
+                                            view={view}
+                                            isViewLocked={isViewLocked}
+                                            onUserInteraction={() => setIsViewLocked(false)}
+                                        />
+                                    </ErrorBoundary>
                                 ) : (
                                     <div style={{ height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: text_secondary, gap: '16px' }}>
                                         <LucideFile style={{ width: '64px', height: '64px', opacity: 0.5 }} />
