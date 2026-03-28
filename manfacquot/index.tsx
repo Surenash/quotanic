@@ -205,7 +205,7 @@ const FileViewerModal = ({ design, onClose }) => {
 
     const fileExtension = design.s3_file_key?.split('.').pop()?.toLowerCase() || 'stl';
     const isSupported = ['stl', 'obj', 'gltf', 'glb', 'step', 'stp', 'iges', 'igs'].includes(fileExtension);
-    const modelUrl = design.view_url?.startsWith('http') ? design.view_url : `${MEDIA_BASE_URL}${design.view_url}`;
+    const modelUrl = design.view_url?.startsWith('http') ? design.view_url : (design.view_url ? `${MEDIA_BASE_URL}${design.view_url}` : null);
 
     return (
         <div style={styles.modalBackdrop}>
@@ -260,7 +260,7 @@ const FileViewerModal = ({ design, onClose }) => {
                     {activeTab === 'viewer' ? (
                         <>
                             <div style={{ flex: 1, background: '#0a0a0f', position: 'relative' }}>
-                                {isSupported ? (
+                                {isSupported && modelUrl ? (
                                     <ErrorBoundary fallback={(error) => (
                                         <div style={{ height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: 'var(--status-error)', padding: '24px', textAlign: 'center' }}>
                                             <LucideAlertTriangle style={{ width: '48px', height: '48px', marginBottom: '16px' }} />
@@ -277,11 +277,18 @@ const FileViewerModal = ({ design, onClose }) => {
                                             onUserInteraction={() => setIsViewLocked(false)}
                                         />
                                     </ErrorBoundary>
+                                ) : isSupported && !modelUrl ? (
+                                    <div style={{ height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: text_secondary, gap: '16px', padding: '24px', textAlign: 'center' }}>
+                                        <div className="w-16 h-16 border-4 border-t-brand-primary border-brand-secondary rounded-full animate-spin"></div>
+                                        <p style={{ marginTop: '24px', fontSize: '18px', color: neon_cyan }}>Preparing 3D Preview...</p>
+                                        <p style={{ maxWidth: '400px', fontSize: '14px' }}>Our AI is currently tessellating your .{fileExtension} file for browser inspection. This typically takes 30-60 seconds.</p>
+                                        <CtaButton text="Download Original" onClick={() => window.open(`${MEDIA_BASE_URL}/media/${design.s3_file_key}`, '_blank')} style={{ marginTop: '16px' }} />
+                                    </div>
                                 ) : (
                                     <div style={{ height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: text_secondary, gap: '16px' }}>
                                         <LucideFile style={{ width: '64px', height: '64px', opacity: 0.5 }} />
                                         <p>3D Preview not available for .{fileExtension} files</p>
-                                        <CtaButton text="Download to View" onClick={() => window.open(modelUrl, '_blank')} />
+                                        <CtaButton text="Download to View" onClick={() => window.open(`${MEDIA_BASE_URL}/media/${design.s3_file_key}`, '_blank')} />
                                     </div>
                                 )}
 
