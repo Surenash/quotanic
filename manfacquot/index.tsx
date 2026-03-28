@@ -119,18 +119,9 @@ const WrenchScrewdriverIcon = ({ style }: { style?: React.CSSProperties }) => (
     <LucideWrench style={{ width: '32px', height: '32px', ...style }} />
 );
 
-const VideoCameraIcon = ({ style }: { style?: React.CSSProperties }) => (
-    <LucideVideo style={{ width: '24px', height: '24px', ...style }} />
+const CubeIcon = ({ style }: { style?: React.CSSProperties }) => (
+    <LucideBox style={{ width: '24px', height: '24px', ...style }} />
 );
-
-const DownloadIcon = ({ style }: { style?: React.CSSProperties }) => (
-    <LucideDownload style={{ width: '24px', height: '24px', ...style }} />
-);
-
-const EyeIcon = ({ style }: { style?: React.CSSProperties }) => (
-    <LucideEye style={{ width: '24px', height: '24px', ...style }} />
-);
-
 
 const GithubIcon = ({ style }: { style?: React.CSSProperties }) => (
     <LucideGithub style={{ width: '24px', height: '24px', ...style }} />
@@ -168,20 +159,16 @@ const UserCircleIcon = ({ style }: { style?: React.CSSProperties }) => (
     <LucideUserCircle style={style} />
 );
 
-const DocumentTextIcon = ({ style }: { style?: React.CSSProperties }) => (
-    <LucideFileText style={style} />
-);
-
 const CogIcon = ({ style }: { style?: React.CSSProperties }) => (
-    <LucideSettings style={style} />
-);
-
-const CubeIcon = ({ style }: { style?: React.CSSProperties }) => (
-    <LucideBox style={style} />
+    <LucideCog style={style} />
 );
 
 const ArchiveBoxIcon = ({ style }: { style?: React.CSSProperties }) => (
     <LucideArchive style={style} />
+);
+
+const DocumentTextIcon = ({ style }: { style?: React.CSSProperties }) => (
+    <LucideFileText style={style} />
 );
 
 const VideoCameraIcon = ({ style }: { style?: React.CSSProperties }) => (
@@ -1805,7 +1792,7 @@ const DashboardOverview = ({ user, onViewFiles }: { user: any, onViewFiles: (id:
                                                         <button 
                                                             onClick={() => onViewFiles(item.design || item.design_id)} 
                                                             style={{ background: 'none', border: 'none', color: neon_cyan, cursor: 'pointer', padding: '4px', display: 'flex', alignItems: 'center' }}
-                                                            title=\"View Design\"
+                                                            title="View Design"
                                                         >
                                                             <EyeIcon style={{ width: '16px', height: '16px' }} />
                                                         </button>
@@ -3153,9 +3140,9 @@ const DesignQuotationsPage = ({ designId, onNavigate, onViewFiles }: { designId:
                     </div>
                     <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'flex-end' }}>
                         <CtaButton 
-                            text=\"View 3D Design\" 
+                            text="View 3D Design" 
                             onClick={() => onViewFiles(designId)} 
-                            className=\"button-small\"
+                            className="button-small"
                         >
                             <EyeIcon style={{ width: '18px', height: '18px', marginRight: '8px' }} />
                         </CtaButton>
