@@ -105,6 +105,9 @@ class IsOwnerOrAdmin(IsAuthenticated): # Or use DRF's IsAuthenticatedOrReadOnly 
         # Admin users can access anything
         if request.user and request.user.is_staff:
             return True
+        # Manufacturers can access designs to provide quotes
+        if request.user and request.user.role == 'manufacturer':
+            return True
         # Owner of the design can access
         return obj.customer == request.user
 
@@ -193,15 +196,19 @@ class DesignDetailView(generics.RetrieveUpdateDestroyAPIView):
     def get_queryset(self):
         """
         Filter designs so that users can only see/affect their own designs,
-        unless they are staff/admin. This ensures a 404 if trying to access
-        another user's design by its ID directly.
+        unless they are manufacturers (who can see designs they need to quote) 
+        or staff/admin. 
         """
         user = self.request.user
         if user.is_staff:
             return Design.objects.all() # Staff can see all designs
+        
+        if user.role == 'manufacturer':
+            # For now, allow manufacturers to see all designs so they can quote.
+            # In a stricter system, you'd filter by those they've received requests for.
+            return Design.objects.all()
+            
         # Customers can only see their own designs
-        # IsOwnerOrAdmin permission will still run for object-level checks,
-        # but this queryset filtering ensures 404 for non-owned objects.
         return Design.objects.filter(customer=user)
 
     # By default, PUT would require all fields from DesignSerializer.
