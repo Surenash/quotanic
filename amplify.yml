@@ -3,14 +3,19 @@ frontend:
   phases:
     preBuild:
       commands:
+        - nvm use 18 || nvm install 18
+        - node -v
         - cd manfacquot
-        - npm install --prefer-offline --no-audit --progress=false
+        - npm install
     build:
       commands:
+        - export NODE_OPTIONS="--max-old-space-size=4096"
+        - cd manfacquot
         - npm run build
   artifacts:
     baseDirectory: manfacquot/dist
     files:
       - '**/*'
   cache:
-    paths: []
+    paths:
+      - manfacquot/node_modules/**/*
