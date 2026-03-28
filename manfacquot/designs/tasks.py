@@ -477,69 +477,67 @@ def perform_fbm_analysis(file_path, file_extension):
 
 
 def generate_glb_from_step(file_path):
-    """
+    \"\"\"
     Converts a STEP/IGES file to GLB format for 3D viewing.
     Uses OpenCASCADE (pythonocc-core) for tessellation and export.
-    """
+    \"\"\"
     if not PYTHONOCC_AVAILABLE:
-        logger.error("pythonocc-core not available for GLB conversion.")
+        logger.error(\"pythonocc-core not available for GLB conversion.\")
         return None
 
-    logger.info(f"GLB Conversion: Starting for {file_path}...")
+    logger.info(f\"GLB Conversion: Starting for {file_path}...\")
     
     try:
         # 1. Load the shape
         file_ext = os.path.splitext(file_path)[1].lower()
+        shape = None
         if file_ext in ['.step', '.stp']:
             from OCC.Extend.DataExchange import read_step_file
             shape = read_step_file(file_path)
         elif file_ext in ['.iges', '.igs']:
             from OCC.Extend.DataExchange import read_iges_file
             shape = read_iges_file(file_path)
-        else:
-            logger.error(f"Unsupported file extension for GLB conversion: {file_ext}")
-            return None
-
-        if not shape:
-            logger.error("Failed to load shape for GLB conversion.")
+        
+        if not shape or shape.IsNull():
+            logger.error(\"Failed to load shape or shape is Null for GLB conversion.\")
             return None
 
         # 2. Tessellate the shape
         # Deflection controls mesh quality (smaller = better/more triangles)
-        linear_deflection = 0.1
+        linear_deflection = 0.5 
         angular_deflection = 0.5
+        logger.info(\"GLB Conversion: Starting tessellation...\")
         mesh = BRepMesh_IncrementalMesh(shape, linear_deflection, False, angular_deflection, True)
         mesh.Perform()
 
         # 3. Create XCAF Document
+        logger.info(\"GLB Conversion: Creating XCAF document...\")
+        # Get application instance
         app = XCAFApp_Application.GetApplication()
-        doc = TDocStd_Document(TCollection_AsciiString("BinXCAF"))
-        app.InitDocument(doc)
+        # Initialize a document
+        doc = TDocStd_Document(TCollection_AsciiString(\"BinXCAF\"))
+        app.NewDocument(TCollection_AsciiString(\"BinXCAF\"), doc)
         
         shape_tool = XCAFDoc_DocumentTool.ShapeTool(doc.Main())
-        # color_tool = XCAFDoc_DocumentTool.ColorTool(doc.Main())
-        
         # Add shape to document
         shape_label = shape_tool.AddShape(shape, False)
         
         # 4. Export to GLTF/GLB
         output_path = file_path.rsplit('.', 1)[0] + '.glb'
+        logger.info(f\"GLB Conversion: Exporting to {output_path}...\")
         
         writer = RWGltf_CafWriter(TCollection_AsciiString(output_path), True)
-        # Configure writer to export as binary GLB
-        # In newer pythonocc/OCCT, binary export is handled by the second parameter of the constructor or specific methods
-        
-        success = writer.Perform(doc, TCollection_AsciiString("QuotanicModel"))
+        success = writer.Perform(doc, TCollection_AsciiString(\"QuotanicModel\"))
         
         if success:
-            logger.info(f"GLB Conversion: Successfully saved to {output_path}")
+            logger.info(f\"GLB Conversion: Successfully saved to {output_path}\")
             return output_path
         else:
-            logger.error("GLB Conversion: writer.Perform failed.")
+            logger.error(\"GLB Conversion: writer.Perform failed.\")
             return None
 
     except Exception as e:
-        logger.error(f"GLB Conversion: Unexpected error: {e}", exc_info=True)
+        logger.error(f\"GLB Conversion: Unexpected error: {e}\", exc_info=True)
         return None
 
 
