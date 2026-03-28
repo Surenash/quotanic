@@ -1,1 +1,2 @@
-import Viewer from './Viewer';\nexport default Viewer;
+import Viewer from './Viewer';
+export default Viewer;
