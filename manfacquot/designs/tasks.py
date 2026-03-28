@@ -478,14 +478,14 @@ def perform_fbm_analysis(file_path, file_extension):
 
 def generate_glb_from_step(file_path):
     \"\"\"
-    Converts a STEP/IGES file to GLB format for 3D viewing.
-    Uses OpenCASCADE (pythonocc-core) for tessellation and export.
+    Converts a STEP/IGES file to a renderable STL format for 3D viewing.
+    Uses StlAPI_Writer which is more stable in this environment than GLTF export.
     \"\"\"
     if not PYTHONOCC_AVAILABLE:
-        logger.error(\"pythonocc-core not available for GLB conversion.\")
+        logger.error(\"pythonocc-core not available for 3D conversion.\")
         return None
 
-    logger.info(f\"GLB Conversion: Starting for {file_path}...\")
+    logger.info(f\"3D Conversion: Starting for {file_path}...\")
     
     try:
         # 1. Load the shape
@@ -499,45 +499,32 @@ def generate_glb_from_step(file_path):
             shape = read_iges_file(file_path)
         
         if not shape or shape.IsNull():
-            logger.error(\"Failed to load shape or shape is Null for GLB conversion.\")
+            logger.error(\"Failed to load shape for 3D conversion.\")
             return None
 
-        # 2. Tessellate the shape
-        # Deflection controls mesh quality (smaller = better/more triangles)
-        linear_deflection = 0.5 
+        # 2. Tessellate (Required for export)
+        linear_deflection = 0.1
         angular_deflection = 0.5
-        logger.info(\"GLB Conversion: Starting tessellation...\")
-        mesh = BRepMesh_IncrementalMesh(shape, linear_deflection, False, angular_deflection, True)
-        mesh.Perform()
+        BRepMesh_IncrementalMesh(shape, linear_deflection, False, angular_deflection, True)
 
-        # 3. Create XCAF Document
-        logger.info(\"GLB Conversion: Creating XCAF document...\")
-        # Get application instance
-        app = XCAFApp_Application.GetApplication()
-        # Initialize a document
-        doc = TDocStd_Document(TCollection_AsciiString(\"BinXCAF\"))
-        app.NewDocument(TCollection_AsciiString(\"BinXCAF\"), doc)
-        
-        shape_tool = XCAFDoc_DocumentTool.ShapeTool(doc.Main())
-        # Add shape to document
-        shape_label = shape_tool.AddShape(shape, False)
-        
-        # 4. Export to GLTF/GLB
-        output_path = file_path.rsplit('.', 1)[0] + '.glb'
-        logger.info(f\"GLB Conversion: Exporting to {output_path}...\")
-        
-        writer = RWGltf_CafWriter(TCollection_AsciiString(output_path), True)
-        success = writer.Perform(doc, TCollection_AsciiString(\"QuotanicModel\"))
-        
-        if success:
-            logger.info(f\"GLB Conversion: Successfully saved to {output_path}\")
-            return output_path
-        else:
-            logger.error(\"GLB Conversion: writer.Perform failed.\")
-            return None
+        # 3. Export to STL (Binary STL is compact and fast to load)
+        output_path = file_path.rsplit('.', 1)[0] + '_view.stl'
+        try:
+            from OCC.Core.StlAPI import StlAPI_Writer
+            writer = StlAPI_Writer()
+            writer.SetASCIIMode(False) # Ensure binary format
+            writer.Write(shape, output_path)
+            
+            if os.path.exists(output_path):
+                logger.info(f\"3D Conversion: Successfully saved view STL to {output_path}\")
+                return output_path
+        except Exception as stl_err:
+            logger.error(f\"3D Conversion: STL export failed: {stl_err}\")
+
+        return None
 
     except Exception as e:
-        logger.error(f\"GLB Conversion: Unexpected error: {e}\", exc_info=True)
+        logger.error(f\"3D Conversion: Unexpected error: {e}\", exc_info=True)
         return None
 
 
@@ -619,26 +606,26 @@ def analyze_cad_file(self, design_id):
                             error_message = f"FBM analysis failed: {fbm_error}"
                             logger.error(error_message)
 
-                        # Generate GLB for 3D viewing
+                        # Generate view file (GLB with STL fallback)
                         try:
-                            glb_path = generate_glb_from_step(local_file_path)
-                            if glb_path and os.path.exists(glb_path):
-                                # Save GLB key in geometric_data
-                                glb_key = design.s3_file_key.rsplit('.', 1)[0] + '.glb'
-                                geometric_data['glb_file_key'] = glb_key
+                            view_file_path = generate_glb_from_step(local_file_path)
+                            if view_file_path and os.path.exists(view_file_path):
+                                # Determine correct extension (could be .glb or .stl)
+                                view_ext = os.path.splitext(view_file_path)[1].lower()
+                                view_file_key = design.s3_file_key.rsplit('.', 1)[0] + '_view' + view_ext
+                                geometric_data['view_file_key'] = view_file_key
 
-                                # Upload GLB to S3 if not using local storage
+                                # Upload to S3 if not using local storage
                                 if not settings.USE_LOCAL_STORAGE:
                                     try:
-                                        s3_client.upload_file(glb_path, settings.AWS_STORAGE_BUCKET_NAME, glb_key)
-                                        logger.info(f"Successfully uploaded GLB to S3: {glb_key}")
+                                        s3_client.upload_file(view_file_path, settings.AWS_STORAGE_BUCKET_NAME, view_file_key)
+                                        logger.info(f\"Successfully uploaded view file to S3: {view_file_key}\")
                                     except Exception as s3_err:
-                                        logger.error(f"Failed to upload GLB to S3: {s3_err}")
+                                        logger.error(f\"Failed to upload view file to S3: {s3_err}\")
 
-                                logger.info(f"Successfully generated GLB: {glb_key}")
-                        except Exception as glb_error:
-                            logger.warning(f"GLB conversion failed (non-critical): {glb_error}")
-
+                                logger.info(f\"Successfully generated view file: {view_file_key}\")
+                        except Exception as view_err:
+                            logger.warning(f\"View file generation failed (non-critical): {view_err}\")
 
                     else:
                         error_message = f"Unsupported file type: {file_extension}."

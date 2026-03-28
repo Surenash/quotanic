@@ -271,7 +271,7 @@ const FileViewerModal = ({ design, onClose }) => {
                                     )}>
                                         <Viewer 
                                             modelUrl={modelUrl} 
-                                            fileExtension={(['step', 'stp', 'iges', 'igs'].includes(fileExtension) ? 'glb' : fileExtension) as any} 
+                                            fileExtension={(modelUrl.split('.').pop().toLowerCase()) as any} 
                                             view={view}
                                             isViewLocked={isViewLocked}
                                             onUserInteraction={() => setIsViewLocked(false)}
