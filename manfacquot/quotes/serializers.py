@@ -13,6 +13,7 @@ class QuoteSerializer(serializers.ModelSerializer):
     design_quantity = serializers.SerializerMethodField()
     customer_name = serializers.SerializerMethodField()
     customer_email = serializers.SerializerMethodField()
+    is_internal = serializers.BooleanField(source='design.is_internal', read_only=True)
     
     class Meta:
         model = Quote
@@ -36,8 +37,9 @@ class QuoteSerializer(serializers.ModelSerializer):
             'design_quantity',
             'customer_name',
             'customer_email',
+            'is_internal',
         ]
-        read_only_fields = ['id', 'design', 'manufacturer', 'created_at', 'updated_at']
+        read_only_fields = ['id', 'design', 'manufacturer', 'created_at', 'updated_at', 'is_internal']
     
     def get_manufacturer_name(self, obj):
         """Get manufacturer's company name or email"""

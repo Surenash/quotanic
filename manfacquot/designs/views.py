@@ -118,7 +118,7 @@ class IsCustomerUser(IsAuthenticated):
     def has_permission(self, request, view):
         if not super().has_permission(request, view):
             return False
-        return request.user.role == UserRole.CUSTOMER
+        return request.user.role in [UserRole.CUSTOMER, 'manufacturer']
 
 class DesignListCreateView(generics.ListCreateAPIView):
     """
@@ -333,10 +333,16 @@ class GenerateQuotesView(APIView):
 
         with transaction.atomic():
             for mf_profile, score in eligible_manufacturers_with_scores:
-                # Skip owner, existing quotes...
-                if design.customer == mf_profile.user: 
-                    logger.info(f"Skipping self-quote for {mf_profile.user.email}")
-                    continue
+                # Handle internal designs: only the owner can quote it
+                if getattr(design, 'is_internal', False):
+                    if design.customer != mf_profile.user:
+                        logger.info(f"Skipping external quote for internal design by {mf_profile.user.email}")
+                        continue
+                else:
+                    # Skip owner for normal designs
+                    if design.customer == mf_profile.user: 
+                        logger.info(f"Skipping self-quote for {mf_profile.user.email}")
+                        continue
                 if Quote.objects.filter(design=design, manufacturer=mf_profile.user).exists(): 
                     logger.info(f"Quote already exists for {mf_profile.user.email}")
                     continue
