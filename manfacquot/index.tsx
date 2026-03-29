@@ -3627,7 +3627,12 @@ const CustomerProfilePage = () => {
             setLoading(true);
             try {
                 const profile = await api.getCustomerProfile();
-                setFormData(profile);
+                // Normalize data from backend (company_name) to frontend (companyName)
+                setFormData({
+                    ...profile,
+                    companyName: profile.company_name || '',
+                    email: profile.email || ''
+                });
             } catch (err) {
                 setError('Failed to load profile data.');
             } finally {
@@ -3647,7 +3652,12 @@ const CustomerProfilePage = () => {
         setLoading(true);
         setNotification({ show: false, message: '', type: 'success' });
         try {
-            await api.updateCustomerProfile(formData);
+            // Map frontend fields back to backend expected names
+            const payload = {
+                ...formData,
+                company_name: formData.companyName
+            };
+            await api.updateCustomerProfile(payload);
             setNotification({ show: true, message: 'Profile updated successfully!', type: 'success' });
         } catch (err) {
             setNotification({ show: true, message: err.message, type: 'error' });
