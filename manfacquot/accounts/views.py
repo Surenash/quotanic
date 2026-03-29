@@ -78,7 +78,7 @@ class CustomTokenObtainPairView(TokenObtainPairView):
 
 
 # Example of a protected view to get current user details
-class CurrentUserView(generics.RetrieveAPIView):
+class CurrentUserView(generics.RetrieveUpdateAPIView):
     serializer_class = UserSerializer
     permission_classes = [IsAuthenticated] # Ensures only authenticated users can access
 
