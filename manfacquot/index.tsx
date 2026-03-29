@@ -975,9 +975,10 @@ type UploadPageProps = {
     user: any;
     pendingData?: any;
     targetManufacturerId?: string;
+    isInternal?: boolean;
 };
 
-const UploadPage = ({ onProceedToLogin, onNavigate, isAuthenticated, user, pendingData = null, targetManufacturerId }: UploadPageProps) => {
+const UploadPage = ({ onProceedToLogin, onNavigate, isAuthenticated, user, pendingData = null, targetManufacturerId, isInternal = false }: UploadPageProps) => {
     const [formData, setFormData] = useState({
         designName: '',
         material: '',
@@ -1080,6 +1081,7 @@ const UploadPage = ({ onProceedToLogin, onNavigate, isAuthenticated, user, pendi
                     packaging: formData.packaging,
                     inspection_requirements: formData.inspectionRequirements,
                     requires_engineering_review: formData.requiresEngineeringReview,
+                    is_internal: isInternal,
                     use_local_storage: true
                 };
 
@@ -1114,9 +1116,11 @@ const UploadPage = ({ onProceedToLogin, onNavigate, isAuthenticated, user, pendi
                 shipping_destination: formData.shippingDestination,
                 target_price: formData.targetPrice,
                 urgency: formData.urgency,
+                urgency: formData.urgency,
                 packaging: formData.packaging,
                 inspection_requirements: formData.inspectionRequirements,
-                requires_engineering_review: formData.requiresEngineeringReview
+                requires_engineering_review: formData.requiresEngineeringReview,
+                is_internal: isInternal
             };
 
             const newDesign = await api.createDesign(designData);
@@ -2527,8 +2531,9 @@ const QuoteRequestsPage = ({ onViewFiles }) => {
         setLoading(true);
         try {
             const data = await api.getQuoteRequests();
-            // Map API response to expected format
-            const mappedData = data.map(quote => ({
+            const mappedData = data
+                .filter(quote => !quote.is_internal)
+                .map(quote => ({
                 id: quote.id,
                 designId: quote.design,
                 designName: quote.design_name || 'Unnamed Part',
@@ -2823,11 +2828,107 @@ const ActiveOrdersPage = ({ onViewFiles }) => {
     );
 };
 
-const ManufacturerDashboard = ({ user, onViewFiles }) => {
-    const [activeView, setActiveView] = useState('overview'); // overview, profile, quotes, orders, settings
+const InternalQuotationsPage = ({ onViewFiles, onNavigate }) => {
+    const [requests, setRequests] = useState([]);
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState('');
+    const [breakdownModalInfo, setBreakdownModalInfo] = useState({ isOpen: false, request: null });
+
+    useEffect(() => {
+        fetchRequests();
+    }, []);
+
+    const fetchRequests = async () => {
+        setLoading(true);
+        try {
+            const data = await api.getQuoteRequests();
+            const mappedData = data
+                .filter(quote => quote.is_internal)
+                .map(quote => ({
+                    id: quote.id,
+                    designId: quote.design,
+                    designName: quote.design_name || 'Unnamed Part',
+                    material: quote.design_material || 'N/A',
+                    quantity: quote.design_quantity || 0,
+                    dateReceived: quote.created_at,
+                    status: quote.status === 'pending' ? 'Pending' : 'Quoted',
+                    price: quote.price_usd,
+                    leadTime: quote.estimated_lead_time_days,
+                    notes: quote.notes || '',
+                }));
+            setRequests(mappedData);
+        } catch (err) {
+            setError('Failed to load internal quotations.');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleOpenBreakdownModal = (request) => {
+        setBreakdownModalInfo({ isOpen: true, request: request });
+    };
+
+    const handleCloseBreakdownModal = () => {
+        setBreakdownModalInfo({ isOpen: false, request: null });
+    };
+
+    if (loading) return <div>Loading records...</div>;
+    if (error) return <p style={styles.loginError}>{error}</p>;
+
+    return (
+        <div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '24px' }}>
+                <div>
+                    <h2 style={{...styles.dashboardPageTitle, marginBottom: '8px'}}>Internal Quotations</h2>
+                    <p style={styles.dashboardPageSubtitle}>Assess parts and generate instant 14-point manufacturing quotes.</p>
+                </div>
+                <CtaButton text="Upload New Design" primary onClick={() => onNavigate('internal-upload')} />
+            </div>
+
+            <div style={styles.tableContainer}>
+                <table style={styles.table}>
+                    <thead>
+                        <tr>
+                            <th style={styles.tableHeader}>Part Name</th>
+                            <th style={styles.tableHeader}>Material</th>
+                            <th style={styles.tableHeader}>Qty</th>
+                            <th style={styles.tableHeader}>Date Uploaded</th>
+                            <th style={styles.tableHeader}>Cost Estimate</th>
+                            <th style={styles.tableHeader}>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {requests.length > 0 ? requests.map((req: any) => (
+                            <tr key={req.id}>
+                                <td style={styles.tableCell}>{req.designName}</td>
+                                <td style={styles.tableCell}>{req.material}</td>
+                                <td style={styles.tableCell}>{req.quantity}</td>
+                                <td style={styles.tableCell}>{new Date(req.dateReceived).toLocaleDateString()}</td>
+                                <td style={styles.tableCell}><strong style={{color: 'var(--neon-cyan)', fontSize: '16px'}}>${req.price}</strong></td>
+                                <td style={styles.tableCell}>
+                                    <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                                        <CtaButton text="View Analysis" onClick={() => handleOpenBreakdownModal(req)} className="button-small" />
+                                        <CtaButton text="View Files" onClick={() => onViewFiles(req.designId)} className="button-small" />
+                                    </div>
+                                </td>
+                            </tr>
+                        )) : (
+                            <tr><td colSpan={6} style={{...styles.tableCell, textAlign: 'center'}}>No internal quotes generated yet. Click 'Upload New Design' to calculate.</td></tr>
+                        )}
+                    </tbody>
+                </table>
+            </div>
+            {breakdownModalInfo.isOpen && <CostBreakdownModal request={breakdownModalInfo.request} onClose={handleCloseBreakdownModal} />}
+        </div>
+    );
+};
+
+const ManufacturerDashboard = ({ user, onViewFiles, onNavigate }) => {
+    const [activeView, setActiveView] = useState('overview'); // overview, profile, quotes, orders, internal, settings
     const navItems = [
         { id: 'overview', label: 'Overview', icon: ChartPieIcon },
         { id: 'quotes', label: 'Quote Requests', icon: DocumentTextIcon },
+        { id: 'internal', label: 'Internal Quotations', icon: DocumentTextIcon },
         { id: 'orders', label: 'Active Orders', icon: CubeIcon },
         { id: 'settings', label: 'Settings', icon: CogIcon },
         { id: 'profile', label: 'Profile Management', icon: UserCircleIcon },
@@ -2838,6 +2939,7 @@ const ManufacturerDashboard = ({ user, onViewFiles }) => {
             case 'settings': return <ManufacturerSettingsPage />;
             case 'profile': return <ManufacturerProfileManagementPage user={user} />;
             case 'quotes': return <QuoteRequestsPage onViewFiles={onViewFiles} />;
+            case 'internal': return <InternalQuotationsPage onViewFiles={onViewFiles} onNavigate={onNavigate} />;
             case 'orders': return <ActiveOrdersPage onViewFiles={onViewFiles} />;
             case 'overview':
             default:

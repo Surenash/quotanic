@@ -60,6 +60,8 @@ class Design(models.Model):
         STANDARD = 'standard', _('Standard')
         URGENT = 'urgent', _('Urgent')
 
+    is_internal = models.BooleanField(default=False, help_text="Flag indicating if this design is for internal assessment only.")
+
     class PackagingType(models.TextChoices):
         STANDARD = 'standard', _('Standard')
         CUSTOM = 'custom', _('Custom / Branded')
