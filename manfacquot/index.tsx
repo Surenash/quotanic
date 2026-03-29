@@ -4432,6 +4432,7 @@ const App = () => {
             case 'signup-customer': return <CustomerSignupPage onLogin={handleLogin} onNavigate={handleNavigate} />;
             case 'signup-manufacturer': return <ManufacturerSignupPage onLogin={handleLogin} onNavigate={handleNavigate} />;
             case 'upload': return <UploadPage onProceedToLogin={handleProceedToLogin} onNavigate={handleNavigate} isAuthenticated={isAuthenticated} user={user} targetManufacturerId={pageParams} />;
+            case 'internal-upload': return <UploadPage onProceedToLogin={handleProceedToLogin} onNavigate={handleNavigate} isAuthenticated={isAuthenticated} user={user} isInternal={true} />;
             case 'view-quotes': return <DesignQuotationsPage designId={pageParams?.designId} onNavigate={handleNavigate} onViewFiles={handleViewFiles} />;
             case 'dashboard':
                 if (!isAuthenticated) {
