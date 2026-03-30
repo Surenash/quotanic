@@ -95,6 +95,9 @@ class ToolType(Enum):
     THREAD_MILL = 'Thread Mill'
     SLOT_DRILL = 'Slot Drill'
     T_SLOT_CUTTER = 'T-Slot Cutter'
+    PARTING_TOOL = 'Parting Tool'
+    THREADING_TOOL = 'Threading Tool'
+    GROOVING_TOOL = 'Grooving Tool'
 
 class MachiningStrategy(Enum):
     """Machining strategies/operations"""
@@ -113,6 +116,10 @@ class MachiningStrategy(Enum):
     ADAPTIVE_CLEARING = 'Adaptive Clearing'
     THREAD_MILLING = 'Thread Milling'
     CHAMFERING = 'Chamfering'
+    PARTING = 'Parting / Cut-off'
+    THREAD_TURNING = 'Thread Turning'
+    GROOVING = 'Grooving'
+    TURNING = 'Turning'
 
 # ==============================================================================
 # DATA STRUCTURES
@@ -163,7 +170,7 @@ class MachiningOperation:
             'name': self.operation_name,
             'strategy': self.strategy.value if hasattr(self.strategy, 'value') else str(self.strategy),
             'tool_type': self.tool_type.value if hasattr(self.tool_type, 'value') else str(self.tool_type),
-            'tool_diameter': self.tool_diameter,
+            'tool_diameter': round(self.tool_diameter, 3),
             'spindle_speed': round(self.spindle_speed, 0),
             'feed_rate': round(self.feed_rate, 1),
             'estimated_time': round(self.estimated_time, 2),
@@ -214,46 +221,127 @@ class FeatureRecognitionEngine:
             return False
 
     def recognize_holes(self) -> List[MachiningFeature]:
-        """Detect cylindrical holes and calculate their properties"""
+        """Detect internal cylindrical holes and calculate their properties with deduplication"""
         holes = []
         if not self.shape: return []
+        
+        detected_holes = {}
         
         explorer = TopExp_Explorer(self.shape, TopAbs_FACE)
         while explorer.More():
             face = explorer.Current()
-            adaptor = BRepAdaptor_Surface(topods_Face(face))
+            topo_face = topods_Face(face)
+            adaptor = BRepAdaptor_Surface(topo_face)
             
             if adaptor.GetType() == GeomAbs_Cylinder:
                 cylinder = adaptor.Cylinder()
-                radius = cylinder.Radius()
-                diameter = 2 * radius
-                
-                # Calculate properties
-                props = GProp_GProps()
-                brepgprop_SurfaceProperties(topods_Face(face), props)
-                area = props.Mass()
-                depth = area / (2 * math.pi * radius) if radius > 0 else 0
+                radius = round(cylinder.Radius(), 4)
+                diameter = round(2 * radius, 3)
                 
                 axis = cylinder.Axis()
                 direction = axis.Direction()
+                location = axis.Location()
                 
-                # Heuristic for through vs blind
-                hole_type = FeatureType.HOLE_THROUGH if depth > 50 else FeatureType.HOLE_BLIND
+                # Check if it's internal (hole) or external (boss/shaft)
+                # For a solid, the face normal points OUT of the material.
+                # If normal points TOWARDS the axis, it's a hole.
+                is_internal = self._is_internal_cylinder(topo_face, cylinder)
                 
-                feature = MachiningFeature(
-                    feature_id=self.feature_counter,
-                    feature_type=hole_type,
-                    geometry={'center': axis.Location(), 'axis': direction},
-                    diameter=diameter,
-                    depth=depth,
-                    area=math.pi * radius * radius,
-                    orientation={'x': direction.X(), 'y': direction.Y(), 'z': direction.Z()},
-                    accessibility=self._determine_accessibility(direction)
-                )
-                holes.append(feature)
-                self.feature_counter += 1
+                if not is_internal:
+                    explorer.Next()
+                    continue
+
+                # Deduplication key
+                v = [direction.X(), direction.Y(), direction.Z()]
+                p = [location.X(), location.Y(), location.Z()]
+                dot_pv = sum(p[i] * v[i] for i in range(3))
+                p_unique = tuple(round(p[i] - dot_pv * v[i], 2) for i in range(3))
+                v_unique = tuple(round(abs(v[i]), 3) for i in range(3))
+                
+                hole_key = (p_unique, v_unique, radius)
+                
+                props = GProp_GProps()
+                brepgprop_SurfaceProperties(topo_face, props)
+                face_area = props.Mass()
+                face_depth = face_area / (2 * math.pi * radius) if radius > 0 else 0
+                
+                if hole_key not in detected_holes:
+                    detected_holes[hole_key] = {
+                        'radius': radius,
+                        'diameter': diameter,
+                        'total_depth': face_depth,
+                        'total_area': face_area,
+                        'direction': direction,
+                        'location': location
+                    }
+                else:
+                    detected_holes[hole_key]['total_depth'] += face_depth
+                    detected_holes[hole_key]['total_area'] += face_area
+                    
             explorer.Next()
+            
+        for key, data in detected_holes.items():
+            direction = data['direction']
+            hole_type = FeatureType.HOLE_THROUGH if data['total_depth'] > 50 else FeatureType.HOLE_BLIND
+            
+            feature = MachiningFeature(
+                feature_id=self.feature_counter,
+                feature_type=hole_type,
+                geometry={'center': data['location'], 'axis': direction},
+                diameter=data['diameter'],
+                depth=round(data['total_depth'], 2),
+                area=round(data['total_area'], 2),
+                orientation={'x': round(direction.X(), 3), 'y': round(direction.Y(), 3), 'z': round(direction.Z(), 3)},
+                accessibility=self._determine_accessibility(direction)
+            )
+            holes.append(feature)
+            self.feature_counter += 1
+            
         return holes
+
+    def _is_internal_cylinder(self, face, cylinder) -> bool:
+        """Helper to determine if a cylindrical face is internal or external"""
+        # Get a point on the surface (UV 0.5, 0.5)
+        u_min, u_max, v_min, v_max = breptools_UVBounds(face)
+        u_mid = (u_min + u_max) / 2.0
+        v_mid = (v_min + v_max) / 2.0
+        
+        # Evaluate point and normal
+        from OCC.Core.GeomLProp import GeomLProp_SLProps
+        surf = BRep_Tool.Surface(face)
+        props = GeomLProp_SLProps(surf, u_mid, v_mid, 1, 0.01)
+        
+        if not props.IsNormalDefined():
+            return True # Default to hole if unsure
+            
+        pnt = props.Value()
+        normal = props.Normal()
+        
+        # Direction from axis to point
+        axis = cylinder.Axis()
+        axis_loc = axis.Location()
+        axis_dir = axis.Direction()
+        
+        # Vector from axis_loc to pnt
+        vec_ap = gp_Vec(axis_loc, pnt)
+        # Vector from axis_loc to projection of pnt on axis
+        proj = vec_ap.Dot(gp_Vec(axis_dir))
+        pnt_on_axis = axis_loc.XYZ() + axis_dir.XYZ() * proj
+        
+        # Vector from axis to point
+        vec_radial = gp_Vec(gp_Pnt(pnt_on_axis), pnt)
+        
+        # If normal and vec_radial are OPPOSITE, normal points INTO the axis (it's a hole)
+        # Remember: Face normal points OUT of solid material.
+        # If it points TOWARDS the axis, the axis is outside the material (a hole).
+        dot = normal.X() * vec_radial.X() + normal.Y() * vec_radial.Y() + normal.Z() * vec_radial.Z()
+        
+        # Apply face orientation
+        from OCC.Core.TopAbs import TopAbs_REVERSED
+        if face.Orientation() == TopAbs_REVERSED:
+            dot = -dot
+            
+        return dot < 0
 
     def recognize_pockets(self) -> List[MachiningFeature]:
         """Detect pocket-like features from planar faces"""
