@@ -456,9 +456,56 @@ class AdvancedFeatureRecognitionEngine(FeatureRecognitionEngine):
         
         return False
     
+    def recognize_turning_features(self) -> List[AdvancedMachiningFeature]:
+        """Detect external cylindrical features for turning"""
+        turning_features = []
+        if not self.shape: return []
+        
+        explorer = TopExp_Explorer(self.shape, TopAbs_FACE)
+        while explorer.More():
+            face = explorer.Current()
+            topo_face = topods_Face(face)
+            adaptor = BRepAdaptor_Surface(topo_face)
+            
+            if adaptor.GetType() == GeomAbs_Cylinder:
+                cylinder = adaptor.Cylinder()
+                # Check if it's external (shaft/boss)
+                # Reuse the _is_internal_cylinder logic from base if possible, 
+                # or implement here if not available.
+                # Since I added it to FBM_core, I can use it.
+                is_internal = self._is_internal_cylinder(topo_face, cylinder)
+                
+                if not is_internal:
+                    radius = round(cylinder.Radius(), 4)
+                    diameter = round(2 * radius, 3)
+                    
+                    props = GProp_GProps()
+                    brepgprop_SurfaceProperties(topo_face, props)
+                    area = props.Mass()
+                    length = area / (2 * math.pi * radius) if radius > 0 else 0
+                    
+                    axis = cylinder.Axis()
+                    direction = axis.Direction()
+                    
+                    feature = AdvancedMachiningFeature(
+                        feature_id=self.feature_counter,
+                        feature_type=AdvancedFeatureType.BOSS_CIRCULAR, # Representing a turned segment
+                        geometry={'face': topo_face, 'cylinder': cylinder},
+                        diameter=diameter,
+                        depth=round(length, 2), # Using depth to store length
+                        orientation={'x': round(direction.X(), 3), 'y': round(direction.Y(), 3), 'z': round(direction.Z(), 3)},
+                        confidence_score=0.9,
+                        complexity_rating=4,
+                        manufacturing_notes=["Turned cylindrical segment"]
+                    )
+                    turning_features.append(feature)
+                    self.feature_counter += 1
+            explorer.Next()
+        return turning_features
+
     def recognize_all_advanced_features(self) -> List[AdvancedMachiningFeature]:
         """
-        Run complete advanced feature recognition
+        Run complete advanced feature recognition with consolidation
         """
         if not self.shape:
             if not self.load_file():
@@ -474,51 +521,71 @@ class AdvancedFeatureRecognitionEngine(FeatureRecognitionEngine):
         print(f"  Accessibility score: {overall_analysis.accessibility_score:.2f}")
         print(f"  Complexity score: {overall_analysis.complexity_score:.1f}/10")
         
-        if overall_analysis.manufacturing_risks:
-            print(f"  Risks: {', '.join(overall_analysis.manufacturing_risks)}")
-        
         # Recognize all feature types
-        all_features = []
+        advanced_features = []
+        
+        # Advanced features (higher priority)
+        print("Recognizing advanced features...")
+        turning = self.recognize_turning_features()
+        threaded = self.recognize_threaded_holes()
+        cbore = self.recognize_counterbores()
+        csink = self.recognize_countersinks()
+        bosses = self.recognize_bosses()
+        tslots = self.recognize_t_slots()
+        
+        advanced_features.extend(turning)
+        advanced_features.extend(threaded)
+        advanced_features.extend(cbore)
+        advanced_features.extend(csink)
+        advanced_features.extend(bosses)
+        advanced_features.extend(tslots)
+        
+        # Track which geometry (edges/faces) is already "used" by advanced features
+        used_geometry_ids = set()
+        for af in advanced_features:
+            for geom_key, geom_obj in af.geometry.items():
+                if hasattr(geom_obj, 'HashCode'):
+                    used_geometry_ids.add(geom_obj.HashCode(1000000))
         
         # Basic features (from parent class)
         print("\nRecognizing basic features...")
         basic_features = super().recognize_all_features()
-        # Convert to advanced features
+        
+        # Consolidation logic: only add basic features if their geometry isn't part of an advanced feature
+        consolidated_features = []
         for bf in basic_features:
-            af = AdvancedMachiningFeature(
-                feature_id=bf.feature_id,
-                feature_type=bf.feature_type,
-                geometry=bf.geometry,
-                depth=bf.depth,
-                diameter=bf.diameter,
-                width=bf.width,
-                length=bf.length,
-                area=bf.area,
-                volume=bf.volume,
-                orientation=bf.orientation,
-                accessibility=bf.accessibility,
-                surface_finish_required=bf.surface_finish_required,
-                tolerance=bf.tolerance,
-                confidence_score=0.95,
-                complexity_rating=3
-            )
-            all_features.append(af)
+            is_redundant = False
+            # Check if this basic feature's geometry was already handled
+            for geom_key, geom_obj in bf.geometry.items():
+                if hasattr(geom_obj, 'HashCode'):
+                    if geom_obj.HashCode(1000000) in used_geometry_ids:
+                        is_redundant = True
+                        break
+            
+            if not is_redundant:
+                # Convert to advanced feature type
+                af = AdvancedMachiningFeature(
+                    feature_id=bf.feature_id,
+                    feature_type=bf.feature_type,
+                    geometry=bf.geometry,
+                    depth=bf.depth,
+                    diameter=bf.diameter,
+                    width=bf.width,
+                    length=bf.length,
+                    area=bf.area,
+                    volume=bf.volume,
+                    orientation=bf.orientation,
+                    accessibility=bf.accessibility,
+                    surface_finish_required=bf.surface_finish_required,
+                    tolerance=bf.tolerance,
+                    confidence_score=0.95,
+                    complexity_rating=3
+                )
+                consolidated_features.append(af)
+            else:
+                print(f"  Skipping redundant basic feature: {bf.feature_type.value} (ID {bf.feature_id})")
         
-        # Advanced features
-        print("Recognizing threaded holes...")
-        all_features.extend(self.recognize_threaded_holes())
-        
-        print("Recognizing counterbores...")
-        all_features.extend(self.recognize_counterbores())
-        
-        print("Recognizing countersinks...")
-        all_features.extend(self.recognize_countersinks())
-        
-        print("Recognizing bosses...")
-        all_features.extend(self.recognize_bosses())
-        
-        print("Recognizing T-slots...")
-        all_features.extend(self.recognize_t_slots())
+        all_features = advanced_features + consolidated_features
         
         # Pattern recognition
         print("\nRecognizing patterns...")
@@ -541,13 +608,156 @@ class AdvancedFeatureRecognitionEngine(FeatureRecognitionEngine):
 # Advanced Toolpath Generator with sophisticated strategies
 
 class AdvancedToolpathGenerator(ToolpathGenerator):
-    """Enhanced toolpath generation with advanced strategies"""
+    """Enhanced toolpath generation with advanced strategies including Turning"""
     
     def __init__(self, features: List[AdvancedMachiningFeature]):
         # Convert features list to base type for parent init
         super().__init__(features)
         self.material = "Aluminum"  # Default
         
+    def generate_turning_operations(self, turn_feature: AdvancedMachiningFeature) -> List[MachiningOperation]:
+        """Generate turning operations for external cylindrical features"""
+        operations = []
+        diameter = turn_feature.diameter
+        length = turn_feature.depth # depth represents length for turned features
+        
+        # 1. OD Roughing
+        rough_op = MachiningOperation(
+            operation_id=self.operation_counter,
+            operation_name=f"Turn Roughing Ø{round(diameter, 2)}mm x {round(length, 2)}mm",
+            feature=turn_feature,
+            strategy=MachiningStrategy.ROUGHING,
+            tool_type=ToolType.BORING_BAR, # Using generic turning tool indicator
+            tool_diameter=round(diameter, 3),
+            cutting_speed=120,
+            feed_rate=0.25, # mm/rev for turning
+            depth_of_cut=2.0,
+            stepover=0,
+            number_of_passes=3,
+            estimated_time=1.5,
+            setup_required=1,
+            priority=5, # Turning usually happens early
+            spindle_speed=self._calculate_spindle_speed(diameter, 120),
+            coolant="Flood",
+            notes="Outer diameter roughing cycle"
+        )
+        operations.append(rough_op)
+        self.operation_counter += 1
+        
+        # 2. OD Finishing
+        finish_op = MachiningOperation(
+            operation_id=self.operation_counter,
+            operation_name=f"Turn Finishing Ø{round(diameter, 2)}mm",
+            feature=turn_feature,
+            strategy=MachiningStrategy.FINISHING,
+            tool_type=ToolType.BORING_BAR,
+            tool_diameter=round(diameter, 3),
+            cutting_speed=180,
+            feed_rate=0.1,
+            depth_of_cut=0.5,
+            stepover=0,
+            number_of_passes=1,
+            estimated_time=1.0,
+            setup_required=1,
+            priority=6,
+            spindle_speed=self._calculate_spindle_speed(diameter, 180),
+            coolant="Flood",
+            notes="Outer diameter finishing for surface quality"
+        )
+        operations.append(finish_op)
+        self.operation_counter += 1
+
+        # Heuristic: Threading
+        # Standard metric threads approx minor diameters: M4(~3.1), M5(~4.0), M6(~4.8), M8(~6.2-6.5), M10(~8.0), M12(~9.8)
+        # Standard metric threads approx major diameters: 4, 5, 6, 8, 10, 12
+        is_thread_candidate = False
+        thread_spec = ""
+        pitch = 1.0
+        
+        if 6.0 <= diameter <= 6.3 or 7.8 <= diameter <= 8.2:
+            is_thread_candidate = True
+            thread_spec = "M8-1.25"
+            pitch = 1.25
+        elif 4.6 <= diameter <= 4.9 or 5.8 <= diameter <= 6.2:
+            is_thread_candidate = True
+            thread_spec = "M6-1.0"
+            pitch = 1.0
+        elif 7.8 <= diameter <= 8.2 or 9.8 <= diameter <= 10.2:
+            is_thread_candidate = True
+            thread_spec = "M10-1.5"
+            pitch = 1.5
+
+        if is_thread_candidate and length > diameter:
+            thread_op = MachiningOperation(
+                operation_id=self.operation_counter,
+                operation_name=f"Thread Turning {thread_spec}",
+                feature=turn_feature,
+                strategy=MachiningStrategy.THREAD_TURNING,
+                tool_type=ToolType.THREADING_TOOL,
+                tool_diameter=0.0,
+                cutting_speed=80,
+                feed_rate=pitch,
+                depth_of_cut=pitch * 0.6,
+                stepover=0,
+                number_of_passes=5,
+                estimated_time=1.5,
+                setup_required=1,
+                priority=18,
+                spindle_speed=self._calculate_spindle_speed(diameter, 80),
+                coolant="Flood",
+                notes=f"Single-point thread turning for {thread_spec}"
+            )
+            operations.append(thread_op)
+            self.operation_counter += 1
+
+            # Append Undercut/Thread Relief
+            undercut_op = MachiningOperation(
+                operation_id=self.operation_counter,
+                operation_name=f"Thread Relief Undercut",
+                feature=turn_feature,
+                strategy=MachiningStrategy.GROOVING,
+                tool_type=ToolType.GROOVING_TOOL,
+                tool_diameter=2.0, # 2mm grooving tool
+                cutting_speed=100,
+                feed_rate=0.05,
+                depth_of_cut=1.5,
+                stepover=0,
+                number_of_passes=1,
+                estimated_time=0.5,
+                setup_required=1,
+                priority=17,
+                spindle_speed=self._calculate_spindle_speed(diameter, 100),
+                coolant="Flood",
+                notes="Undercut at shoulder for thread clearance"
+            )
+            operations.append(undercut_op)
+            self.operation_counter += 1
+
+        # Heuristic: Chamfering (Standard for most turned ends)
+        chamfer_op = MachiningOperation(
+            operation_id=self.operation_counter,
+            operation_name=f"Turn Edge Chamfer/Deburr",
+            feature=turn_feature,
+            strategy=MachiningStrategy.CHAMFERING,
+            tool_type=ToolType.BORING_BAR,
+            tool_diameter=0.0,
+            cutting_speed=150,
+            feed_rate=0.1,
+            depth_of_cut=0.5,
+            stepover=0,
+            number_of_passes=1,
+            estimated_time=0.3,
+            setup_required=1,
+            priority=19,
+            spindle_speed=self._calculate_spindle_speed(diameter, 150),
+            coolant="Flood",
+            notes="45-deg edge break"
+        )
+        operations.append(chamfer_op)
+        self.operation_counter += 1
+        
+        return operations
+
     def generate_thread_operations(self, threaded_hole: AdvancedMachiningFeature) -> List[MachiningOperation]:
         """Generate thread milling operations"""
         operations = []
@@ -563,7 +773,7 @@ class AdvancedToolpathGenerator(ToolpathGenerator):
             feature=threaded_hole,
             strategy=MachiningStrategy.DRILLING,
             tool_type=ToolType.DRILL,
-            tool_diameter=pilot_diameter,
+            tool_diameter=round(pilot_diameter, 3),
             cutting_speed=80,
             feed_rate=150,
             depth_of_cut=depth,
@@ -586,12 +796,12 @@ class AdvancedToolpathGenerator(ToolpathGenerator):
             feature=threaded_hole,
             strategy=MachiningStrategy.THREAD_MILLING,
             tool_type=ToolType.THREAD_MILL,
-            tool_diameter=thread_mill_dia,
+            tool_diameter=round(thread_mill_dia, 3),
             cutting_speed=60,
             feed_rate=pitch * self._calculate_spindle_speed(thread_mill_dia, 60) / 60,
             depth_of_cut=pitch,
             stepover=0,
-            number_of_passes=int(depth / pitch),
+            number_of_passes=int(depth / (pitch if pitch > 0 else 1)),
             estimated_time=4.0,
             setup_required=1,
             priority=16,
@@ -603,7 +813,6 @@ class AdvancedToolpathGenerator(ToolpathGenerator):
         self.operation_counter += 1
         
         return operations
-    
     def generate_all_advanced_operations(self) -> List[MachiningOperation]:
         """Generate operations for all advanced features"""
         self.operations = []
@@ -612,9 +821,15 @@ class AdvancedToolpathGenerator(ToolpathGenerator):
             if hasattr(feature, 'feature_type'):
                 feat_type = feature.feature_type
                 
-                if feat_type == AdvancedFeatureType.HOLE_THREADED:
+                # Handle Turning Features
+                if feat_type == AdvancedFeatureType.BOSS_CIRCULAR:
+                    self.operations.extend(self.generate_turning_operations(feature))
+                
+                # Handle Threaded Features
+                elif feat_type == AdvancedFeatureType.HOLE_THREADED:
                     self.operations.extend(self.generate_thread_operations(feature))
-                # Add other advanced types here...
+                
+                # Standard Features
                 elif feat_type in [FeatureType.HOLE_THROUGH, FeatureType.HOLE_BLIND]:
                     self.operations.extend(self.generate_hole_operations(feature))
                 elif feat_type in [FeatureType.POCKET_RECTANGULAR, FeatureType.POCKET_CIRCULAR]:
@@ -637,7 +852,7 @@ class AdvancedMachiningProcessPlanner:
         self.patterns = []
         
     def process(self) -> Dict:
-        """Run advanced FBM process"""
+        """Run advanced FBM process with operation grouping"""
         print("="*80)
         print("ADVANCED FBM SYSTEM")
         print("="*80)
@@ -649,8 +864,92 @@ class AdvancedMachiningProcessPlanner:
         
         print("\nGenerating toolpaths...")
         generator = AdvancedToolpathGenerator(self.features)
-        self.operations = generator.generate_all_advanced_operations()
-        print(f"Generated {len(self.operations)} operations")
+        raw_operations = generator.generate_all_advanced_operations()
+        print(f"Generated {len(raw_operations)} raw operations")
+        
+        # AGGREGATION LOGIC: Group identical operations
+        # Key: (strategy, tool_type, tool_diameter, depth_of_cut)
+        grouped_ops = {}
+        for op in raw_operations:
+            # Round diameter for grouping key
+            key = (
+                op.strategy, 
+                op.tool_type, 
+                round(op.tool_diameter, 2), 
+                round(op.depth_of_cut, 2)
+            )
+            if key not in grouped_ops:
+                grouped_ops[key] = {
+                    'op': op,
+                    'count': 1,
+                    'total_time': op.estimated_time,
+                    'feature_ids': [op.feature.feature_id]
+                }
+            else:
+                grouped_ops[key]['count'] += 1
+                grouped_ops[key]['total_time'] += op.estimated_time
+                grouped_ops[key]['feature_ids'].append(op.feature.feature_id)
+        
+        # Create final operation list from grouped data
+        self.operations = []
+        has_turning = any(op.strategy in [MachiningStrategy.ROUGHING, MachiningStrategy.FINISHING] and op.tool_type == ToolType.BORING_BAR for op in raw_operations)
+        max_diameter = 0.0
+        
+        for i, (key, data) in enumerate(grouped_ops.items()):
+            op = data['op']
+            count = data['count']
+            
+            if has_turning and op.tool_type == ToolType.BORING_BAR and op.tool_diameter > max_diameter:
+                max_diameter = op.tool_diameter
+
+            # If multiple features, update name to reflect grouping
+            new_name = op.operation_name
+            if count > 1:
+                if "Drill" in new_name:
+                    new_name = f"Drill {count}x {round(op.tool_diameter, 2)}mm Holes"
+                else:
+                    new_name = f"{op.operation_name} ({count} features)"
+            
+            # Contextual Renaming: Rectangular Pocket on a turned part is usually a slotted drive
+            if has_turning and "Rectangular Pocket" in new_name:
+                new_name = new_name.replace("Rectangular Pocket", "Slotted Drive (Live Tooling)")
+
+            # Update operation properties
+            op.operation_id = len(self.operations) + 1
+            op.operation_name = new_name
+            op.estimated_time = round(data['total_time'], 2)
+            op.notes = f"Grouped {count} identical features. " + op.notes if count > 1 else op.notes
+            
+            self.operations.append(op)
+            
+        # Add Parting/Cut-off if it's a turned part
+        if has_turning:
+            parting_op = MachiningOperation(
+                operation_id=len(self.operations) + 1,
+                operation_name=f"Parting / Cut-off (from Ø{round(max_diameter, 2)}mm bar)",
+                feature=AdvancedMachiningFeature(
+                    feature_id=999,
+                    feature_type=AdvancedFeatureType.FACE_PLANAR,
+                    geometry={},
+                ),
+                strategy=MachiningStrategy.PARTING,
+                tool_type=ToolType.PARTING_TOOL,
+                tool_diameter=2.0,
+                cutting_speed=80,
+                feed_rate=0.05,
+                depth_of_cut=max_diameter / 2,
+                stepover=0,
+                number_of_passes=1,
+                estimated_time=0.5,
+                setup_required=1,
+                priority=99, # Always last
+                spindle_speed=800, # Approx for parting
+                coolant="Flood",
+                notes="Final cut to separate from bar stock"
+            )
+            self.operations.append(parting_op)
+            
+        print(f"Aggregated into {len(self.operations)} process steps")
         
         total_time = sum(op.estimated_time for op in self.operations)
         setups = set(op.setup_required for op in self.operations)
@@ -665,6 +964,7 @@ class AdvancedMachiningProcessPlanner:
             'summary': {
                 'total_features': len(self.features),
                 'total_operations': len(self.operations),
+                'raw_operation_count': len(raw_operations),
                 'total_patterns': len(self.patterns),
                 'estimated_total_time_minutes': round(total_time, 2),
                 'estimated_total_time_hours': round(total_time / 60, 2),

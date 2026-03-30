@@ -1,0 +1,78 @@
+2026-03-28T07:02:18.456Z [INFO]: # Build environment configured with Standard build compute type: 8GiB Memory, 4vCPUs, 128GB Disk Space
+2026-03-28T07:02:18.686Z [INFO]: # Retrieving Git provider SSH public keys
+2026-03-28T07:02:25.095Z [INFO]: # Successfully retrieved Git provider SSH public keys
+2026-03-28T07:02:25.164Z [INFO]: # Cloning repository: git@github.com:Surenash/quotanic.git
+2026-03-28T07:02:29.282Z [INFO]: Agent pid 461
+2026-03-28T07:02:29.362Z [INFO]: Identity added: /root/.ssh/git_rsa (/root/.ssh/git_rsa)
+                                 Cloning into 'quotanic'...
+2026-03-28T07:02:29.363Z [INFO]: # Switching to commit: 6a6d1193ff7cbd5ecbca7f8f9a8799542823bded
+2026-03-28T07:02:29.407Z [INFO]: Agent pid 472
+2026-03-28T07:02:29.407Z [INFO]: Identity added: /root/.ssh/git_rsa (/root/.ssh/git_rsa)
+                                 Note: switching to '6a6d1193ff7cbd5ecbca7f8f9a8799542823bded'.
+                                 You are in 'detached HEAD' state. You can look around, make experimental
+                                 changes and commit them, and you can discard any commits you make in this
+                                 state without impacting any branches by switching back to a branch.
+                                 If you want to create a new branch to retain commits you create, you may
+                                 do so (now or later) by using -c with the switch command. Example:
+                                 git switch -c <new-branch-name>
+                                 Or undo this operation with:
+                                 git switch -
+                                 Turn off this advice by setting config variable advice.detachedHead to false
+                                 HEAD is now at 6a6d119 Fix Amplify build: switch to Node 20 and remove redundant cd
+2026-03-28T07:02:29.418Z [INFO]: Successfully cleaned up Git credentials
+2026-03-28T07:02:29.418Z [INFO]: # Checking for Git submodules at: /codebuild/output/src1969808747/src/quotanic/.gitmodules
+2026-03-28T07:02:29.423Z [INFO]: # Retrieving environment cache...
+2026-03-28T07:02:29.505Z [INFO]: # Retrieved environment cache
+2026-03-28T07:02:29.505Z [INFO]: ---- Setting Up SSM Secrets ----
+2026-03-28T07:02:29.505Z [INFO]: SSM params {"Path":"/amplify/d26hyjmydbv3uo/main/","WithDecryption":true}
+2026-03-28T07:02:29.544Z [WARNING]: !Failed to set up process.env.secrets
+2026-03-28T07:02:30.433Z [INFO]: # No package override configuration found.
+2026-03-28T07:02:30.438Z [INFO]: # Retrieving cache...
+2026-03-28T07:02:31.611Z [INFO]: # Extracting cache...
+2026-03-28T07:02:33.531Z [INFO]: # Extraction completed
+2026-03-28T07:02:33.621Z [INFO]: # Retrieved cache
+2026-03-28T07:02:38.227Z [INFO]: ## Starting Backend Build
+                                 ## Checking for associated backend environment...
+                                 ## No backend environment association found, continuing...
+                                 ## Completed Backend Build
+2026-03-28T07:02:38.232Z [INFO]: {"backendDuration": 0}
+                                 ## Starting Frontend Build
+                                 # Starting phase: preBuild
+                                 # Executing command: nvm use 20 || nvm install 20
+2026-03-28T07:02:44.648Z [INFO]: Now using node v20.19.4 (npm v10.8.2)
+2026-03-28T07:02:44.652Z [INFO]: # Executing command: node -v
+2026-03-28T07:02:44.654Z [INFO]: v20.19.4
+2026-03-28T07:02:44.655Z [INFO]: # Executing command: cd manfacquot
+2026-03-28T07:02:44.692Z [INFO]: # Executing command: npm install
+2026-03-28T07:02:58.165Z [WARNING]: npm warn deprecated three-mesh-bvh@0.7.8: Deprecated due to three.js version incompatibility. Please use v0.8.0, instead.
+2026-03-28T07:02:59.608Z [INFO]: added 79 packages, and audited 150 packages in 15s
+2026-03-28T07:02:59.608Z [INFO]: 13 packages are looking for funding
+                                 run `npm fund` for details
+2026-03-28T07:02:59.617Z [INFO]: 2 high severity vulnerabilities
+                                 To address all issues, run:
+                                 npm audit fix
+                                 Run `npm audit` for details.
+2026-03-28T07:02:59.630Z [INFO]: # Completed phase: preBuild
+                                 # Starting phase: build
+                                 # Executing command: export NODE_OPTIONS="--max-old-space-size=4096"
+                                 # Executing command: npm run build
+2026-03-28T07:02:59.759Z [INFO]: > app-gg-v1.1@0.0.0 build
+                                 > vite build
+2026-03-28T07:03:00.592Z [INFO]: vite v6.4.1 building for production...
+2026-03-28T07:03:00.728Z [INFO]: transforming...
+2026-03-28T07:03:02.128Z [INFO]: ✓ 1066 modules transformed.
+2026-03-28T07:03:02.134Z [WARNING]: ✗ Build failed in 1.51s
+                                    error during build:
+                                    Could not resolve "./Scene" from "components/Viewer.tsx"
+                                    file: /codebuild/output/src1969808747/src/quotanic/manfacquot/components/Viewer.tsx
+                                    at getRollupError (file:///codebuild/output/src1969808747/src/quotanic/manfacquot/node_modules/rollup/dist/es/shared/parseAst.js:401:41)
+                                    at error (file:///codebuild/output/src1969808747/src/quotanic/manfacquot/node_modules/rollup/dist/es/shared/parseAst.js:397:42)
+                                    at ModuleLoader.handleInvalidResolvedId (file:///codebuild/output/src1969808747/src/quotanic/manfacquot/node_modules/rollup/dist/es/shared/node-entry.js:21430:24)
+                                    at file:///codebuild/output/src1969808747/src/quotanic/manfacquot/node_modules/rollup/dist/es/shared/node-entry.js:21390:26
+2026-03-28T07:03:02.211Z [ERROR]: !!! Build failed
+2026-03-28T07:03:02.212Z [ERROR]: !!! Error: Command failed with exit code 1
+2026-03-28T07:03:02.212Z [INFO]: # Starting environment caching...
+2026-03-28T07:03:02.212Z [INFO]: # Uploading environment cache artifact...
+2026-03-28T07:03:02.287Z [INFO]: # Uploaded environment cache artifact
+2026-03-28T07:03:02.287Z [INFO]: # Environment caching completed
+
