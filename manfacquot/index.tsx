@@ -275,6 +275,7 @@ const FileViewerModal = ({ design, onClose }) => {
                                             view={view}
                                             isViewLocked={isViewLocked}
                                             onUserInteraction={() => setIsViewLocked(false)}
+                                            design={design}
                                         />
                                     </ErrorBoundary>
                                 ) : isSupported && !modelUrl ? (

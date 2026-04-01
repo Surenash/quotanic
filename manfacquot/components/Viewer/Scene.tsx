@@ -18,11 +18,14 @@ interface SceneProps {
   lighting: any;
   animation: any;
   zoomLevel: number;
+  showGrid: boolean;
+  showAxes: boolean;
 }
 
 const Scene: React.FC<SceneProps> = ({ 
   modelUrl, fileExtension, view, isViewLocked, onUserInteraction,
-  viewportMode, material, lighting, animation, zoomLevel 
+  viewportMode, material, lighting, animation, zoomLevel,
+  showGrid, showAxes
 }) => {
   const { camera, controls } = useThree();
   const targetPosition = useRef(new THREE.Vector3(5, 5, 5));
@@ -89,6 +92,8 @@ const Scene: React.FC<SceneProps> = ({
       
       <Environment preset="city" opacity={0.5} />
 
+      {showAxes && <axesHelper args={[baseDistance]} />}
+
       <Model 
         modelUrl={modelUrl} 
         fileExtension={fileExtension} 
@@ -105,14 +110,16 @@ const Scene: React.FC<SceneProps> = ({
         maxDistance={baseDistance * 20}
       />
 
-      <Grid
-        infiniteGrid
-        cellSize={baseDistance / 10}
-        sectionSize={baseDistance}
-        sectionColor={"#4f4f4f"}
-        fadeDistance={baseDistance * 5}
-        fadeStrength={1}
-      />
+      {showGrid && (
+        <Grid
+          infiniteGrid
+          cellSize={baseDistance / 10}
+          sectionSize={baseDistance}
+          sectionColor={"#4f4f4f"}
+          fadeDistance={baseDistance * 5}
+          fadeStrength={1}
+        />
+      )}
     </>
   );
 };

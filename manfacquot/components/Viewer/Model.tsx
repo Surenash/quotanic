@@ -10,7 +10,6 @@ interface ModelComponentProps {
   url: string;
   viewportMode: 'solid' | 'wireframe';
   materialOverride: { color: string, isOverride: boolean };
-  animation: any;
 }
 
 const applyMaterialSettings = (obj: any, mode: string, override: any) => {
@@ -82,41 +81,45 @@ const Model: React.FC<ModelProps> = ({ modelUrl, fileExtension, onLoad, viewport
     const t = state.clock.getElapsedTime();
     const group = groupRef.current;
 
-    // Reset base transforms
+    // Reset base transforms to Manual Orientation
     group.position.set(0, 0, 0);
-    
-    // Apply manual rotations from state
-    group.rotation.set(animation.rotation[0], animation.rotation[1], animation.rotation[2]);
+    group.rotation.set(animation.orientation[0], animation.orientation[1], animation.orientation[2]);
+
+    const speedFactor = (6 - animation.length); // length 1 -> 5 speed, length 5 -> 1 speed
+    const ampFactor = animation.height === 'high' || animation.radius === 'high' || animation.angle === 'high' ? 2 : 1;
 
     // Procedural Animations
     switch (animation.type) {
       case 'rotate':
-        group.rotation.y += t * 0.5;
+        // Continuous rotation based on speed sliders
+        group.rotation.x += t * animation.speed[0];
+        group.rotation.y += t * animation.speed[1];
+        group.rotation.z += t * animation.speed[2];
         break;
       case 'bounce':
-        group.position.y = Math.sin(t * 2) * 2;
-        break;
-      case 'wobble':
-        group.rotation.z = Math.sin(t * 3) * 0.2;
-        group.rotation.x = Math.cos(t * 2) * 0.1;
-        break;
-      case 'hover':
-        group.position.y = Math.sin(t * 1.5) * 0.5;
+        group.position.y = Math.sin(t * speedFactor) * ampFactor;
         break;
       case 'figure-eight':
-        group.position.x = Math.sin(t) * 2;
-        group.position.y = Math.sin(t * 2) * 1;
+        group.position.x = Math.sin(t * speedFactor) * ampFactor * 2;
+        group.position.y = Math.sin(t * speedFactor * 2) * ampFactor;
+        break;
+      case 'hover':
+        group.position.y = Math.sin(t * speedFactor) * 0.5 * ampFactor;
         break;
       case 'orbit':
-        group.position.x = Math.sin(t) * 3;
-        group.position.z = Math.cos(t) * 3;
-        group.rotation.y = -t;
+        group.position.x = Math.sin(t * speedFactor) * 3 * ampFactor;
+        group.position.z = Math.cos(t * speedFactor) * 3 * ampFactor;
+        group.rotation.y = -t * speedFactor;
+        break;
+      case 'wobble':
+        group.rotation.z = Math.sin(t * speedFactor) * 0.2 * ampFactor;
+        group.rotation.x = Math.cos(t * speedFactor * 0.7) * 0.1 * ampFactor;
         break;
     }
   });
 
   const renderLoader = () => {
-    const props = { url: modelUrl, viewportMode, materialOverride, animation };
+    const props = { url: modelUrl, viewportMode, materialOverride };
     switch (fileExtension) {
       case 'stl': return <STLModel {...props} />;
       case 'obj': return <OBJModel {...props} />;
