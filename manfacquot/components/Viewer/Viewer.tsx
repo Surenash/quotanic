@@ -130,18 +130,18 @@ const Viewer: React.FC<ViewerProps> = ({ modelUrl, fileExtension, view, isViewLo
       <div style={{
         height: '48px',
         width: '100%',
-        background: 'rgba(10, 10, 18, 0.95)',
-        backdropFilter: 'blur(12px)',
-        borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
+        background: 'rgba(10, 10, 18, 0.98)',
+        backdropFilter: 'blur(15px)',
+        borderBottom: '1px solid rgba(255, 255, 255, 0.12)',
         display: 'flex',
         alignItems: 'center',
-        justifyContent: 'space-between',
         padding: '0 8px',
         zIndex: 110,
-        boxShadow: '0 4px 20px rgba(0,0,0,0.4)',
-        userSelect: 'none'
+        boxShadow: '0 4px 20px rgba(0,0,0,0.5)',
+        userSelect: 'none',
+        position: 'relative'
       }}>
-        {/* Left Group: Contextual Tools (with overflow handling) */}
+        {/* Left Group: Contextual Tools */}
         <div style={{ 
           display: 'flex', 
           gap: '2px', 
@@ -149,13 +149,11 @@ const Viewer: React.FC<ViewerProps> = ({ modelUrl, fileExtension, view, isViewLo
           flex: 1, 
           overflowX: 'auto', 
           overflowY: 'hidden',
-          scrollbarWidth: 'none',
-          msOverflowStyle: 'none',
-          paddingRight: '12px'
+          paddingRight: '180px' // Reserved space for the pinned right group
         }} className="no-scrollbar">
           <ToolbarButton icon={Icons.ZoomOutIcon} onClick={() => setZoomLevel(prev => Math.max(0.2, prev - 0.2))} label="Zoom Out" />
           <ToolbarButton icon={Icons.ZoomInIcon} onClick={() => setZoomLevel(prev => Math.min(4, prev + 0.2))} label="Zoom In" />
-          <div style={{ width: '1px', height: '18px', background: 'rgba(255,255,255,0.1)', margin: '0 4px', flexShrink: 0 }} />
+          <div style={{ width: '1px', height: '18px', background: 'rgba(255,255,255,0.15)', margin: '0 6px', flexShrink: 0 }} />
           <ToolbarButton icon={Icons.BackgroundIcon} onClick={() => togglePanel('background')} active={activePanel === 'background'} label="Background" />
           <ToolbarButton icon={Icons.ModelColorIcon} onClick={() => togglePanel('material')} active={activePanel === 'material'} label="Model Color" />
           <ToolbarButton icon={Icons.AnimationIcon} onClick={() => togglePanel('animation')} active={activePanel === 'animation'} label="Animation" />
@@ -164,16 +162,19 @@ const Viewer: React.FC<ViewerProps> = ({ modelUrl, fileExtension, view, isViewLo
           <ToolbarButton icon={Icons.CloudDownloadIcon} onClick={downloadOriginal} label="Download Original File" />
         </div>
 
-        {/* Right Group: Viewport Modes (Pinned to right) */}
+        {/* Right Group: Viewport Modes (ABSOLUTELY PINNED TO RIGHT) */}
         <div style={{ 
+          position: 'absolute',
+          right: '8px',
+          top: 0,
+          bottom: 0,
           display: 'flex', 
           gap: '4px', 
           alignItems: 'center', 
-          flexShrink: 0,
-          background: 'rgba(10, 10, 18, 0.8)',
+          background: 'rgba(10, 10, 18, 0.95)',
           paddingLeft: '12px',
-          borderLeft: '1px solid rgba(255,255,255,0.1)',
-          height: '100%'
+          boxShadow: '-10px 0 15px rgba(10, 10, 18, 0.9)',
+          zIndex: 120
         }}>
           <ToolbarButton 
             icon={Icons.CenterIcon} 
@@ -196,7 +197,7 @@ const Viewer: React.FC<ViewerProps> = ({ modelUrl, fileExtension, view, isViewLo
             active={viewportMode === 'solid'} 
             label="Solid Mode" 
           />
-          <div style={{ width: '1px', height: '18px', background: 'rgba(255,255,255,0.1)', margin: '0 4px' }} />
+          <div style={{ width: '1px', height: '18px', background: 'rgba(255,255,255,0.15)', margin: '0 4px' }} />
           <ToolbarButton icon={Icons.FullscreenIcon} onClick={handleFullscreen} label="Toggle Fullscreen" />
         </div>
       </div>
