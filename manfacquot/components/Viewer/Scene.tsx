@@ -28,24 +28,29 @@ const Scene: React.FC<SceneProps> = ({
   viewportMode, material, lighting, animation, zoomLevel,
   showGrid, showAxes, resetKey
 }) => {
-  const { camera, controls } = useThree();
+  const { camera, controls, size, gl } = useThree();
   const targetPosition = useRef(new THREE.Vector3(5, 5, 5));
-  const targetLookAt = new THREE.Vector3(0, 0, 0); // Always origin since we use <Center>
   const [modelBounds, setModelBounds] = useState<THREE.Box3 | null>(null);
   const [baseDistance, setBaseDistance] = useState(10);
+
+  // Force camera update when size changes (e.g. sidebar or fullscreen)
+  useEffect(() => {
+    if (camera instanceof THREE.PerspectiveCamera) {
+      camera.aspect = size.width / size.height;
+      camera.updateProjectionMatrix();
+    }
+    gl.setSize(size.width, size.height);
+  }, [size, camera, gl]);
 
   const handleModelLoad = useCallback((payload: { boundingBox: THREE.Box3 }) => {
     setModelBounds(payload.boundingBox);
 
     if (!(camera instanceof THREE.PerspectiveCamera)) return;
 
-    const size = new THREE.Vector3();
-    payload.boundingBox.getSize(size);
+    const boxSize = new THREE.Vector3();
+    payload.boundingBox.getSize(boxSize);
     
-    // Model is already centered at (0,0,0) by the <Center> component in Model.tsx
-    // So we don't need to calculate a dynamic lookAt center.
-
-    const maxDim = Math.max(size.x, size.y, size.z);
+    const maxDim = Math.max(boxSize.x, boxSize.y, boxSize.z);
     const fov = camera.fov * (Math.PI / 180);
     const distance = (maxDim / (2 * Math.tan(fov / 2))) * 1.5;
 
