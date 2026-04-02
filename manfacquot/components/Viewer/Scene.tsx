@@ -89,8 +89,16 @@ const Scene: React.FC<SceneProps> = ({
   useEffect(() => {
     const distance = baseDistance / (zoomLevel || 1);
     const direction = CAMERA_VIEW_DIRECTIONS[view];
-    targetPosition.current.copy(direction).multiplyScalar(distance);
-  }, [view, modelBounds, baseDistance, zoomLevel]);
+    
+    if (isViewLocked) {
+      targetPosition.current.copy(direction).multiplyScalar(distance);
+    } else if (controls) {
+      // If unlocked, just adjust the distance of the existing camera position relative to origin
+      const currentDir = camera.position.clone().normalize();
+      camera.position.copy(currentDir).multiplyScalar(distance);
+      (controls as any).update();
+    }
+  }, [view, modelBounds, baseDistance, zoomLevel, isViewLocked, camera, controls]);
 
   useFrame((state) => {
     if (isViewLocked && !state.camera.position.equals(targetPosition.current)) {
