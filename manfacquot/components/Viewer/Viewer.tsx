@@ -133,7 +133,7 @@ const Viewer: React.FC<ViewerProps> = ({ modelUrl, fileExtension, view, isViewLo
         background: '#0a0a0f',
         borderBottom: '1px solid rgba(255, 255, 255, 0.15)',
         display: 'grid',
-        gridTemplateColumns: '1fr auto',
+        gridTemplateColumns: 'minmax(0, 1fr) auto',
         alignItems: 'center',
         padding: '0 8px',
         zIndex: 110,
@@ -196,7 +196,7 @@ const Viewer: React.FC<ViewerProps> = ({ modelUrl, fileExtension, view, isViewLo
         </div>
       </div>
 
-      <div style={{ flex: 1, position: 'relative', display: 'flex', minHeight: 0 }}>
+      <div style={{ flex: 1, position: 'relative', display: 'flex', minHeight: 0, minWidth: 0, overflow: 'hidden' }}>
         {/* 2. DYNAMIC LEFT SIDEBAR */}
         {activePanel && (
           <div style={{
@@ -253,7 +253,7 @@ const Viewer: React.FC<ViewerProps> = ({ modelUrl, fileExtension, view, isViewLo
         )}
 
         {/* 3. MAIN CANVAS */}
-        <div style={{ flex: 1, position: 'relative' }}>
+        <div style={{ flex: 1, position: 'relative', minWidth: 0, minHeight: 0, overflow: 'hidden' }}>
           <Suspense fallback={<Loader />}>
             <Canvas
               camera={{ fov: 50 }}
