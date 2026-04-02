@@ -24,6 +24,7 @@ const Viewer: React.FC<ViewerProps> = ({ modelUrl, fileExtension, view, isViewLo
   const [zoomLevel, setZoomLevel] = useState(1);
   const [showGrid, setShowGrid] = useState(true);
   const [showAxes, setShowAxes] = useState(false);
+  const [resetKey, setResetKey] = useState(0); // Counter to trigger recentering
   
   const [background, setBackground] = useState({
     top: '#1a1a2e',
@@ -153,7 +154,16 @@ const Viewer: React.FC<ViewerProps> = ({ modelUrl, fileExtension, view, isViewLo
         </div>
 
         {/* Right Group: Viewport Modes */}
-        <div style={{ display: 'flex', gap: '4px', alignItems: 'center', paddingLeft: '12px' }}>
+        <div style={{ display: 'flex', gap: '6px', alignItems: 'center', paddingLeft: '12px', paddingRight: '4px' }}>
+          <ToolbarButton 
+            icon={Icons.CenterIcon} 
+            onClick={() => {
+              setResetKey(prev => prev + 1);
+              setZoomLevel(1);
+            }} 
+            label="Center & Reset View" 
+          />
+          <div style={{ width: '1px', height: '20px', background: 'rgba(255,255,255,0.1)', margin: '0 4px' }} />
           <ToolbarButton icon={Icons.SettingsIcon} onClick={() => togglePanel('settings')} active={activePanel === 'settings'} label="Settings" />
           <ToolbarButton 
             icon={Icons.WireframeIcon} 
@@ -249,6 +259,7 @@ const Viewer: React.FC<ViewerProps> = ({ modelUrl, fileExtension, view, isViewLo
                 zoomLevel={zoomLevel}
                 showGrid={showGrid}
                 showAxes={showAxes}
+                resetKey={resetKey}
               />
             </Canvas>
           </Suspense>
