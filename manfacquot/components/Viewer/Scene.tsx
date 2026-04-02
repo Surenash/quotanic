@@ -30,7 +30,7 @@ const Scene: React.FC<SceneProps> = ({
 }) => {
   const { camera, controls } = useThree();
   const targetPosition = useRef(new THREE.Vector3(5, 5, 5));
-  const targetLookAt = useRef(new THREE.Vector3(0, 0, 0));
+  const targetLookAt = new THREE.Vector3(0, 0, 0); // Always origin since we use <Center>
   const [modelBounds, setModelBounds] = useState<THREE.Box3 | null>(null);
   const [baseDistance, setBaseDistance] = useState(10);
 
@@ -41,9 +41,9 @@ const Scene: React.FC<SceneProps> = ({
 
     const size = new THREE.Vector3();
     payload.boundingBox.getSize(size);
-    const center = new THREE.Vector3();
-    payload.boundingBox.getCenter(center);
-    targetLookAt.current.copy(center);
+    
+    // Model is already centered at (0,0,0) by the <Center> component in Model.tsx
+    // So we don't need to calculate a dynamic lookAt center.
 
     const maxDim = Math.max(size.x, size.y, size.z);
     const fov = camera.fov * (Math.PI / 180);
@@ -55,25 +55,23 @@ const Scene: React.FC<SceneProps> = ({
     camera.updateProjectionMatrix();
     
     if (controls) {
-      (controls as any).target.copy(center);
+      (controls as any).target.set(0, 0, 0);
       (controls as any).update();
     }
   }, [camera, controls]);
 
   // RESET LOGIC
   useEffect(() => {
-    if (resetKey > 0 && modelBounds) {
+    if (resetKey > 0) {
       const direction = CAMERA_VIEW_DIRECTIONS[ViewPreset.ISO];
       const distance = baseDistance;
       camera.position.copy(direction).multiplyScalar(distance);
-      const center = new THREE.Vector3();
-      modelBounds.getCenter(center);
       if (controls) {
-        (controls as any).target.copy(center);
+        (controls as any).target.set(0, 0, 0);
         (controls as any).update();
       }
     }
-  }, [resetKey, modelBounds, baseDistance, camera, controls]);
+  }, [resetKey, baseDistance, camera, controls]);
 
   useEffect(() => {
     if (controls) {
@@ -130,7 +128,7 @@ const Scene: React.FC<SceneProps> = ({
       
       <OrbitControls
         makeDefault
-        target={targetLookAt.current}
+        target={[0, 0, 0]}
         minDistance={baseDistance / 20}
         maxDistance={baseDistance * 20}
       />
