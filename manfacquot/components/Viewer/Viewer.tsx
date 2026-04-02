@@ -130,29 +130,27 @@ const Viewer: React.FC<ViewerProps> = ({ modelUrl, fileExtension, view, isViewLo
       <div style={{
         height: '48px',
         width: '100%',
-        background: 'rgba(10, 10, 18, 0.98)',
-        backdropFilter: 'blur(15px)',
-        borderBottom: '1px solid rgba(255, 255, 255, 0.12)',
-        display: 'flex',
+        background: '#0a0a0f',
+        borderBottom: '1px solid rgba(255, 255, 255, 0.15)',
+        display: 'grid',
+        gridTemplateColumns: '1fr auto',
         alignItems: 'center',
         padding: '0 8px',
         zIndex: 110,
-        boxShadow: '0 4px 20px rgba(0,0,0,0.5)',
-        userSelect: 'none',
-        position: 'relative'
+        position: 'relative',
+        userSelect: 'none'
       }}>
         {/* Left Group: Contextual Tools */}
         <div style={{ 
           display: 'flex', 
           gap: '2px', 
           alignItems: 'center', 
-          flex: 1, 
           overflowX: 'auto', 
-          overflowY: 'hidden',
-          paddingRight: '180px' // Reserved space for the pinned right group
+          minWidth: 0,
+          marginRight: '8px'
         }} className="no-scrollbar">
-          <ToolbarButton icon={Icons.ZoomOutIcon} onClick={() => setZoomLevel(prev => Math.max(0.2, prev - 0.2))} label="Zoom Out" />
-          <ToolbarButton icon={Icons.ZoomInIcon} onClick={() => setZoomLevel(prev => Math.min(4, prev + 0.2))} label="Zoom In" />
+          <ToolbarButton icon={Icons.ZoomOutIcon} onClick={() => setZoomLevel(prev => Math.max(0.1, prev * 0.8))} label="Zoom Out" />
+          <ToolbarButton icon={Icons.ZoomInIcon} onClick={() => setZoomLevel(prev => Math.min(10, prev * 1.2))} label="Zoom In" />
           <div style={{ width: '1px', height: '18px', background: 'rgba(255,255,255,0.15)', margin: '0 6px', flexShrink: 0 }} />
           <ToolbarButton icon={Icons.BackgroundIcon} onClick={() => togglePanel('background')} active={activePanel === 'background'} label="Background" />
           <ToolbarButton icon={Icons.ModelColorIcon} onClick={() => togglePanel('material')} active={activePanel === 'material'} label="Model Color" />
@@ -164,17 +162,13 @@ const Viewer: React.FC<ViewerProps> = ({ modelUrl, fileExtension, view, isViewLo
 
         {/* Right Group: Viewport Modes (ABSOLUTELY PINNED TO RIGHT) */}
         <div style={{ 
-          position: 'absolute',
-          right: '8px',
-          top: 0,
-          bottom: 0,
           display: 'flex', 
           gap: '4px', 
           alignItems: 'center', 
-          background: 'rgba(10, 10, 18, 0.95)',
+          background: '#0a0a0f',
           paddingLeft: '12px',
-          boxShadow: '-10px 0 15px rgba(10, 10, 18, 0.9)',
-          zIndex: 120
+          borderLeft: '1px solid rgba(255, 255, 255, 0.1)',
+          flexShrink: 0
         }}>
           <ToolbarButton 
             icon={Icons.CenterIcon} 
