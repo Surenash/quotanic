@@ -276,7 +276,44 @@ const FileViewerModal = ({ design, onClose }) => {
                                             isViewLocked={isViewLocked}
                                             onUserInteraction={() => setIsViewLocked(false)}
                                             design={design}
-                                        />
+                                        >
+                                            {/* Viewer Controls Overlay */}
+                                            <div style={{ position: 'absolute', bottom: '24px', left: '50%', transform: 'translateX(-50%)', display: 'flex', gap: '8px', background: 'rgba(15, 23, 42, 0.8)', padding: '6px', borderRadius: '12px', border: `1px solid ${border_color}`, backdropFilter: 'blur(8px)', zIndex: 10 }}>
+                                                {[
+                                                    { id: ViewPreset.ISO, label: 'ISO' },
+                                                    { id: ViewPreset.TOP, label: 'Top' },
+                                                    { id: ViewPreset.FRONT, label: 'Front' },
+                                                    { id: ViewPreset.RIGHT, label: 'Right' },
+                                                    { id: ViewPreset.LEFT, label: 'Left' },
+                                                ].map(preset => (
+                                                    <button
+                                                        key={preset.id}
+                                                        onClick={() => { setView(preset.id); setIsViewLocked(true); }}
+                                                        style={{
+                                                            padding: '6px 12px',
+                                                            borderRadius: '8px',
+                                                            border: 'none',
+                                                            background: view === preset.id && isViewLocked ? neon_cyan : 'transparent',
+                                                            color: view === preset.id && isViewLocked ? '#000' : '#fff',
+                                                            fontSize: '12px',
+                                                            fontWeight: 700,
+                                                            cursor: 'pointer',
+                                                            transition: 'all 0.2s'
+                                                        }}
+                                                    >
+                                                        {preset.label}
+                                                    </button>
+                                                ))}
+                                            </div>
+                                            
+                                            {/* Info Badge */}
+                                            <div style={{ position: 'absolute', top: '24px', left: '24px', background: 'rgba(15, 23, 42, 0.6)', padding: '8px 16px', borderRadius: '20px', border: `1px solid ${border_color}`, backdropFilter: 'blur(4px)', pointerEvents: 'none', zIndex: 10 }}>
+                                                <span style={{ fontSize: '12px', fontWeight: 600, color: neon_cyan, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                                    <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: neon_cyan, boxShadow: `0 0 8px ${neon_cyan}` }} />
+                                                    LIVE 3D INSPECTION
+                                                </span>
+                                            </div>
+                                        </Viewer>
                                     </ErrorBoundary>
                                 ) : isSupported && !modelUrl ? (
                                     <div style={{ height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: text_secondary, gap: '16px', padding: '24px', textAlign: 'center' }}>
@@ -292,45 +329,6 @@ const FileViewerModal = ({ design, onClose }) => {
                                         <CtaButton text="Download to View" onClick={() => window.open(`${MEDIA_BASE_URL}/media/${design.s3_file_key}`, '_blank')} />
                                     </div>
                                 )}
-
-                                {/* Viewer Controls Overlay */}
-                                {isSupported && (
-                                    <div style={{ position: 'absolute', bottom: '24px', left: '50%', transform: 'translateX(-50%)', display: 'flex', gap: '8px', background: 'rgba(15, 23, 42, 0.8)', padding: '6px', borderRadius: '12px', border: `1px solid ${border_color}`, backdropFilter: 'blur(8px)', zIndex: 10 }}>
-                                        {[
-                                            { id: ViewPreset.ISO, label: 'ISO' },
-                                            { id: ViewPreset.TOP, label: 'Top' },
-                                            { id: ViewPreset.FRONT, label: 'Front' },
-                                            { id: ViewPreset.RIGHT, label: 'Right' },
-                                            { id: ViewPreset.LEFT, label: 'Left' },
-                                        ].map(preset => (
-                                            <button
-                                                key={preset.id}
-                                                onClick={() => { setView(preset.id); setIsViewLocked(true); }}
-                                                style={{
-                                                    padding: '6px 12px',
-                                                    borderRadius: '8px',
-                                                    border: 'none',
-                                                    background: view === preset.id && isViewLocked ? neon_cyan : 'transparent',
-                                                    color: view === preset.id && isViewLocked ? '#000' : '#fff',
-                                                    fontSize: '12px',
-                                                    fontWeight: 700,
-                                                    cursor: 'pointer',
-                                                    transition: 'all 0.2s'
-                                                }}
-                                            >
-                                                {preset.label}
-                                            </button>
-                                        ))}
-                                    </div>
-                                )}
-                                
-                                {/* Info Badge */}
-                                <div style={{ position: 'absolute', top: '24px', left: '24px', background: 'rgba(15, 23, 42, 0.6)', padding: '8px 16px', borderRadius: '20px', border: `1px solid ${border_color}`, backdropFilter: 'blur(4px)', pointerEvents: 'none' }}>
-                                    <span style={{ fontSize: '12px', fontWeight: 600, color: neon_cyan, display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                        <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: neon_cyan, boxShadow: `0 0 8px ${neon_cyan}` }} />
-                                        LIVE 3D INSPECTION
-                                    </span>
-                                </div>
                             </div>
                         </>
                     ) : (

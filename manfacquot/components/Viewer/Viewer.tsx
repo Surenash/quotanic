@@ -12,12 +12,13 @@ interface ViewerProps {
   isViewLocked: boolean;
   onUserInteraction: () => void;
   design?: any; // To get the original file key for download
+  children?: React.ReactNode;
 }
 
 // Sidebar Panel Types
 type PanelType = 'background' | 'material' | 'animation' | 'lighting' | 'settings' | null;
 
-const Viewer: React.FC<ViewerProps> = ({ modelUrl, fileExtension, view, isViewLocked, onUserInteraction, design }) => {
+const Viewer: React.FC<ViewerProps> = ({ modelUrl, fileExtension, view, isViewLocked, onUserInteraction, design, children }) => {
   // --- STATE ---
   const [activePanel, setActivePanel] = useState<PanelType>(null);
   const [viewportMode, setViewportMode] = useState<'solid' | 'wireframe'>('solid');
@@ -277,6 +278,7 @@ const Viewer: React.FC<ViewerProps> = ({ modelUrl, fileExtension, view, isViewLo
               />
             </Canvas>
           </Suspense>
+          {children}
         </div>
       </div>
 
