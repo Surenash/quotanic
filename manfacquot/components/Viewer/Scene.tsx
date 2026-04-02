@@ -40,6 +40,10 @@ const Scene: React.FC<SceneProps> = ({
 
     const size = new THREE.Vector3();
     payload.boundingBox.getSize(size);
+    const center = new THREE.Vector3();
+    payload.boundingBox.getCenter(center);
+    targetLookAt.current.copy(center);
+
     const maxDim = Math.max(size.x, size.y, size.z);
     const fov = camera.fov * (Math.PI / 180);
     const distance = (maxDim / (2 * Math.tan(fov / 2))) * 1.5;
@@ -48,7 +52,27 @@ const Scene: React.FC<SceneProps> = ({
     camera.near = distance / 100;
     camera.far = distance * 100;
     camera.updateProjectionMatrix();
-  }, [camera]);
+    
+    if (controls) {
+      (controls as any).target.copy(center);
+      (controls as any).update();
+    }
+  }, [camera, controls]);
+
+  // RESET LOGIC
+  useEffect(() => {
+    if (resetKey > 0 && modelBounds) {
+      const direction = CAMERA_VIEW_DIRECTIONS[ViewPreset.ISO];
+      const distance = baseDistance;
+      camera.position.copy(direction).multiplyScalar(distance);
+      const center = new THREE.Vector3();
+      modelBounds.getCenter(center);
+      if (controls) {
+        (controls as any).target.copy(center);
+        (controls as any).update();
+      }
+    }
+  }, [resetKey, modelBounds, baseDistance, camera, controls]);
 
   useEffect(() => {
     if (controls) {
