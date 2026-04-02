@@ -256,10 +256,10 @@ const FileViewerModal = ({ design, onClose }) => {
                     </div>
                 </div>
 
-                <div style={{ flex: 1, display: 'flex', overflow: 'hidden', position: 'relative' }}>
+                <div style={{ flex: 1, display: 'flex', overflow: 'hidden', position: 'relative', minWidth: 0, minHeight: 0 }}>
                     {activeTab === 'viewer' ? (
                         <>
-                            <div style={{ flex: 1, background: '#0a0a0f', position: 'relative' }}>
+                            <div style={{ flex: 1, background: '#0a0a0f', position: 'relative', minWidth: 0, minHeight: 0, overflow: 'hidden' }}>
                                 {isSupported && modelUrl ? (
                                     <ErrorBoundary fallback={(error) => (
                                         <div style={{ height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: 'var(--status-error)', padding: '24px', textAlign: 'center' }}>
