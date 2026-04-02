@@ -20,12 +20,13 @@ interface SceneProps {
   zoomLevel: number;
   showGrid: boolean;
   showAxes: boolean;
+  resetKey: number;
 }
 
 const Scene: React.FC<SceneProps> = ({ 
   modelUrl, fileExtension, view, isViewLocked, onUserInteraction,
   viewportMode, material, lighting, animation, zoomLevel,
-  showGrid, showAxes
+  showGrid, showAxes, resetKey
 }) => {
   const { camera, controls } = useThree();
   const targetPosition = useRef(new THREE.Vector3(5, 5, 5));
