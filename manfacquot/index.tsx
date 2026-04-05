@@ -1115,7 +1115,6 @@ const UploadPage = ({ onProceedToLogin, onNavigate, isAuthenticated, user, pendi
                 shipping_destination: formData.shippingDestination,
                 target_price: formData.targetPrice,
                 urgency: formData.urgency,
-                urgency: formData.urgency,
                 packaging: formData.packaging,
                 inspection_requirements: formData.inspectionRequirements,
                 requires_engineering_review: formData.requiresEngineeringReview,
@@ -2456,92 +2455,6 @@ const CostBreakdownModal = ({ request, onClose }) => {
 
                 <div style={{ padding: '24px' }}>
                     <CostBreakdownContent breakdown={breakdown} request={request} formatPrice={formatPrice} />
-                    <div style={{ marginTop: '24px', display: 'flex', justifyContent: 'flex-end' }}>
-                        <CtaButton text="Close" onClick={onClose} />
-                    </div>
-                </div>
-            </div>
-        </div>
-    );
-};
-
-                                                        alignItems: 'center',
-                                                        borderBottom: idx === flow.length - 1 ? 'none' : '1px solid rgba(255,255,255,0.05)'
-                                                    }}>
-                                                        <span style={{ color: 'var(--text-secondary)' }}>{idx + 1}</span>
-                                                        <span style={{ color: '#E2E8F0', fontWeight: '500' }}>{step.step}</span>
-                                                        <span style={{ color: 'var(--text-secondary)', fontSize: '11px' }}>{step.tool}</span>
-                                                        <span style={{ color: 'var(--text-secondary)' }}>{step.time}</span>
-                                                        <span style={{ color: 'var(--neon-cyan)', fontWeight: '600', textAlign: 'right' }}>{step.cost}</span>
-                                                    </div>
-                                                ));
-                                            } catch (e) {
-                                                return <div style={{ padding: '12px', fontSize: '12px', color: 'var(--text-secondary)' }}>{breakdown.feature_costs || 'Flow data format error'}</div>;
-                                            }
-                                        })()}
-                                    </div>
-                                </div>
-                            )}
-
-                            {/* Feature Manufacturing Sequences */}
-                            {breakdown.feature_sequences && (
-                                <div style={{ marginBottom: '24px' }}>
-                                    <h4 style={{ margin: '0 0 12px 0', color: 'var(--neon-cyan)', fontSize: '14px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Feature Manufacturing Sequences</h4>
-                                    <div style={{ display: 'grid', gap: '8px' }}>
-                                        {(() => {
-                                            try {
-                                                const sequences = typeof breakdown.feature_sequences === 'string' ? JSON.parse(breakdown.feature_sequences) : breakdown.feature_sequences;
-                                                return Object.entries(sequences).map(([feature, sequence], idx) => (
-                                                    <div key={idx} style={{ padding: '12px', background: 'rgba(255,255,255,0.02)', borderRadius: '6px', borderLeft: '3px solid var(--neon-cyan)' }}>
-                                                        <p style={{ fontSize: '12px', fontWeight: '700', color: 'var(--neon-cyan)', margin: '0 0 4px 0' }}>{feature}</p>
-                                                        <p style={{ fontSize: '13px', color: '#CBD5E1', margin: 0, fontStyle: 'italic' }}>{sequence as string}</p>
-                                                    </div>
-                                                ));
-                                            } catch (e) {
-                                                return null;
-                                            }
-                                        })()}
-                                    </div>
-                                </div>
-                            )}
-
-                            {/* Process Info */}
-                            {breakdown.ai_process_selected && (
-                                <div style={{ marginBottom: '16px', padding: '12px', background: 'rgba(var(--neon-cyan-rgb), 0.05)', borderRadius: '6px', border: '1px solid rgba(var(--neon-cyan-rgb), 0.1)' }}>
-                                    <p style={{ fontSize: '12px', color: 'var(--text-secondary)', margin: '0 0 4px 0' }}>Manufacturing Process</p>
-                                    <p style={{ fontSize: '14px', fontWeight: '600', margin: '0 0 8px 0', color: 'var(--neon-cyan)' }}>{breakdown.machine_selected || breakdown.ai_process_selected}</p>
-                                    {breakdown.ai_reasoning && (
-                                        <p style={{ fontSize: '12px', color: '#CBD5E1', margin: 0 }}>{breakdown.ai_reasoning}</p>
-                                    )}
-                                </div>
-                            )}
-
-                            {/* Summary Breakdown */}
-                            {breakdown.breakdown && (
-                                <div style={{ padding: '12px', background: 'var(--bg-panel)', borderRadius: '6px' }}>
-                                    <p style={{ fontSize: '12px', color: 'var(--text-secondary)', margin: '0 0 4px 0' }}>Summary</p>
-                                    <p style={{ fontSize: '12px', fontFamily: 'monospace', color: '#CBD5E1', margin: 0, lineHeight: '1.6' }}>{breakdown.breakdown}</p>
-                                </div>
-                            )}
-
-                            {/* Terms */}
-                            {(breakdown.terms_validity || breakdown.terms_payment) && (
-                                <div style={{ marginTop: '16px', padding: '12px', background: 'rgba(var(--text-secondary), 0.05)', borderRadius: '6px' }}>
-                                    <p style={{ fontSize: '12px', color: 'var(--text-secondary)', margin: '0 0 8px 0' }}>Terms & Conditions</p>
-                                    <div style={{ display: 'flex', gap: '24px', fontSize: '12px' }}>
-                                        {breakdown.terms_validity && <span>Valid for: <strong>{breakdown.terms_validity}</strong></span>}
-                                        {breakdown.terms_payment && <span>Payment: <strong>{breakdown.terms_payment}</strong></span>}
-                                    </div>
-                                </div>
-                            )}
-                        </>
-                    ) : (
-                        <div style={{ padding: '40px', textAlign: 'center', color: 'var(--text-secondary)' }}>
-                            <p>Detailed cost breakdown not available for this quote.</p>
-                            <p style={{ fontSize: '14px', marginTop: '8px' }}>Total Price: <strong style={{ color: 'var(--neon-cyan)', fontSize: '20px' }}>{formatPrice(request.price)}</strong></p>
-                        </div>
-                    )}
-
                     <div style={{ marginTop: '24px', display: 'flex', justifyContent: 'flex-end' }}>
                         <CtaButton text="Close" onClick={onClose} />
                     </div>
