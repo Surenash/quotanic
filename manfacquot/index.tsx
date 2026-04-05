@@ -2351,30 +2351,61 @@ const CostBreakdownContent = ({ breakdown, request, formatPrice }) => {
                     </div>
                     <table style={{ width: '100%', borderCollapse: 'collapse', flexGrow: 1 }}>
                         <tbody>
-                            {[
-                                { label: 'Material Cost (per unit)', value: material_cost_per_unit, extra: material_yield ? `Calculated Yield: ${material_yield}` : null, icon: <LucideBox size={14} /> },
-                                { label: 'Labor & Machining', value: labor_cost_per_unit, extra: applied_hourly_rate ? `Applied Rate: ${applied_hourly_rate}` : null, icon: <LucideWrench size={14} /> },
-                                { label: 'Finishing & Treatments', value: finishing_cost_per_unit, icon: <LucideSparkles size={14} /> },
-                                { label: 'Setup & Programming', value: setup_fee, icon: <LucideCode2 size={14} /> },
-                                { label: 'Packaging & Handling', value: packaging_fee, icon: <LucideArchive size={14} /> },
-                                { label: 'Logistics & Shipping', value: logistics_estimate, icon: <LucideMapPin size={14} /> }
-                            ].map((item, i) => item.value ? (
-                                <tr key={i} style={{ borderBottom: '1px solid rgba(255,255,255,0.03)', background: i % 2 === 0 ? 'transparent' : 'rgba(255,255,255,0.01)' }}>
-                                    <td style={{ padding: '16px 20px', fontSize: '14px', color: 'var(--text-secondary)' }}>
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                                            <span style={{ color: 'rgba(255,255,255,0.3)' }}>{item.icon}</span>
-                                            <div>
-                                                <div style={{ color: 'var(--text-primary)', fontWeight: 500 }}>{item.label}</div>
-                                                {item.extra && <div style={{ fontSize: '11px', color: 'var(--neon-cyan)', marginTop: '4px' }}>{item.extra}</div>}
+                            {(() => {
+                                let components = [
+                                    { label: 'Material Cost (per unit)', value: material_cost_per_unit, extra: material_yield ? `Calculated Yield: ${material_yield}` : null, icon: <LucideBox size={14} /> },
+                                    { label: 'Labor & Machining', value: labor_cost_per_unit, extra: applied_hourly_rate ? `Applied Rate: ${applied_hourly_rate}` : null, icon: <LucideWrench size={14} /> },
+                                    { label: 'Finishing & Treatments', value: finishing_cost_per_unit, icon: <LucideSparkles size={14} /> },
+                                    { label: 'Setup & Programming', value: setup_fee, icon: <LucideCode2 size={14} /> },
+                                    { label: 'Packaging & Handling', value: packaging_fee, icon: <LucideArchive size={14} /> },
+                                    { label: 'Logistics & Shipping', value: logistics_estimate, icon: <LucideMapPin size={14} /> }
+                                ];
+
+                                // FBM AI Engine output parser (comma-separated string includes Overhead, Margin, Machining, etc.)
+                                if (summary_text && summary_text.includes('Mat:') && summary_text.includes(',')) {
+                                    const pairs = summary_text.split(',').map(p => p.trim());
+                                    // Ensure it's the actual cost breakdown string before overriding
+                                    if (pairs.length > 3 && pairs.some(p => p.includes('Lab:') || p.includes('Mach:'))) {
+                                        components = pairs.map(pair => {
+                                            const [k, v] = pair.split(/[:\t\s]+/).reduce((acc, curr, i) => i === 0 ? [curr, ''] : [acc[0], (acc[1] + ' ' + curr).trim()], ['', '']);
+                                            let icon = <LucideFileText size={14} />;
+                                            let label = k;
+                                            let extra = null;
+
+                                            const keyLower = k.toLowerCase();
+                                            if (keyLower.includes('mat')) { icon = <LucideBox size={14} />; label = 'Material Cost'; extra = material_yield ? `Yield: ${material_yield}` : null; }
+                                            else if (keyLower.includes('lab')) { icon = <LucideWrench size={14} />; label = 'Labor Cost'; extra = applied_hourly_rate ? `Rate: ${applied_hourly_rate}` : null; }
+                                            else if (keyLower.includes('mach')) { icon = <LucideZap size={14} />; label = 'Machining Cost'; }
+                                            else if (keyLower.includes('setup')) { icon = <LucideCode2 size={14} />; label = 'Setup & Programming'; }
+                                            else if (keyLower.includes('pkg') || keyLower.includes('log')) { icon = <LucideMapPin size={14} />; label = 'Packaging & Logistics'; }
+                                            else if (keyLower.includes('risk') || keyLower.includes('margin')) { icon = <LucideDollarSign size={14} />; label = 'Risk & Profit Margin'; }
+                                            else if (keyLower.includes('overhead')) { icon = <LucideFactory size={14} />; label = 'Facility Overhead'; }
+                                            else if (keyLower.includes('urgency')) { icon = <LucideFileText size={14} />; label = 'Urgency Premium'; }
+
+                                            return { label, value: v, icon, extra };
+                                        });
+                                    }
+                                }
+
+                                return components.map((item, i) => item.value ? (
+                                    <tr key={i} style={{ borderBottom: '1px solid rgba(255,255,255,0.03)', background: i % 2 === 0 ? 'transparent' : 'rgba(255,255,255,0.01)' }}>
+                                        <td style={{ padding: '16px 20px', fontSize: '14px', color: 'var(--text-secondary)' }}>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                                <span style={{ color: 'rgba(255,255,255,0.3)' }}>{item.icon}</span>
+                                                <div>
+                                                    <div style={{ color: 'var(--text-primary)', fontWeight: 500 }}>{item.label}</div>
+                                                    {item.extra && <div style={{ fontSize: '11px', color: 'var(--neon-cyan)', marginTop: '4px' }}>{item.extra}</div>}
+                                                </div>
                                             </div>
-                                        </div>
-                                    </td>
-                                    <td style={{ padding: '16px 20px', fontSize: '16px', fontWeight: '600', textAlign: 'right', color: 'var(--text-primary)' }}>{typeof item.value === 'string' && item.value.includes('$') ? item.value : formatPrice(item.value)}</td>
-                                </tr>
-                            ) : null)}
+                                        </td>
+                                        <td style={{ padding: '16px 20px', fontSize: '16px', fontWeight: '600', textAlign: 'right', color: 'var(--text-primary)' }}>
+                                            {typeof item.value === 'string' && item.value.includes('$') ? item.value : formatPrice(item.value)}
+                                        </td>
+                                    </tr>
+                                ) : null);
+                            })()}
                         </tbody>
-                    </table>
-                    
+                    </table>                    
                     {/* Dedicated Totals Calculation Table */}
                     <div style={{ borderTop: '2px solid var(--neon-cyan)', background: 'rgba(var(--neon-cyan-rgb), 0.05)' }}>
                         <table style={{ width: '100%', borderCollapse: 'collapse' }}>
