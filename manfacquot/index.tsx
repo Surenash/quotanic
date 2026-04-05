@@ -4474,6 +4474,29 @@ const BackgroundAnimation = () => {
 
 // --- Main App Component ---
 
+const CurrencyRatesWarning = () => {
+    const { ratesError } = useCurrency();
+    if (!ratesError) return null;
+
+    return (
+        <div style={{
+            background: 'rgba(var(--status-error-rgb), 0.1)',
+            borderBottom: '1px solid var(--status-error)',
+            padding: '12px 24px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '12px',
+            color: 'var(--status-error)',
+            fontSize: '14px',
+            fontWeight: 500,
+            animation: 'slideDown 0.3s ease-out'
+        }}>
+            <LucideAlertTriangle size={18} />
+            <p style={{ margin: 0 }}>{ratesError}</p>
+        </div>
+    );
+};
+
 const App = () => {
     const [page, setPage] = useState('landing');
     const [pageParams, setPageParams] = useState(null);
@@ -4754,6 +4777,7 @@ const App = () => {
             <BackgroundAnimation />
             <div style={{ ...styles.appWrapper, backgroundColor: 'transparent', position: 'relative', zIndex: 1 }}>
                 <Header isAuthenticated={isAuthenticated} onLogout={handleLogout} onNavigate={handleNavigate} />
+                <CurrencyRatesWarning />
                 <main style={styles.mainContent}>
                     {renderPage()}
                 </main>
