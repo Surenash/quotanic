@@ -35,8 +35,13 @@ export const CurrencyProvider = ({ children }: { children: React.ReactNode }) =>
     };
 
     const formatPrice = (amount: number | string) => {
-        const numericAmount = typeof amount === 'string' ? parseFloat(amount) : amount;
-        if (isNaN(numericAmount)) return 'N/A';
+        if (amount === undefined || amount === null || amount === '') return 'N/A';
+        
+        // Robust numeric extraction: handle strings like "$28.65" or "28.65 (0.8 hrs)"
+        const cleanString = String(amount).split(' ')[0].replace(/[^0-9.-]/g, '');
+        const numericAmount = parseFloat(cleanString);
+        
+        if (isNaN(numericAmount)) return String(amount);
 
         const rate = rates[currency] || 1;
         const converted = numericAmount * rate;
