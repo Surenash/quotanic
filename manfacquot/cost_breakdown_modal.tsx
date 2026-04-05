@@ -23,7 +23,7 @@ const CostBreakdownModal = ({ request, onClose }) => {
     const { formatPrice } = useCurrency();
 
     return (
-        <div style={{ ...styles.modalOverlay }}>
+        <div style={{ ...styles.modalBackdrop }}>
             <div style={{ ...styles.modalContent, maxWidth: '800px' }}>
                 <div style={styles.modalHeader}>
                     <h2 style={{ margin: 0, color: 'var(--neon-cyan)' }}>Cost Breakdown</h2>

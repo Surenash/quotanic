@@ -2293,27 +2293,144 @@ const QuoteRequestModal = ({ request, onClose, onSubmit }) => {
     );
 };
 
-// Cost Breakdown Modal Component
+// Reusable Cost Breakdown Content Component
+const CostBreakdownContent = ({ breakdown, request, formatPrice }) => {
+    if (!breakdown) {
+        return (
+            <div style={{ padding: '40px', textAlign: 'center', color: 'var(--text-secondary)' }}>
+                <p>Detailed cost breakdown not available for this quote.</p>
+                <p style={{ fontSize: '14px', marginTop: '8px' }}>Total Price: <strong style={{ color: 'var(--neon-cyan)', fontSize: '20px' }}>{formatPrice(request.price)}</strong></p>
+            </div>
+        );
+    }
+
+    const { 
+        unit_price, final_price, material_cost_per_unit, labor_cost_per_unit, 
+        applied_hourly_rate, finishing_cost_per_unit, setup_fee, packaging_fee,
+        logistics_estimate, lead_time_estimate, ai_process_selected, ai_reasoning,
+        machine_selected, process_flow, material_yield
+    } = breakdown;
+
+    return (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+            {/* Header Summary Table */}
+            <div style={{ background: 'linear-gradient(135deg, rgba(var(--neon-cyan-rgb), 0.1), rgba(var(--neon-magenta-rgb), 0.05))', borderRadius: '12px', border: '1px solid rgba(var(--neon-cyan-rgb), 0.2)', overflow: 'hidden' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+                    <thead>
+                        <tr style={{ borderBottom: '1px solid rgba(var(--neon-cyan-rgb), 0.2)', background: 'rgba(var(--neon-cyan-rgb), 0.05)' }}>
+                            <th style={{ padding: '12px 16px', fontSize: '11px', textTransform: 'uppercase', color: 'var(--neon-cyan)' }}>Total Estimate</th>
+                            <th style={{ padding: '12px 16px', fontSize: '11px', textTransform: 'uppercase', color: 'var(--neon-cyan)' }}>Unit Price</th>
+                            <th style={{ padding: '12px 16px', fontSize: '11px', textTransform: 'uppercase', color: 'var(--neon-cyan)' }}>Quantity</th>
+                            <th style={{ padding: '12px 16px', fontSize: '11px', textTransform: 'uppercase', color: 'var(--neon-cyan)' }}>Lead Time</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td style={{ padding: '16px', fontSize: '24px', fontWeight: '800', color: 'var(--neon-cyan)' }}>{formatPrice(final_price || request.price)}</td>
+                            <td style={{ padding: '16px', fontSize: '20px', fontWeight: '600', color: '#fff' }}>{formatPrice(unit_price)}</td>
+                            <td style={{ padding: '16px', fontSize: '18px', color: 'var(--text-secondary)' }}>{request.quantity} units</td>
+                            <td style={{ padding: '16px', fontSize: '18px', color: 'var(--neon-magenta)', fontWeight: '600' }}>{lead_time_estimate || request.leadTime || '5-7 days'}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>
+                {/* Detailed Cost Breakdown Table */}
+                <div style={{ backgroundColor: 'rgba(255,255,255,0.02)', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)', overflow: 'hidden' }}>
+                    <div style={{ padding: '12px 16px', background: 'rgba(255,255,255,0.05)', fontSize: '12px', fontWeight: 'bold', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>COST COMPONENTS</div>
+                    <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                        <tbody>
+                            {[
+                                { label: 'Material Cost (per unit)', value: material_cost_per_unit, extra: material_yield ? `Yield: ${material_yield}` : null },
+                                { label: 'Labor Cost', value: labor_cost_per_unit, extra: applied_hourly_rate ? `Rate: ${applied_hourly_rate}` : null },
+                                { label: 'Finishing Services', value: finishing_cost_per_unit },
+                                { label: 'Setup & Programming', value: setup_fee },
+                                { label: 'Packaging & Handling', value: packaging_fee },
+                                { label: 'Shipping Estimate', value: logistics_estimate }
+                            ].map((item, i) => item.value ? (
+                                <tr key={i} style={{ borderBottom: '1px solid rgba(255,255,255,0.03)' }}>
+                                    <td style={{ padding: '12px 16px', fontSize: '13px', color: 'var(--text-secondary)' }}>
+                                        {item.label}
+                                        {item.extra && <div style={{ fontSize: '10px', color: 'rgba(var(--neon-cyan-rgb), 0.6)' }}>{item.extra}</div>}
+                                    </td>
+                                    <td style={{ padding: '12px 16px', fontSize: '14px', fontWeight: '600', textAlign: 'right' }}>{typeof item.value === 'string' && item.value.includes('$') ? item.value : formatPrice(item.value)}</td>
+                                </tr>
+                            ) : null)}
+                        </tbody>
+                    </table>
+                </div>
+
+                {/* AI Manufacturing Intelligence */}
+                <div style={{ backgroundColor: 'rgba(var(--neon-cyan-rgb), 0.03)', borderRadius: '8px', border: '1px solid rgba(var(--neon-cyan-rgb), 0.1)', padding: '16px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
+                        <LucideZap size={16} color="var(--neon-cyan)" />
+                        <span style={{ fontSize: '12px', fontWeight: 'bold', color: 'var(--neon-cyan)', textTransform: 'uppercase' }}>AI Process Selection</span>
+                    </div>
+                    <div style={{ marginBottom: '16px' }}>
+                        <div style={{ fontSize: '16px', fontWeight: '600', color: '#fff' }}>{machine_selected || ai_process_selected}</div>
+                        <div style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '4px', lineHeight: '1.4' }}>{ai_reasoning}</div>
+                    </div>
+                    <div style={{ padding: '12px', background: 'rgba(255,255,255,0.03)', borderRadius: '6px', fontSize: '12px' }}>
+                        <div style={{ color: 'var(--text-secondary)', marginBottom: '4px' }}>Confidence Score</div>
+                        <div style={{ width: '100%', height: '4px', background: 'rgba(255,255,255,0.1)', borderRadius: '2px', overflow: 'hidden' }}>
+                            <div style={{ width: '92%', height: '100%', background: 'var(--neon-cyan)', boxShadow: '0 0 8px var(--neon-cyan)' }}></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {/* Process Flow Table */}
+            {process_flow && (
+                <div style={{ backgroundColor: 'rgba(255,255,255,0.02)', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)', overflow: 'hidden' }}>
+                    <div style={{ padding: '12px 16px', background: 'rgba(255,255,255,0.05)', fontSize: '12px', fontWeight: 'bold', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>MANUFACTURING OPERATIONS</div>
+                    <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                        <thead>
+                            <tr style={{ background: 'rgba(255,255,255,0.02)', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                                <th style={{ padding: '10px 16px', fontSize: '11px', textAlign: 'left', color: 'var(--text-secondary)' }}>#</th>
+                                <th style={{ padding: '10px 16px', fontSize: '11px', textAlign: 'left', color: 'var(--text-secondary)' }}>Operation</th>
+                                <th style={{ padding: '10px 16px', fontSize: '11px', textAlign: 'left', color: 'var(--text-secondary)' }}>Tooling</th>
+                                <th style={{ padding: '10px 16px', fontSize: '11px', textAlign: 'left', color: 'var(--text-secondary)' }}>Time</th>
+                                <th style={{ padding: '10px 16px', fontSize: '11px', textAlign: 'right', color: 'var(--text-secondary)' }}>Cost</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {(() => {
+                                try {
+                                    const flow = typeof process_flow === 'string' ? JSON.parse(process_flow) : process_flow;
+                                    return flow.map((step, idx) => (
+                                        <tr key={idx} style={{ borderBottom: '1px solid rgba(255,255,255,0.03)' }}>
+                                            <td style={{ padding: '10px 16px', fontSize: '12px', color: 'rgba(255,255,255,0.3)' }}>{idx + 1}</td>
+                                            <td style={{ padding: '10px 16px', fontSize: '13px', fontWeight: '500' }}>{step.step}</td>
+                                            <td style={{ padding: '10px 16px', fontSize: '12px', color: 'var(--text-secondary)' }}>{step.tool}</td>
+                                            <td style={{ padding: '10px 16px', fontSize: '12px', color: 'var(--text-secondary)' }}>{step.time}</td>
+                                            <td style={{ padding: '10px 16px', fontSize: '13px', fontWeight: '600', color: 'var(--neon-cyan)', textAlign: 'right' }}>{step.cost}</td>
+                                        </tr>
+                                    ));
+                                } catch (e) {
+                                    return <tr><td colSpan={5} style={{ padding: '16px', fontSize: '12px', textAlign: 'center' }}>Detail view unavailable</td></tr>;
+                                }
+                            })()}
+                        </tbody>
+                    </table>
+                </div>
+            )}
+        </div>
+    );
+};
+
+// Updated Cost Breakdown Modal
 const CostBreakdownModal = ({ request, onClose }) => {
-    // Parse the notes field to extract breakdown data
     const parseBreakdown = (notes) => {
         if (!notes) return null;
         try {
-            // Notes format: "Match Score: ... Process: ... {JSON}"
-            // We want to find the first '{' and the last '}' to extract the JSON body
             const jsonStart = notes.indexOf('{');
             const jsonEnd = notes.lastIndexOf('}');
-            
             if (jsonStart === -1 || jsonEnd === -1 || jsonEnd < jsonStart) return null;
-
             const jsonStr = notes.substring(jsonStart, jsonEnd + 1);
-            
-            // Try standard JSON parse first
             try {
                 return JSON.parse(jsonStr);
             } catch (e) {
-                // Fallback for Python-style dictionaries (single quotes)
-                // Only replace single quotes that are not preceded by a backslash
                 const fixedJson = jsonStr
                     .replace(/'/g, '"')
                     .replace(/None/g, 'null')
@@ -2322,17 +2439,15 @@ const CostBreakdownModal = ({ request, onClose }) => {
                 return JSON.parse(fixedJson);
             }
         } catch (e) {
-            console.error('Failed to parse breakdown:', e);
             return null;
         }
     };
 
     const breakdown = parseBreakdown(request.notes);
-
     const { formatPrice } = useCurrency();
 
     return (
-        <div style={{ ...styles.modalOverlay }}>
+        <div style={{ ...styles.modalBackdrop }}>
             <div style={{ ...styles.modalContent, maxWidth: '800px' }}>
                 <div style={styles.modalHeader}>
                     <h2 style={{ margin: 0, color: 'var(--neon-cyan)' }}>Cost Breakdown</h2>
@@ -2340,94 +2455,16 @@ const CostBreakdownModal = ({ request, onClose }) => {
                 </div>
 
                 <div style={{ padding: '24px' }}>
-                    {/* Part Info */}
-                    <div style={{ marginBottom: '24px', padding: '16px', background: 'rgba(var(--neon-cyan-rgb), 0.05)', borderRadius: '8px' }}>
-                        <h3 style={{ margin: '0 0 12px 0', color: 'var(--neon-cyan)', fontSize: '18px' }}>{request.designName}</h3>
-                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px' }}>
-                            <div>
-                                <p style={{ fontSize: '12px', color: 'var(--text-secondary)', margin: '0 0 4px 0' }}>Customer</p>
-                                <p style={{ fontSize: '14px', fontWeight: '600', margin: 0 }}>{request.customer}</p>
-                            </div>
-                            <div>
-                                <p style={{ fontSize: '12px', color: 'var(--text-secondary)', margin: '0 0 4px 0' }}>Material</p>
-                                <p style={{ fontSize: '14px', fontWeight: '600', margin: 0 }}>{request.material}</p>
-                            </div>
-                            <div>
-                                <p style={{ fontSize: '12px', color: 'var(--text-secondary)', margin: '0 0 4px 0' }}>Quantity</p>
-                                <p style={{ fontSize: '14px', fontWeight: '600', margin: 0 }}>{request.quantity} units</p>
-                            </div>
-                        </div>
+                    <CostBreakdownContent breakdown={breakdown} request={request} formatPrice={formatPrice} />
+                    <div style={{ marginTop: '24px', display: 'flex', justifyContent: 'flex-end' }}>
+                        <CtaButton text="Close" onClick={onClose} />
                     </div>
+                </div>
+            </div>
+        </div>
+    );
+};
 
-                    {breakdown ? (
-                        <>
-                            {/* Summary */}
-                            <div style={{ marginBottom: '24px', padding: '16px', background: 'linear-gradient(135deg, rgba(var(--neon-cyan-rgb), 0.1), rgba(var(--neon-cyan-rgb), 0.05))', borderRadius: '8px', border: '1px solid rgba(var(--neon-cyan-rgb), 0.2)' }}>
-                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '16px' }}>
-                                    <div>
-                                        <p style={{ fontSize: '12px', color: 'var(--text-secondary)', margin: '0 0 4px 0' }}>Total Price</p>
-                                        <p style={{ fontSize: '24px', fontWeight: '700', color: 'var(--neon-cyan)', margin: 0 }}>{formatPrice(breakdown.final_price)}</p>
-                                    </div>
-                                    <div>
-                                        <p style={{ fontSize: '12px', color: 'var(--text-secondary)', margin: '0 0 4px 0' }}>Unit Price</p>
-                                        <p style={{ fontSize: '24px', fontWeight: '700', margin: 0 }}>{formatPrice(breakdown.unit_price)}</p>
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* Detailed Breakdown */}
-                            <div style={{ marginBottom: '24px' }}>
-                                <h4 style={{ margin: '0 0 12px 0', color: '#CBD5E1', fontSize: '14px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Cost Components</h4>
-                                <div style={{ display: 'grid', gap: '8px' }}>
-                                    {breakdown.material_cost_per_unit && (
-                                        <div style={{ display: 'flex', justifyContent: 'space-between', padding: '12px', background: 'var(--bg-panel)', borderRadius: '6px' }}>
-                                            <span>Material Cost</span>
-                                            <span style={{ fontWeight: '600' }}>{formatPrice(breakdown.material_cost_per_unit)}</span>
-                                        </div>
-                                    )}
-                                    {breakdown.labor_cost_per_unit && (
-                                        <div style={{ display: 'flex', justifyContent: 'space-between', padding: '12px', background: 'var(--bg-panel)', borderRadius: '6px' }}>
-                                            <span>Labor Cost <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>({breakdown.labor_cost_per_unit.split('(')[1]?.replace(')', '')})</span></span>
-                                            <span style={{ fontWeight: '600' }}>{formatPrice(breakdown.labor_cost_per_unit.split(' ')[0].replace('$', ''))}</span>
-                                        </div>
-                                    )}
-                                    {breakdown.applied_hourly_rate && (
-                                        <div style={{ display: 'flex', justifyContent: 'space-between', padding: '12px', background: 'var(--bg-panel)', borderRadius: '6px' }}>
-                                            <span>Machining Rate</span>
-                                            <span style={{ fontWeight: '600' }}>{breakdown.applied_hourly_rate}</span>
-                                        </div>
-                                    )}
-                                    {breakdown.finishing_cost_per_unit && (
-                                        <div style={{ display: 'flex', justifyContent: 'space-between', padding: '12px', background: 'var(--bg-panel)', borderRadius: '6px' }}>
-                                            <span>Finishing <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>({breakdown.finishing_details ? `(${breakdown.finishing_details.substring(0, 30)}...)` : ''}</span></span>
-                                            <span style={{ fontWeight: '600' }}>{formatPrice(breakdown.finishing_cost_per_unit)}</span>
-                                        </div>
-                                    )}
-                                </div>
-                            </div>
-
-                            {/* Step-by-Step Process Flow */}
-                            {breakdown.process_flow && (
-                                <div style={{ marginBottom: '24px' }}>
-                                    <h4 style={{ margin: '0 0 12px 0', color: 'var(--neon-cyan)', fontSize: '14px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Manufacturing Process Flow</h4>
-                                    <div style={{ display: 'grid', gap: '4px', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', overflow: 'hidden' }}>
-                                        <div style={{ display: 'grid', gridTemplateColumns: '40px 1fr 1fr 80px 80px', padding: '10px 12px', background: 'rgba(255,255,255,0.05)', fontSize: '11px', fontWeight: 'bold', textTransform: 'uppercase', color: 'var(--text-secondary)' }}>
-                                            <span>#</span>
-                                            <span>Operation</span>
-                                            <span>Tooling</span>
-                                            <span>Time</span>
-                                            <span style={{ textAlign: 'right' }}>Cost</span>
-                                        </div>
-                                        {(() => {
-                                            try {
-                                                const flow = typeof breakdown.process_flow === 'string' ? JSON.parse(breakdown.process_flow) : breakdown.process_flow;
-                                                return flow.map((step, idx) => (
-                                                    <div key={idx} style={{ 
-                                                        display: 'grid', 
-                                                        gridTemplateColumns: '40px 1fr 1fr 80px 80px', 
-                                                        padding: '10px 12px', 
-                                                        background: idx % 2 === 0 ? 'transparent' : 'rgba(255,255,255,0.02)',
-                                                        fontSize: '12px',
                                                         alignItems: 'center',
                                                         borderBottom: idx === flow.length - 1 ? 'none' : '1px solid rgba(255,255,255,0.05)'
                                                     }}>
@@ -2520,7 +2557,25 @@ const QuoteRequestsPage = ({ onViewFiles }) => {
     const [error, setError] = useState('');
     const [modalInfo, setModalInfo] = useState({ isOpen: false, request: null });
     const [breakdownModalInfo, setBreakdownModalInfo] = useState({ isOpen: false, request: null });
+    const [expandedRequestId, setExpandedRequestId] = useState(null);
     const [notification, setNotification] = useState({ show: false, message: '', type: 'success' });
+    const { formatPrice } = useCurrency();
+
+    const parseBreakdown = (notes) => {
+        if (!notes) return null;
+        try {
+            const jsonStart = notes.indexOf('{');
+            const jsonEnd = notes.lastIndexOf('}');
+            if (jsonStart === -1 || jsonEnd === -1 || jsonEnd < jsonStart) return null;
+            const jsonStr = notes.substring(jsonStart, jsonEnd + 1);
+            try {
+                return JSON.parse(jsonStr);
+            } catch (e) {
+                const fixedJson = jsonStr.replace(/'/g, '"').replace(/None/g, 'null').replace(/True/g, 'true').replace(/False/g, 'false');
+                return JSON.parse(fixedJson);
+            }
+        } catch (e) { return null; }
+    };
 
     useEffect(() => {
         fetchRequests();
@@ -2624,28 +2679,54 @@ const QuoteRequestsPage = ({ onViewFiles }) => {
                     </thead>
                     <tbody>
                         {requests.map(req => (
-                            <tr key={req.id}>
-                                <td style={styles.tableCell}>{req.designName}</td>
-                                <td style={styles.tableCell}>{req.customer}</td>
-                                <td style={styles.tableCell}>{req.material}</td>
-                                <td style={styles.tableCell}>{req.quantity}</td>
-                                <td style={styles.tableCell}>{new Date(req.dateReceived).toLocaleDateString()}</td>
-                                <td style={styles.tableCell}><span style={getStatusStyle(req.status)}>{req.status}</span></td>
-                                <td style={styles.tableCell}>
-                                    <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                                        <CtaButton text="View Files" onClick={() => onViewFiles(req.designId)} className="button-small" />
-                                        <CtaButton text="View Details" onClick={() => handleOpenBreakdownModal(req)} className="button-small" />
-                                        {req.status === 'Pending' ? (
-                                            <>
-                                                <CtaButton text="Quote" primary onClick={() => handleOpenModal(req)} className="button-small" />
-                                                <CtaButton text="Decline" onClick={() => handleDecline(req)} className="button-small-danger" />
-                                            </>
-                                        ) : (
-                                            <span style={{ color: 'var(--text-secondary)', fontSize: '14px' }}>Completed</span>
-                                        )}
-                                    </div>
-                                </td>
-                            </tr>
+                            <React.Fragment key={req.id}>
+                                <tr>
+                                    <td style={styles.tableCell}>{req.designName}</td>
+                                    <td style={styles.tableCell}>{req.customer}</td>
+                                    <td style={styles.tableCell}>{req.material}</td>
+                                    <td style={styles.tableCell}>{req.quantity}</td>
+                                    <td style={styles.tableCell}>{new Date(req.dateReceived).toLocaleDateString()}</td>
+                                    <td style={styles.tableCell}><span style={getStatusStyle(req.status)}>{req.status}</span></td>
+                                    <td style={styles.tableCell}>
+                                        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                                            <CtaButton text="View Files" onClick={() => onViewFiles(req.designId)} className="button-small" />
+                                            <CtaButton 
+                                                text={expandedRequestId === req.id ? "Hide Details" : "View Details"} 
+                                                onClick={() => setExpandedRequestId(expandedRequestId === req.id ? null : req.id)} 
+                                                className="button-small" 
+                                            />
+                                            {req.status === 'Pending' ? (
+                                                <>
+                                                    <CtaButton text="Quote" primary onClick={() => handleOpenModal(req)} className="button-small" />
+                                                    <CtaButton text="Decline" onClick={() => handleDecline(req)} className="button-small-danger" />
+                                                </>
+                                            ) : (
+                                                <span style={{ color: 'var(--text-secondary)', fontSize: '14px' }}>Completed</span>
+                                            )}
+                                        </div>
+                                    </td>
+                                </tr>
+                                {expandedRequestId === req.id && (
+                                    <tr>
+                                        <td colSpan={7} style={{ padding: '0 16px 24px 16px', backgroundColor: 'rgba(0,0,0,0.1)' }}>
+                                            <div style={{ 
+                                                marginTop: '8px', 
+                                                padding: '24px', 
+                                                backgroundColor: 'rgba(var(--bg-deep-space-rgb), 0.5)', 
+                                                borderRadius: '0 0 12px 12px',
+                                                border: '1px solid rgba(var(--neon-cyan-rgb), 0.2)',
+                                                borderTop: 'none'
+                                            }}>
+                                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                                                    <h4 style={{ margin: 0, color: 'var(--neon-cyan)', fontSize: '14px', textTransform: 'uppercase' }}>In-Depth Analysis</h4>
+                                                    <CtaButton text="Open in Popup" className="button-small" onClick={() => handleOpenBreakdownModal(req)} />
+                                                </div>
+                                                <CostBreakdownContent breakdown={parseBreakdown(req.notes)} request={req} formatPrice={formatPrice} />
+                                            </div>
+                                        </td>
+                                    </tr>
+                                )}
+                            </React.Fragment>
                         ))}
                     </tbody>
                 </table>
@@ -2832,6 +2913,24 @@ const InternalQuotationsPage = ({ onViewFiles, onNavigate }) => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
     const [breakdownModalInfo, setBreakdownModalInfo] = useState({ isOpen: false, request: null });
+    const [expandedRequestId, setExpandedRequestId] = useState<number | null>(null);
+    const { formatPrice } = useCurrency();
+
+    const parseBreakdown = (notes) => {
+        if (!notes) return null;
+        try {
+            const jsonStart = notes.indexOf('{');
+            const jsonEnd = notes.lastIndexOf('}');
+            if (jsonStart === -1 || jsonEnd === -1 || jsonEnd < jsonStart) return null;
+            const jsonStr = notes.substring(jsonStart, jsonEnd + 1);
+            try {
+                return JSON.parse(jsonStr);
+            } catch (e) {
+                const fixedJson = jsonStr.replace(/'/g, '"').replace(/None/g, 'null').replace(/True/g, 'true').replace(/False/g, 'false');
+                return JSON.parse(fixedJson);
+            }
+        } catch (e) { return null; }
+    };
 
     useEffect(() => {
         fetchRequests();
@@ -2898,19 +2997,45 @@ const InternalQuotationsPage = ({ onViewFiles, onNavigate }) => {
                     </thead>
                     <tbody>
                         {requests.length > 0 ? requests.map((req: any) => (
-                            <tr key={req.id}>
-                                <td style={styles.tableCell}>{req.designName}</td>
-                                <td style={styles.tableCell}>{req.material}</td>
-                                <td style={styles.tableCell}>{req.quantity}</td>
-                                <td style={styles.tableCell}>{new Date(req.dateReceived).toLocaleDateString()}</td>
-                                <td style={styles.tableCell}><strong style={{color: 'var(--neon-cyan)', fontSize: '16px'}}>${req.price}</strong></td>
-                                <td style={styles.tableCell}>
-                                    <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                                        <CtaButton text="View Analysis" onClick={() => handleOpenBreakdownModal(req)} className="button-small" />
-                                        <CtaButton text="View Files" onClick={() => onViewFiles(req.designId)} className="button-small" />
-                                    </div>
-                                </td>
-                            </tr>
+                            <React.Fragment key={req.id}>
+                                <tr>
+                                    <td style={styles.tableCell}>{req.designName}</td>
+                                    <td style={styles.tableCell}>{req.material}</td>
+                                    <td style={styles.tableCell}>{req.quantity}</td>
+                                    <td style={styles.tableCell}>{new Date(req.dateReceived).toLocaleDateString()}</td>
+                                    <td style={styles.tableCell}><strong style={{color: 'var(--neon-cyan)', fontSize: '16px'}}>${req.price}</strong></td>
+                                    <td style={styles.tableCell}>
+                                        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                                            <CtaButton 
+                                                text={expandedRequestId === req.id ? "Hide Analysis" : "View Analysis"} 
+                                                onClick={() => setExpandedRequestId(expandedRequestId === req.id ? null : req.id)} 
+                                                className="button-small" 
+                                            />
+                                            <CtaButton text="View Files" onClick={() => onViewFiles(req.designId)} className="button-small" />
+                                        </div>
+                                    </td>
+                                </tr>
+                                {expandedRequestId === req.id && (
+                                    <tr>
+                                        <td colSpan={6} style={{ padding: '0 16px 24px 16px', backgroundColor: 'rgba(0,0,0,0.1)' }}>
+                                            <div style={{ 
+                                                marginTop: '8px', 
+                                                padding: '24px', 
+                                                backgroundColor: 'rgba(var(--bg-deep-space-rgb), 0.5)', 
+                                                borderRadius: '0 0 12px 12px',
+                                                border: '1px solid rgba(var(--neon-magenta-rgb), 0.2)',
+                                                borderTop: 'none'
+                                            }}>
+                                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                                                    <h4 style={{ margin: 0, color: 'var(--neon-magenta)', fontSize: '14px', textTransform: 'uppercase' }}>FBM Manufacturing Intelligence</h4>
+                                                    <CtaButton text="Open in Popup" className="button-small" onClick={() => setBreakdownModalInfo({ isOpen: true, request: req })} />
+                                                </div>
+                                                <CostBreakdownContent breakdown={parseBreakdown(req.notes)} request={req} formatPrice={formatPrice} />
+                                            </div>
+                                        </td>
+                                    </tr>
+                                )}
+                            </React.Fragment>
                         )) : (
                             <tr><td colSpan={6} style={{...styles.tableCell, textAlign: 'center'}}>No internal quotes generated yet. Click 'Upload New Design' to calculate.</td></tr>
                         )}
@@ -3176,9 +3301,25 @@ const DesignQuotationsPage = ({ designId, onNavigate, onViewFiles }: { designId:
     const [error, setError] = useState('');
     const [sortBy, setSortBy] = useState('price'); // 'price' or 'lead_time'
     const [acceptingQuoteId, setAcceptingQuoteId] = useState(null);
-
     const { formatPrice } = useCurrency();
     const [breakdownModalInfo, setBreakdownModalInfo] = useState({ isOpen: false, request: null });
+    const [expandedQuoteId, setExpandedQuoteId] = useState<number | null>(null);
+
+    const parseBreakdown = (notes) => {
+        if (!notes) return null;
+        try {
+            const jsonStart = notes.indexOf('{');
+            const jsonEnd = notes.lastIndexOf('}');
+            if (jsonStart === -1 || jsonEnd === -1 || jsonEnd < jsonStart) return null;
+            const jsonStr = notes.substring(jsonStart, jsonEnd + 1);
+            try {
+                return JSON.parse(jsonStr);
+            } catch (e) {
+                const fixedJson = jsonStr.replace(/'/g, '"').replace(/None/g, 'null').replace(/True/g, 'true').replace(/False/g, 'false');
+                return JSON.parse(fixedJson);
+            }
+        } catch (e) { return null; }
+    };
 
     useEffect(() => {
         const fetchData = async () => {
@@ -3328,72 +3469,94 @@ const DesignQuotationsPage = ({ designId, onNavigate, onViewFiles }: { designId:
                                 </tr>
                             </thead>
                             <tbody>
-                                {sortedQuotes.map(quote => {
+                                {sortedQuotes.map((quote: any) => {
                                     const isAccepted = quote.status === 'accepted';
                                     const isPending = quote.status === 'pending';
                                     const hasAcceptedQuote = quotes.some(q => q.status === 'accepted');
+                                    const isExpanded = expandedQuoteId === quote.id;
+
+                                    const requestObj = {
+                                        id: quote.id,
+                                        designId: quote.design,
+                                        designName: design?.design_name || 'Design',
+                                        customer: quote.manufacturer_name || 'Manufacturer',
+                                        material: design?.material || 'N/A',
+                                        quantity: design?.quantity || 0,
+                                        price: quote.price_usd,
+                                        leadTime: quote.estimated_lead_time_days,
+                                        notes: quote.notes || '',
+                                    };
 
                                     return (
-                                        <tr key={quote.id}>
-                                            <td style={styles.tableCell}>
-                                                {quote.manufacturer_name || 'Unknown'}
-                                            </td>
-                                            <td style={styles.tableCell}>
-                                                {quote.manufacturer_company || 'N/A'}
-                                            </td>
-                                            <td style={styles.tableCell}>
-                                                <strong style={{ color: 'var(--neon-cyan)', fontSize: '16px' }}>
-                                                    {formatPrice(quote.price_usd || 0)}
-                                                </strong>
-                                            </td>
-                                            <td style={styles.tableCell}>
-                                                {quote.estimated_lead_time_days || 'N/A'} days
-                                            </td>
-                                            <td style={styles.tableCell}>
-                                                <span style={{
-                                                    ...styles.statusBadge,
-                                                    color: isAccepted ? 'var(--status-success)' : '#FBBF24',
-                                                    backgroundColor: isAccepted ? 'rgba(var(--status-success-rgb), 0.1)' : 'rgba(251, 191, 36, 0.1)',
-                                                    border: `1px solid ${isAccepted ? 'rgba(var(--status-success-rgb), 0.3)' : 'rgba(251, 191, 36, 0.3)'}`
-                                                }}>
-                                                    {isAccepted ? '✓ Accepted' : isPending ? '⏳ Pending' : quote.status}
-                                                </span>
-                                            </td>
-                                            <td style={styles.tableCell}>
-                                                <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                                                    {isPending && !hasAcceptedQuote && (
-                                                        <CtaButton
-                                                            text={acceptingQuoteId === quote.id ? 'Accepting...' : 'Accept Quote'}
-                                                            onClick={() => handleAcceptQuote(quote.id)}
-                                                            primary
-                                                            disabled={acceptingQuoteId !== null}
-                                                            className="button-small"
+                                        <React.Fragment key={quote.id}>
+                                            <tr style={{ backgroundColor: isExpanded ? 'rgba(var(--neon-cyan-rgb), 0.03)' : 'transparent' }}>
+                                                <td style={styles.tableCell}>
+                                                    {quote.manufacturer_name || 'Unknown'}
+                                                </td>
+                                                <td style={styles.tableCell}>
+                                                    {quote.manufacturer_company || 'N/A'}
+                                                </td>
+                                                <td style={styles.tableCell}>
+                                                    <strong style={{ color: 'var(--neon-cyan)', fontSize: '16px' }}>
+                                                        {formatPrice(quote.price_usd || 0)}
+                                                    </strong>
+                                                </td>
+                                                <td style={styles.tableCell}>
+                                                    {quote.estimated_lead_time_days || 'N/A'} days
+                                                </td>
+                                                <td style={styles.tableCell}>
+                                                    <span style={{
+                                                        ...styles.statusBadge,
+                                                        color: isAccepted ? 'var(--status-success)' : '#FBBF24',
+                                                        backgroundColor: isAccepted ? 'rgba(var(--status-success-rgb), 0.1)' : 'rgba(251, 191, 36, 0.1)',
+                                                        border: `1px solid ${isAccepted ? 'rgba(var(--status-success-rgb), 0.3)' : 'rgba(251, 191, 36, 0.3)'}`
+                                                    }}>
+                                                        {isAccepted ? '✓ Accepted' : isPending ? '⏳ Pending' : quote.status}
+                                                    </span>
+                                                </td>
+                                                <td style={styles.tableCell}>
+                                                    <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                                                        {isPending && !hasAcceptedQuote && (
+                                                            <CtaButton
+                                                                text={acceptingQuoteId === quote.id ? 'Accepting...' : 'Accept Quote'}
+                                                                onClick={() => handleAcceptQuote(quote.id)}
+                                                                primary
+                                                                disabled={acceptingQuoteId !== null}
+                                                                className="button-small"
+                                                            />
+                                                        )}
+                                                        <CtaButton 
+                                                            text={isExpanded ? "Hide Details" : "View Details"} 
+                                                            onClick={() => setExpandedQuoteId(isExpanded ? null : quote.id)} 
+                                                            className="button-small" 
                                                         />
-                                                    )}
-                                                    <CtaButton 
-                                                        text="View Details" 
-                                                        onClick={() => {
-                                                            const request = {
-                                                                id: quote.id,
-                                                                designId: quote.design,
-                                                                designName: design?.design_name || 'Design',
-                                                                customer: quote.manufacturer_name || 'Manufacturer',
-                                                                material: design?.material || 'N/A',
-                                                                quantity: design?.quantity || 0,
-                                                                price: quote.price_usd,
-                                                                leadTime: quote.estimated_lead_time_days,
-                                                                notes: quote.notes || '',
-                                                            };
-                                                            setBreakdownModalInfo({ isOpen: true, request });
-                                                        }} 
-                                                        className="button-small" 
-                                                    />
-                                                    {isAccepted && (
-                                                        <span style={{ ...styles.statusBadge, color: 'var(--status-success)' }}>✓ Order Created</span>
-                                                    )}
-                                                </div>
-                                            </td>
-                                        </tr>
+                                                        {isAccepted && (
+                                                            <span style={{ ...styles.statusBadge, color: 'var(--status-success)' }}>✓ Order Created</span>
+                                                        )}
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                            {isExpanded && (
+                                                <tr>
+                                                    <td colSpan={6} style={{ padding: '0 16px 24px 16px', backgroundColor: 'rgba(0,0,0,0.1)' }}>
+                                                        <div style={{ 
+                                                            marginTop: '8px', 
+                                                            padding: '24px', 
+                                                            backgroundColor: 'rgba(var(--bg-deep-space-rgb), 0.5)', 
+                                                            borderRadius: '0 0 12px 12px',
+                                                            border: '1px solid rgba(var(--neon-cyan-rgb), 0.2)',
+                                                            borderTop: 'none'
+                                                        }}>
+                                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                                                                <h4 style={{ margin: 0, color: 'var(--neon-cyan)', fontSize: '14px', textTransform: 'uppercase' }}>Quotation Breakdown</h4>
+                                                                <CtaButton text="Open in Popup" className="button-small" onClick={() => setBreakdownModalInfo({ isOpen: true, request: requestObj })} />
+                                                            </div>
+                                                            <CostBreakdownContent breakdown={parseBreakdown(quote.notes)} request={requestObj} formatPrice={formatPrice} />
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            )}
+                                        </React.Fragment>
                                     );
                                 })}
                             </tbody>
