@@ -2399,14 +2399,13 @@ const CostBreakdownContent = ({ breakdown, request, formatPrice }) => {
                                             </div>
                                         </td>
                                         <td style={{ padding: '16px 20px', fontSize: '16px', fontWeight: '600', textAlign: 'right', color: 'var(--text-primary)' }}>
-                                            {typeof item.value === 'string' && item.value.includes('$') ? item.value : formatPrice(item.value)}
+                                            {formatPrice(item.value)}
                                         </td>
-                                    </tr>
-                                ) : null);
-                            })()}
-                        </tbody>
-                    </table>                    
-                    {/* Dedicated Totals Calculation Table */}
+                                        </tr>
+                                        ) : null);
+                                        })()}
+                                        </tbody>
+                                        </table>                    {/* Dedicated Totals Calculation Table */}
                     <div style={{ borderTop: '2px solid var(--neon-cyan)', background: 'rgba(var(--neon-cyan-rgb), 0.05)' }}>
                         <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                             <tbody>
@@ -2476,10 +2475,12 @@ const CostBreakdownContent = ({ breakdown, request, formatPrice }) => {
                                             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: '1px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '8px', overflow: 'hidden' }}>
                                                 {pairs.map((pair, idx) => {
                                                     const [k, v] = pair.split(/[:\t\s]+/).reduce((acc, curr, i) => i === 0 ? [curr, ''] : [acc[0], (acc[1] + ' ' + curr).trim()], ['', '']);
+                                                    // Detect if value is numeric or currency to format it
+                                                    const isNumeric = !isNaN(parseFloat(v.replace(/[^0-9.-]/g, '')));
                                                     return (
                                                         <div key={idx} style={{ background: 'var(--bg-panel)', padding: '12px 16px' }}>
                                                             <div style={{ fontSize: '11px', color: 'var(--neon-cyan)', textTransform: 'uppercase', fontWeight: 700, marginBottom: '2px' }}>{k || 'Metric'}</div>
-                                                            <div style={{ fontSize: '15px', color: '#fff', fontWeight: 600 }}>{v || '-'}</div>
+                                                            <div style={{ fontSize: '15px', color: '#fff', fontWeight: 600 }}>{isNumeric ? formatPrice(v) : v}</div>
                                                         </div>
                                                     );
                                                 })}
