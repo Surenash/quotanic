@@ -2433,36 +2433,64 @@ const CostBreakdownContent = ({ breakdown, request, formatPrice }) => {
                                 <LucideFileText size={18} color="var(--text-secondary)" />
                                 <h4 style={{ margin: 0, fontSize: '13px', fontWeight: 'bold', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Executive Summary & Technical Overview</h4>
                             </div>
-                            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                                <tbody>
-                                    {summary_text.split('\n').filter(line => line.trim()).map((line, i) => {
-                                        const parts = line.split(':');
-                                        const isKeyValue = parts.length > 1 && parts[0].length < 45;
-                                        
+                            <div style={{ padding: '20px' }}>
+                                {(() => {
+                                    // Intelligent Parser for unstructured summary data
+                                    const lines = summary_text.split('\n').filter(l => l.trim());
+                                    
+                                    // Detect if it's a comma-separated list of metrics (common in AI output)
+                                    if (lines.length === 1 && summary_text.includes(',') && (summary_text.includes(':') || summary_text.includes('\t'))) {
+                                        const pairs = summary_text.split(',').map(p => p.trim());
                                         return (
-                                            <tr key={i} style={{ borderBottom: '1px solid rgba(255,255,255,0.03)', background: i % 2 === 0 ? 'transparent' : 'rgba(255,255,255,0.01)' }}>
-                                                {isKeyValue ? (
-                                                    <>
-                                                        <td style={{ padding: '14px 20px', fontSize: '13px', color: 'var(--neon-cyan)', fontWeight: 600, width: '35%', verticalAlign: 'top' }}>
-                                                            {parts[0].trim().replace(/^[-•]\s*/, '')}
-                                                        </td>
-                                                        <td style={{ padding: '14px 20px', fontSize: '13px', color: 'var(--text-primary)', lineHeight: '1.5', borderLeft: '1px solid rgba(255,255,255,0.05)' }}>
-                                                            {parts.slice(1).join(':').trim()}
-                                                        </td>
-                                                    </>
-                                                ) : (
-                                                    <td colSpan={2} style={{ padding: '14px 20px', fontSize: '13px', color: 'var(--text-primary)', lineHeight: '1.5' }}>
-                                                        <div style={{ display: 'flex', gap: '12px' }}>
-                                                            <span style={{ color: 'var(--neon-cyan)' }}>•</span>
-                                                            <span>{line.trim().replace(/^[-•]\s*/, '')}</span>
+                                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: '1px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '8px', overflow: 'hidden' }}>
+                                                {pairs.map((pair, idx) => {
+                                                    const [k, v] = pair.split(/[:\t\s]+/).reduce((acc, curr, i) => i === 0 ? [curr, ''] : [acc[0], (acc[1] + ' ' + curr).trim()], ['', '']);
+                                                    return (
+                                                        <div key={idx} style={{ background: 'var(--bg-panel)', padding: '12px 16px' }}>
+                                                            <div style={{ fontSize: '11px', color: 'var(--neon-cyan)', textTransform: 'uppercase', fontWeight: 700, marginBottom: '2px' }}>{k || 'Metric'}</div>
+                                                            <div style={{ fontSize: '15px', color: '#fff', fontWeight: 600 }}>{v || '-'}</div>
                                                         </div>
-                                                    </td>
-                                                )}
-                                            </tr>
+                                                    );
+                                                })}
+                                            </div>
                                         );
-                                    })}
-                                </tbody>
-                            </table>
+                                    }
+
+                                    // Otherwise, render as a structured key-value table
+                                    return (
+                                        <table style={{ width: '100%', borderCollapse: 'collapse', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '8px', overflow: 'hidden' }}>
+                                            <tbody>
+                                                {lines.map((line, i) => {
+                                                    const parts = line.split(':');
+                                                    const isKeyValue = parts.length > 1 && parts[0].length < 45;
+                                                    
+                                                    return (
+                                                        <tr key={i} style={{ borderBottom: '1px solid rgba(255,255,255,0.03)', background: i % 2 === 0 ? 'transparent' : 'rgba(255,255,255,0.01)' }}>
+                                                            {isKeyValue ? (
+                                                                <>
+                                                                    <td style={{ padding: '12px 16px', fontSize: '13px', color: 'var(--neon-cyan)', fontWeight: 600, width: '30%', borderRight: '1px solid rgba(255,255,255,0.05)' }}>
+                                                                        {parts[0].trim().replace(/^[-•]\s*/, '')}
+                                                                    </td>
+                                                                    <td style={{ padding: '12px 16px', fontSize: '13px', color: 'var(--text-primary)', lineHeight: '1.5' }}>
+                                                                        {parts.slice(1).join(':').trim()}
+                                                                    </td>
+                                                                </>
+                                                            ) : (
+                                                                <td colSpan={2} style={{ padding: '12px 16px', fontSize: '13px', color: 'var(--text-primary)', lineHeight: '1.5' }}>
+                                                                    <div style={{ display: 'flex', gap: '10px' }}>
+                                                                        <span style={{ color: 'var(--neon-cyan)' }}>•</span>
+                                                                        <span>{line.trim().replace(/^[-•]\s*/, '')}</span>
+                                                                    </div>
+                                                                </td>
+                                                            )}
+                                                        </tr>
+                                                    );
+                                                })}
+                                            </tbody>
+                                        </table>
+                                    );
+                                })()}
+                            </div>
                         </div>
                     )}
                 </div>
