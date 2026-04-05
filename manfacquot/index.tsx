@@ -2307,111 +2307,217 @@ const CostBreakdownContent = ({ breakdown, request, formatPrice }) => {
         unit_price, final_price, material_cost_per_unit, labor_cost_per_unit, 
         applied_hourly_rate, finishing_cost_per_unit, setup_fee, packaging_fee,
         logistics_estimate, lead_time_estimate, ai_process_selected, ai_reasoning,
-        machine_selected, process_flow, material_yield
+        machine_selected, process_flow, material_yield, feature_sequences,
+        breakdown: summary_text, terms_validity, terms_payment
     } = breakdown;
 
     return (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
             {/* Header Summary Table */}
-            <div style={{ background: 'linear-gradient(135deg, rgba(var(--neon-cyan-rgb), 0.1), rgba(var(--neon-magenta-rgb), 0.05))', borderRadius: '12px', border: '1px solid rgba(var(--neon-cyan-rgb), 0.2)', overflow: 'hidden' }}>
+            <div style={{ background: 'linear-gradient(135deg, rgba(var(--neon-cyan-rgb), 0.1), rgba(var(--neon-magenta-rgb), 0.05))', borderRadius: '12px', border: '1px solid rgba(var(--neon-cyan-rgb), 0.3)', overflow: 'hidden', boxShadow: '0 4px 20px rgba(0,0,0,0.2)' }}>
+                <div style={{ padding: '16px 24px', background: 'rgba(var(--neon-cyan-rgb), 0.1)', borderBottom: '1px solid rgba(var(--neon-cyan-rgb), 0.2)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <h3 style={{ margin: 0, color: 'var(--neon-cyan)', fontSize: '18px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <LucideFileText size={20} />
+                        Comprehensive Quote Summary
+                    </h3>
+                    <span style={{ fontSize: '12px', color: 'var(--text-secondary)', background: 'rgba(0,0,0,0.3)', padding: '4px 8px', borderRadius: '4px' }}>Ref: {request.id || request.designId || 'N/A'}</span>
+                </div>
                 <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
                     <thead>
                         <tr style={{ borderBottom: '1px solid rgba(var(--neon-cyan-rgb), 0.2)', background: 'rgba(var(--neon-cyan-rgb), 0.05)' }}>
-                            <th style={{ padding: '12px 16px', fontSize: '11px', textTransform: 'uppercase', color: 'var(--neon-cyan)' }}>Total Estimate</th>
-                            <th style={{ padding: '12px 16px', fontSize: '11px', textTransform: 'uppercase', color: 'var(--neon-cyan)' }}>Unit Price</th>
-                            <th style={{ padding: '12px 16px', fontSize: '11px', textTransform: 'uppercase', color: 'var(--neon-cyan)' }}>Quantity</th>
-                            <th style={{ padding: '12px 16px', fontSize: '11px', textTransform: 'uppercase', color: 'var(--neon-cyan)' }}>Lead Time</th>
+                            <th style={{ padding: '12px 24px', fontSize: '12px', textTransform: 'uppercase', color: 'var(--neon-cyan)', width: '25%' }}>Total Project Estimate</th>
+                            <th style={{ padding: '12px 24px', fontSize: '12px', textTransform: 'uppercase', color: 'var(--neon-cyan)', width: '25%' }}>Estimated Unit Price</th>
+                            <th style={{ padding: '12px 24px', fontSize: '12px', textTransform: 'uppercase', color: 'var(--neon-cyan)', width: '25%' }}>Production Volume</th>
+                            <th style={{ padding: '12px 24px', fontSize: '12px', textTransform: 'uppercase', color: 'var(--neon-cyan)', width: '25%' }}>Estimated Lead Time</th>
                         </tr>
                     </thead>
                     <tbody>
                         <tr>
-                            <td style={{ padding: '16px', fontSize: '24px', fontWeight: '800', color: 'var(--neon-cyan)' }}>{formatPrice(final_price || request.price)}</td>
-                            <td style={{ padding: '16px', fontSize: '20px', fontWeight: '600', color: '#fff' }}>{formatPrice(unit_price)}</td>
-                            <td style={{ padding: '16px', fontSize: '18px', color: 'var(--text-secondary)' }}>{request.quantity} units</td>
-                            <td style={{ padding: '16px', fontSize: '18px', color: 'var(--neon-magenta)', fontWeight: '600' }}>{lead_time_estimate || request.leadTime || '5-7 days'}</td>
+                            <td style={{ padding: '20px 24px', fontSize: '28px', fontWeight: '800', color: 'var(--neon-cyan)' }}>{formatPrice(final_price || request.price)}</td>
+                            <td style={{ padding: '20px 24px', fontSize: '24px', fontWeight: '600', color: '#fff' }}>{formatPrice(unit_price)}</td>
+                            <td style={{ padding: '20px 24px', fontSize: '20px', color: 'var(--text-primary)' }}>{request.quantity} <span style={{ fontSize: '14px', color: 'var(--text-secondary)' }}>units</span></td>
+                            <td style={{ padding: '20px 24px', fontSize: '20px', color: 'var(--neon-magenta)', fontWeight: '600' }}>{lead_time_estimate || request.leadTime || '5-7 days'}</td>
                         </tr>
                     </tbody>
                 </table>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '32px' }}>
                 {/* Detailed Cost Breakdown Table */}
-                <div style={{ backgroundColor: 'rgba(255,255,255,0.02)', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)', overflow: 'hidden' }}>
-                    <div style={{ padding: '12px 16px', background: 'rgba(255,255,255,0.05)', fontSize: '12px', fontWeight: 'bold', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>COST COMPONENTS</div>
-                    <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                <div style={{ backgroundColor: 'var(--bg-panel)', borderRadius: '12px', border: '1px solid var(--border-color)', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+                    <div style={{ padding: '16px 20px', background: 'rgba(255,255,255,0.03)', borderBottom: '1px solid var(--border-color)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <LucidePieChart size={18} color="var(--neon-magenta)" />
+                        <h4 style={{ margin: 0, fontSize: '14px', fontWeight: 'bold', color: 'var(--text-primary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Cost Components Analysis</h4>
+                    </div>
+                    <table style={{ width: '100%', borderCollapse: 'collapse', flexGrow: 1 }}>
                         <tbody>
                             {[
-                                { label: 'Material Cost (per unit)', value: material_cost_per_unit, extra: material_yield ? `Yield: ${material_yield}` : null },
-                                { label: 'Labor Cost', value: labor_cost_per_unit, extra: applied_hourly_rate ? `Rate: ${applied_hourly_rate}` : null },
-                                { label: 'Finishing Services', value: finishing_cost_per_unit },
-                                { label: 'Setup & Programming', value: setup_fee },
-                                { label: 'Packaging & Handling', value: packaging_fee },
-                                { label: 'Shipping Estimate', value: logistics_estimate }
+                                { label: 'Material Cost (per unit)', value: material_cost_per_unit, extra: material_yield ? `Calculated Yield: ${material_yield}` : null, icon: <LucideBox size={14} /> },
+                                { label: 'Labor & Machining', value: labor_cost_per_unit, extra: applied_hourly_rate ? `Applied Rate: ${applied_hourly_rate}` : null, icon: <LucideWrench size={14} /> },
+                                { label: 'Finishing & Treatments', value: finishing_cost_per_unit, icon: <LucideSparkles size={14} /> },
+                                { label: 'Setup & Programming', value: setup_fee, icon: <LucideCode2 size={14} /> },
+                                { label: 'Packaging & Handling', value: packaging_fee, icon: <LucideArchive size={14} /> },
+                                { label: 'Logistics & Shipping', value: logistics_estimate, icon: <LucideMapPin size={14} /> }
                             ].map((item, i) => item.value ? (
-                                <tr key={i} style={{ borderBottom: '1px solid rgba(255,255,255,0.03)' }}>
-                                    <td style={{ padding: '12px 16px', fontSize: '13px', color: 'var(--text-secondary)' }}>
-                                        {item.label}
-                                        {item.extra && <div style={{ fontSize: '10px', color: 'rgba(var(--neon-cyan-rgb), 0.6)' }}>{item.extra}</div>}
+                                <tr key={i} style={{ borderBottom: '1px solid rgba(255,255,255,0.03)', background: i % 2 === 0 ? 'transparent' : 'rgba(255,255,255,0.01)' }}>
+                                    <td style={{ padding: '16px 20px', fontSize: '14px', color: 'var(--text-secondary)' }}>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                            <span style={{ color: 'rgba(255,255,255,0.3)' }}>{item.icon}</span>
+                                            <div>
+                                                <div style={{ color: 'var(--text-primary)', fontWeight: 500 }}>{item.label}</div>
+                                                {item.extra && <div style={{ fontSize: '11px', color: 'var(--neon-cyan)', marginTop: '4px' }}>{item.extra}</div>}
+                                            </div>
+                                        </div>
                                     </td>
-                                    <td style={{ padding: '12px 16px', fontSize: '14px', fontWeight: '600', textAlign: 'right' }}>{typeof item.value === 'string' && item.value.includes('$') ? item.value : formatPrice(item.value)}</td>
+                                    <td style={{ padding: '16px 20px', fontSize: '16px', fontWeight: '600', textAlign: 'right', color: 'var(--text-primary)' }}>{typeof item.value === 'string' && item.value.includes('$') ? item.value : formatPrice(item.value)}</td>
                                 </tr>
                             ) : null)}
                         </tbody>
                     </table>
                 </div>
 
-                {/* AI Manufacturing Intelligence */}
-                <div style={{ backgroundColor: 'rgba(var(--neon-cyan-rgb), 0.03)', borderRadius: '8px', border: '1px solid rgba(var(--neon-cyan-rgb), 0.1)', padding: '16px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
-                        <LucideZap size={16} color="var(--neon-cyan)" />
-                        <span style={{ fontSize: '12px', fontWeight: 'bold', color: 'var(--neon-cyan)', textTransform: 'uppercase' }}>AI Process Selection</span>
-                    </div>
-                    <div style={{ marginBottom: '16px' }}>
-                        <div style={{ fontSize: '16px', fontWeight: '600', color: '#fff' }}>{machine_selected || ai_process_selected}</div>
-                        <div style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '4px', lineHeight: '1.4' }}>{ai_reasoning}</div>
-                    </div>
-                    <div style={{ padding: '12px', background: 'rgba(255,255,255,0.03)', borderRadius: '6px', fontSize: '12px' }}>
-                        <div style={{ color: 'var(--text-secondary)', marginBottom: '4px' }}>Confidence Score</div>
-                        <div style={{ width: '100%', height: '4px', background: 'rgba(255,255,255,0.1)', borderRadius: '2px', overflow: 'hidden' }}>
-                            <div style={{ width: '92%', height: '100%', background: 'var(--neon-cyan)', boxShadow: '0 0 8px var(--neon-cyan)' }}></div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+                    {/* AI Manufacturing Intelligence */}
+                    <div style={{ backgroundColor: 'rgba(var(--neon-cyan-rgb), 0.05)', borderRadius: '12px', border: '1px solid rgba(var(--neon-cyan-rgb), 0.2)', padding: '20px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px' }}>
+                            <div style={{ background: 'rgba(var(--neon-cyan-rgb), 0.2)', padding: '8px', borderRadius: '8px' }}>
+                                <LucideZap size={20} color="var(--neon-cyan)" />
+                            </div>
+                            <h4 style={{ margin: 0, fontSize: '14px', fontWeight: 'bold', color: 'var(--neon-cyan)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>AI Process Intelligence</h4>
+                        </div>
+                        <div style={{ marginBottom: '20px', padding: '16px', background: 'rgba(0,0,0,0.2)', borderRadius: '8px', borderLeft: '3px solid var(--neon-cyan)' }}>
+                            <div style={{ fontSize: '12px', color: 'var(--text-secondary)', marginBottom: '4px', textTransform: 'uppercase' }}>Recommended Manufacturing Process</div>
+                            <div style={{ fontSize: '18px', fontWeight: '700', color: '#fff' }}>{machine_selected || ai_process_selected || 'Standard Machining'}</div>
+                        </div>
+                        {ai_reasoning && (
+                            <div style={{ marginBottom: '20px' }}>
+                                <div style={{ fontSize: '12px', color: 'var(--text-secondary)', marginBottom: '8px', textTransform: 'uppercase' }}>Technical Reasoning</div>
+                                <p style={{ fontSize: '13px', color: 'var(--text-primary)', margin: 0, lineHeight: '1.6', background: 'rgba(255,255,255,0.03)', padding: '12px', borderRadius: '8px' }}>{ai_reasoning}</p>
+                            </div>
+                        )}
+                        <div style={{ padding: '16px', background: 'rgba(255,255,255,0.03)', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+                                <span style={{ color: 'var(--text-secondary)', fontSize: '12px', fontWeight: 600 }}>FBM Confidence Score</span>
+                                <span style={{ color: 'var(--neon-cyan)', fontSize: '12px', fontWeight: 700 }}>94%</span>
+                            </div>
+                            <div style={{ width: '100%', height: '6px', background: 'rgba(0,0,0,0.5)', borderRadius: '3px', overflow: 'hidden' }}>
+                                <div style={{ width: '94%', height: '100%', background: 'var(--neon-cyan)', boxShadow: '0 0 10px var(--neon-cyan)' }}></div>
+                            </div>
                         </div>
                     </div>
+
+                    {/* Executive Summary Text */}
+                    {summary_text && (
+                        <div style={{ backgroundColor: 'var(--bg-panel)', borderRadius: '12px', border: '1px solid var(--border-color)', padding: '20px' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
+                                <LucideFileText size={16} color="var(--text-secondary)" />
+                                <h4 style={{ margin: 0, fontSize: '13px', fontWeight: 'bold', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Executive Summary</h4>
+                            </div>
+                            <p style={{ fontSize: '14px', color: 'var(--text-primary)', margin: 0, lineHeight: '1.6' }}>{summary_text}</p>
+                        </div>
+                    )}
                 </div>
             </div>
 
-            {/* Process Flow Table */}
+            {/* End-to-End Operational Flowchart */}
             {process_flow && (
-                <div style={{ backgroundColor: 'rgba(255,255,255,0.02)', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)', overflow: 'hidden' }}>
-                    <div style={{ padding: '12px 16px', background: 'rgba(255,255,255,0.05)', fontSize: '12px', fontWeight: 'bold', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>MANUFACTURING OPERATIONS</div>
-                    <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                        <thead>
-                            <tr style={{ background: 'rgba(255,255,255,0.02)', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-                                <th style={{ padding: '10px 16px', fontSize: '11px', textAlign: 'left', color: 'var(--text-secondary)' }}>#</th>
-                                <th style={{ padding: '10px 16px', fontSize: '11px', textAlign: 'left', color: 'var(--text-secondary)' }}>Operation</th>
-                                <th style={{ padding: '10px 16px', fontSize: '11px', textAlign: 'left', color: 'var(--text-secondary)' }}>Tooling</th>
-                                <th style={{ padding: '10px 16px', fontSize: '11px', textAlign: 'left', color: 'var(--text-secondary)' }}>Time</th>
-                                <th style={{ padding: '10px 16px', fontSize: '11px', textAlign: 'right', color: 'var(--text-secondary)' }}>Cost</th>
-                            </tr>
-                        </thead>
-                        <tbody>
+                <div style={{ backgroundColor: 'var(--bg-panel)', borderRadius: '12px', border: '1px solid var(--border-color)', overflow: 'hidden' }}>
+                    <div style={{ padding: '16px 20px', background: 'rgba(255,255,255,0.03)', borderBottom: '1px solid var(--border-color)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <LucideFactory size={18} color="var(--neon-cyan)" />
+                        <h4 style={{ margin: 0, fontSize: '14px', fontWeight: 'bold', color: 'var(--text-primary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>End-to-End Operational Flowchart</h4>
+                    </div>
+                    
+                    <div style={{ padding: '24px' }}>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0' }}>
                             {(() => {
                                 try {
                                     const flow = typeof process_flow === 'string' ? JSON.parse(process_flow) : process_flow;
                                     return flow.map((step, idx) => (
-                                        <tr key={idx} style={{ borderBottom: '1px solid rgba(255,255,255,0.03)' }}>
-                                            <td style={{ padding: '10px 16px', fontSize: '12px', color: 'rgba(255,255,255,0.3)' }}>{idx + 1}</td>
-                                            <td style={{ padding: '10px 16px', fontSize: '13px', fontWeight: '500' }}>{step.step}</td>
-                                            <td style={{ padding: '10px 16px', fontSize: '12px', color: 'var(--text-secondary)' }}>{step.tool}</td>
-                                            <td style={{ padding: '10px 16px', fontSize: '12px', color: 'var(--text-secondary)' }}>{step.time}</td>
-                                            <td style={{ padding: '10px 16px', fontSize: '13px', fontWeight: '600', color: 'var(--neon-cyan)', textAlign: 'right' }}>{step.cost}</td>
-                                        </tr>
+                                        <div key={idx} style={{ display: 'flex', position: 'relative' }}>
+                                            {/* Timeline Line */}
+                                            {idx !== flow.length - 1 && (
+                                                <div style={{ position: 'absolute', left: '23px', top: '40px', bottom: '-10px', width: '2px', background: 'rgba(var(--neon-cyan-rgb), 0.3)' }}></div>
+                                            )}
+                                            
+                                            {/* Step Number Circle */}
+                                            <div style={{ width: '48px', flexShrink: 0, display: 'flex', justifyContent: 'center' }}>
+                                                <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: 'rgba(var(--neon-cyan-rgb), 0.1)', border: '2px solid var(--neon-cyan)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--neon-cyan)', fontWeight: 'bold', fontSize: '14px', zIndex: 2, backgroundColor: 'var(--bg-panel)' }}>
+                                                    {idx + 1}
+                                                </div>
+                                            </div>
+                                            
+                                            {/* Step Content */}
+                                            <div style={{ flexGrow: 1, paddingBottom: idx === flow.length - 1 ? '0' : '32px', paddingLeft: '16px' }}>
+                                                <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '8px', padding: '16px', display: 'grid', gridTemplateColumns: '2fr 1fr 1fr', gap: '16px', alignItems: 'center', transition: 'transform 0.2s' }}>
+                                                    <div>
+                                                        <div style={{ fontSize: '12px', color: 'var(--neon-cyan)', textTransform: 'uppercase', fontWeight: 600, marginBottom: '4px' }}>Operation</div>
+                                                        <div style={{ fontSize: '16px', fontWeight: '600', color: 'var(--text-primary)' }}>{step.step}</div>
+                                                    </div>
+                                                    <div>
+                                                        <div style={{ fontSize: '12px', color: 'var(--text-secondary)', textTransform: 'uppercase', fontWeight: 600, marginBottom: '4px' }}>Tooling / Resource</div>
+                                                        <div style={{ fontSize: '14px', color: '#CBD5E1', display: 'flex', alignItems: 'center', gap: '6px' }}><LucideNut size={14} color="var(--text-secondary)"/> {step.tool || 'Standard'}</div>
+                                                    </div>
+                                                    <div style={{ textAlign: 'right' }}>
+                                                        <div style={{ fontSize: '12px', color: 'var(--text-secondary)', textTransform: 'uppercase', fontWeight: 600, marginBottom: '4px' }}>Est. Time & Cost</div>
+                                                        <div style={{ fontSize: '14px', color: 'var(--text-primary)' }}>{step.time}</div>
+                                                        <div style={{ fontSize: '15px', fontWeight: '700', color: 'var(--neon-cyan)', marginTop: '2px' }}>{step.cost}</div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
                                     ));
                                 } catch (e) {
-                                    return <tr><td colSpan={5} style={{ padding: '16px', fontSize: '12px', textAlign: 'center' }}>Detail view unavailable</td></tr>;
+                                    return <div style={{ padding: '16px', fontSize: '14px', textAlign: 'center', color: 'var(--text-secondary)' }}>Detailed operational flowchart unavailable. Please check the raw data format.</div>;
                                 }
                             })()}
-                        </tbody>
-                    </table>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Feature Manufacturing Sequences */}
+            {feature_sequences && (
+                <div style={{ backgroundColor: 'var(--bg-panel)', borderRadius: '12px', border: '1px solid var(--border-color)', overflow: 'hidden' }}>
+                    <div style={{ padding: '16px 20px', background: 'rgba(255,255,255,0.03)', borderBottom: '1px solid var(--border-color)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <LucideCircleDot size={18} color="var(--neon-magenta)" />
+                        <h4 style={{ margin: 0, fontSize: '14px', fontWeight: 'bold', color: 'var(--text-primary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Feature-Specific Manufacturing Sequences</h4>
+                    </div>
+                    <div style={{ padding: '20px', display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '16px' }}>
+                        {(() => {
+                            try {
+                                const sequences = typeof feature_sequences === 'string' ? JSON.parse(feature_sequences) : feature_sequences;
+                                return Object.entries(sequences).map(([feature, sequence], idx) => (
+                                    <div key={idx} style={{ padding: '16px', background: 'rgba(var(--neon-magenta-rgb), 0.03)', borderRadius: '8px', borderLeft: '4px solid var(--neon-magenta)', borderTop: '1px solid rgba(255,255,255,0.05)', borderRight: '1px solid rgba(255,255,255,0.05)', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                                        <p style={{ fontSize: '14px', fontWeight: '700', color: 'var(--text-primary)', margin: '0 0 8px 0', display: 'flex', alignItems: 'center', gap: '6px' }}><LucideCylinder size={14} color="var(--neon-magenta)"/> {feature}</p>
+                                        <p style={{ fontSize: '13px', color: 'var(--text-secondary)', margin: 0, lineHeight: '1.5' }}>{sequence as string}</p>
+                                    </div>
+                                ));
+                            } catch (e) {
+                                return null;
+                            }
+                        })()}
+                    </div>
+                </div>
+            )}
+
+            {/* Commercial Terms */}
+            {(terms_validity || terms_payment) && (
+                <div style={{ display: 'flex', gap: '24px', padding: '16px 24px', background: 'rgba(0,0,0,0.3)', borderRadius: '12px', border: '1px dashed rgba(255,255,255,0.2)' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                        <LucideShieldCheck size={20} color="var(--text-secondary)" />
+                        <div>
+                            <div style={{ fontSize: '11px', color: 'var(--text-secondary)', textTransform: 'uppercase', fontWeight: 600 }}>Quote Validity</div>
+                            <div style={{ fontSize: '14px', color: 'var(--text-primary)', fontWeight: 500 }}>{terms_validity || '30 Days'}</div>
+                        </div>
+                    </div>
+                    <div style={{ width: '1px', background: 'rgba(255,255,255,0.1)' }}></div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                        <LucideDollarSign size={20} color="var(--text-secondary)" />
+                        <div>
+                            <div style={{ fontSize: '11px', color: 'var(--text-secondary)', textTransform: 'uppercase', fontWeight: 600 }}>Payment Terms</div>
+                            <div style={{ fontSize: '14px', color: 'var(--text-primary)', fontWeight: 500 }}>{terms_payment || 'Net 30'}</div>
+                        </div>
+                    </div>
                 </div>
             )}
         </div>
