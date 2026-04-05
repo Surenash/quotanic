@@ -2406,14 +2406,27 @@ const CostBreakdownContent = ({ breakdown, request, formatPrice }) => {
                         </div>
                     </div>
 
-                    {/* Executive Summary Text */}
+                    {/* Executive Summary Table */}
                     {summary_text && (
-                        <div style={{ backgroundColor: 'var(--bg-panel)', borderRadius: '12px', border: '1px solid var(--border-color)', padding: '20px' }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
-                                <LucideFileText size={16} color="var(--text-secondary)" />
-                                <h4 style={{ margin: 0, fontSize: '13px', fontWeight: 'bold', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Executive Summary</h4>
+                        <div style={{ backgroundColor: 'var(--bg-panel)', borderRadius: '12px', border: '1px solid var(--border-color)', overflow: 'hidden', boxShadow: '0 2px 10px rgba(0,0,0,0.1)' }}>
+                            <div style={{ padding: '16px 20px', background: 'rgba(255,255,255,0.03)', borderBottom: '1px solid var(--border-color)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                <LucideFileText size={18} color="var(--text-secondary)" />
+                                <h4 style={{ margin: 0, fontSize: '13px', fontWeight: 'bold', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Executive Summary & Technical Overview</h4>
                             </div>
-                            <p style={{ fontSize: '14px', color: 'var(--text-primary)', margin: 0, lineHeight: '1.6' }}>{summary_text}</p>
+                            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                                <tbody>
+                                    <tr>
+                                        <td style={{ padding: '24px', fontSize: '14px', color: 'var(--text-primary)', lineHeight: '1.7', background: 'rgba(255,255,255,0.01)' }}>
+                                            {summary_text.split('\n').map((line, i) => line.trim() ? (
+                                                <div key={i} style={{ marginBottom: '8px', display: 'flex', gap: '8px' }}>
+                                                    {line.trim().startsWith('-') || line.trim().startsWith('•') ? null : <div style={{ minWidth: '4px', height: '18px', background: 'var(--neon-cyan)', borderRadius: '2px', marginTop: '2px' }}></div>}
+                                                    <span>{line.trim().startsWith('-') || line.trim().startsWith('•') ? line : line}</span>
+                                                </div>
+                                            ) : <div key={i} style={{ height: '12px' }}></div>)}
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
                         </div>
                     )}
                 </div>
