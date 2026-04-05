@@ -2374,6 +2374,26 @@ const CostBreakdownContent = ({ breakdown, request, formatPrice }) => {
                             ) : null)}
                         </tbody>
                     </table>
+                    
+                    {/* Dedicated Totals Calculation Table */}
+                    <div style={{ borderTop: '2px solid var(--neon-cyan)', background: 'rgba(var(--neon-cyan-rgb), 0.05)' }}>
+                        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                            <tbody>
+                                <tr>
+                                    <td style={{ padding: '16px 20px', fontSize: '14px', color: 'var(--text-secondary)', fontWeight: 500 }}>Total Unit Subtotal</td>
+                                    <td style={{ padding: '16px 20px', fontSize: '18px', fontWeight: '600', textAlign: 'right', color: 'var(--text-primary)' }}>{formatPrice(unit_price)}</td>
+                                </tr>
+                                <tr style={{ borderBottom: '1px solid rgba(var(--neon-cyan-rgb), 0.2)' }}>
+                                    <td style={{ padding: '12px 20px 16px 20px', fontSize: '14px', color: 'var(--text-secondary)', fontWeight: 500, display: 'flex', alignItems: 'center', gap: '8px' }}><LucideX size={14} color="var(--neon-cyan)"/> Production Volume</td>
+                                    <td style={{ padding: '12px 20px 16px 20px', fontSize: '16px', fontWeight: '600', textAlign: 'right', color: 'var(--text-primary)' }}>{request.quantity} units</td>
+                                </tr>
+                                <tr style={{ background: 'rgba(var(--neon-cyan-rgb), 0.1)' }}>
+                                    <td style={{ padding: '20px', fontSize: '16px', color: 'var(--neon-cyan)', fontWeight: 700, textTransform: 'uppercase' }}>Final Quote Total</td>
+                                    <td style={{ padding: '20px', fontSize: '24px', fontWeight: '800', textAlign: 'right', color: 'var(--neon-cyan)' }}>{formatPrice(final_price || request.price)}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
@@ -2415,16 +2435,32 @@ const CostBreakdownContent = ({ breakdown, request, formatPrice }) => {
                             </div>
                             <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                                 <tbody>
-                                    <tr>
-                                        <td style={{ padding: '24px', fontSize: '14px', color: 'var(--text-primary)', lineHeight: '1.7', background: 'rgba(255,255,255,0.01)' }}>
-                                            {summary_text.split('\n').map((line, i) => line.trim() ? (
-                                                <div key={i} style={{ marginBottom: '8px', display: 'flex', gap: '8px' }}>
-                                                    {line.trim().startsWith('-') || line.trim().startsWith('•') ? null : <div style={{ minWidth: '4px', height: '18px', background: 'var(--neon-cyan)', borderRadius: '2px', marginTop: '2px' }}></div>}
-                                                    <span>{line.trim().startsWith('-') || line.trim().startsWith('•') ? line : line}</span>
-                                                </div>
-                                            ) : <div key={i} style={{ height: '12px' }}></div>)}
-                                        </td>
-                                    </tr>
+                                    {summary_text.split('\n').filter(line => line.trim()).map((line, i) => {
+                                        const parts = line.split(':');
+                                        const isKeyValue = parts.length > 1 && parts[0].length < 45;
+                                        
+                                        return (
+                                            <tr key={i} style={{ borderBottom: '1px solid rgba(255,255,255,0.03)', background: i % 2 === 0 ? 'transparent' : 'rgba(255,255,255,0.01)' }}>
+                                                {isKeyValue ? (
+                                                    <>
+                                                        <td style={{ padding: '14px 20px', fontSize: '13px', color: 'var(--neon-cyan)', fontWeight: 600, width: '35%', verticalAlign: 'top' }}>
+                                                            {parts[0].trim().replace(/^[-•]\s*/, '')}
+                                                        </td>
+                                                        <td style={{ padding: '14px 20px', fontSize: '13px', color: 'var(--text-primary)', lineHeight: '1.5', borderLeft: '1px solid rgba(255,255,255,0.05)' }}>
+                                                            {parts.slice(1).join(':').trim()}
+                                                        </td>
+                                                    </>
+                                                ) : (
+                                                    <td colSpan={2} style={{ padding: '14px 20px', fontSize: '13px', color: 'var(--text-primary)', lineHeight: '1.5' }}>
+                                                        <div style={{ display: 'flex', gap: '12px' }}>
+                                                            <span style={{ color: 'var(--neon-cyan)' }}>•</span>
+                                                            <span>{line.trim().replace(/^[-•]\s*/, '')}</span>
+                                                        </div>
+                                                    </td>
+                                                )}
+                                            </tr>
+                                        );
+                                    })}
                                 </tbody>
                             </table>
                         </div>
