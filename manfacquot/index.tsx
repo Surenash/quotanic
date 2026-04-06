@@ -2733,13 +2733,20 @@ const CostBreakdownModal = ({ request, onClose }) => {
 
 // --- 3D Part Thumbnail Component ---
 const DesignThumbnail = ({ modelUrl, designName }: { modelUrl: string | null, designName: string }) => {
+    // Debug logging to catch missing URLs
+    useEffect(() => {
+        if (!modelUrl) {
+            console.warn(`[DesignThumbnail] Missing modelUrl for: ${designName}`);
+        }
+    }, [modelUrl, designName]);
+
     if (!modelUrl) {
         return (
             <div style={{ 
                 width: '64px', height: '64px', borderRadius: '8px', 
                 background: 'rgba(255,255,255,0.05)', display: 'flex', 
                 alignItems: 'center', justifyContent: 'center', border: `1px solid ${border_color}`
-            }}>
+            }} title={`No 3D preview for ${designName}`}>
                 <LucideBox size={24} color="var(--text-secondary)" />
             </div>
         );
