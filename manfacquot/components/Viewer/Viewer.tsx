@@ -10,15 +10,27 @@ interface ViewerProps {
   fileExtension: SupportedExtensions;
   view: ViewPreset;
   isViewLocked: boolean;
-  onUserInteraction: () => void;
+  onUserInteraction?: () => void;
   design?: any; // To get the original file key for download
+  hideToolbar?: boolean;
+  hideSidebar?: boolean;
   children?: React.ReactNode;
 }
 
 // Sidebar Panel Types
 type PanelType = 'background' | 'material' | 'animation' | 'lighting' | 'settings' | null;
 
-const Viewer: React.FC<ViewerProps> = ({ modelUrl, fileExtension, view, isViewLocked, onUserInteraction, design, children }) => {
+const Viewer: React.FC<ViewerProps> = ({ 
+  modelUrl, 
+  fileExtension, 
+  view, 
+  isViewLocked, 
+  onUserInteraction, 
+  design, 
+  hideToolbar = false,
+  hideSidebar = false,
+  children 
+}) => {
   // --- STATE ---
   const [activePanel, setActivePanel] = useState<PanelType>(null);
   const [viewportMode, setViewportMode] = useState<'solid' | 'wireframe'>('solid');
@@ -128,74 +140,76 @@ const Viewer: React.FC<ViewerProps> = ({ modelUrl, fileExtension, view, isViewLo
       }}
     >
       {/* 1. TOP TOOLBAR */}
-      <div style={{
-        height: '48px',
-        width: '100%',
-        background: '#0a0a0f',
-        borderBottom: '1px solid rgba(255, 255, 255, 0.15)',
-        display: 'grid',
-        gridTemplateColumns: 'minmax(0, 1fr) auto',
-        alignItems: 'center',
-        padding: '0 8px',
-        zIndex: 110,
-        position: 'relative',
-        userSelect: 'none'
-      }}>
-        {/* Left Group: Contextual Tools */}
-        <div style={{ 
-          display: 'flex', 
-          gap: '2px', 
-          alignItems: 'center', 
-          overflowX: 'auto', 
-          minWidth: 0,
-          marginRight: '8px'
-        }} className="no-scrollbar">
-          <ToolbarButton icon={Icons.ZoomOutIcon} onClick={() => setZoomLevel(prev => Math.max(0.1, prev * 0.8))} label="Zoom Out" />
-          <ToolbarButton icon={Icons.ZoomInIcon} onClick={() => setZoomLevel(prev => Math.min(10, prev * 1.2))} label="Zoom In" />
-          <div style={{ width: '1px', height: '18px', background: 'rgba(255,255,255,0.15)', margin: '0 6px', flexShrink: 0 }} />
-          <ToolbarButton icon={Icons.BackgroundIcon} onClick={() => togglePanel('background')} active={activePanel === 'background'} label="Background" />
-          <ToolbarButton icon={Icons.ModelColorIcon} onClick={() => togglePanel('material')} active={activePanel === 'material'} label="Model Color" />
-          <ToolbarButton icon={Icons.AnimationIcon} onClick={() => togglePanel('animation')} active={activePanel === 'animation'} label="Animation" />
-          <ToolbarButton icon={Icons.LightingIcon} onClick={() => togglePanel('lighting')} active={activePanel === 'lighting'} label="Lighting" />
-          <ToolbarButton icon={Icons.LandscapeIcon} onClick={downloadSnapshot} label="Download Image" />
-          <ToolbarButton icon={Icons.CloudDownloadIcon} onClick={downloadOriginal} label="Download Original File" />
-        </div>
-
-        {/* Right Group: Viewport Modes (ABSOLUTELY PINNED TO RIGHT) */}
-        <div style={{ 
-          display: 'flex', 
-          gap: '4px', 
-          alignItems: 'center', 
+      {!hideToolbar && (
+        <div style={{
+          height: '48px',
+          width: '100%',
           background: '#0a0a0f',
-          paddingLeft: '12px',
-          borderLeft: '1px solid rgba(255, 255, 255, 0.1)',
-          flexShrink: 0
+          borderBottom: '1px solid rgba(255, 255, 255, 0.15)',
+          display: 'grid',
+          gridTemplateColumns: 'minmax(0, 1fr) auto',
+          alignItems: 'center',
+          padding: '0 8px',
+          zIndex: 110,
+          position: 'relative',
+          userSelect: 'none'
         }}>
-          <ToolbarButton 
-            icon={Icons.CenterIcon} 
-            onClick={() => {
-              setResetKey(prev => prev + 1);
-              setZoomLevel(1);
-            }} 
-            label="Center & Reset View" 
-          />
-          <ToolbarButton icon={Icons.SettingsIcon} onClick={() => togglePanel('settings')} active={activePanel === 'settings'} label="Settings" />
-          <ToolbarButton 
-            icon={Icons.WireframeIcon} 
-            onClick={() => setViewportMode('wireframe')} 
-            active={viewportMode === 'wireframe'} 
-            label="Wireframe Mode" 
-          />
-          <ToolbarButton 
-            icon={Icons.SolidIcon} 
-            onClick={() => setViewportMode('solid')} 
-            active={viewportMode === 'solid'} 
-            label="Solid Mode" 
-          />
-          <div style={{ width: '1px', height: '18px', background: 'rgba(255,255,255,0.15)', margin: '0 4px' }} />
-          <ToolbarButton icon={Icons.FullscreenIcon} onClick={handleFullscreen} label="Toggle Fullscreen" />
+          {/* Left Group: Contextual Tools */}
+          <div style={{ 
+            display: 'flex', 
+            gap: '2px', 
+            alignItems: 'center', 
+            overflowX: 'auto', 
+            minWidth: 0,
+            marginRight: '8px'
+          }} className="no-scrollbar">
+            <ToolbarButton icon={Icons.ZoomOutIcon} onClick={() => setZoomLevel(prev => Math.max(0.1, prev * 0.8))} label="Zoom Out" />
+            <ToolbarButton icon={Icons.ZoomInIcon} onClick={() => setZoomLevel(prev => Math.min(10, prev * 1.2))} label="Zoom In" />
+            <div style={{ width: '1px', height: '18px', background: 'rgba(255,255,255,0.15)', margin: '0 6px', flexShrink: 0 }} />
+            <ToolbarButton icon={Icons.BackgroundIcon} onClick={() => togglePanel('background')} active={activePanel === 'background'} label="Background" />
+            <ToolbarButton icon={Icons.ModelColorIcon} onClick={() => togglePanel('material')} active={activePanel === 'material'} label="Model Color" />
+            <ToolbarButton icon={Icons.AnimationIcon} onClick={() => togglePanel('animation')} active={activePanel === 'animation'} label="Animation" />
+            <ToolbarButton icon={Icons.LightingIcon} onClick={() => togglePanel('lighting')} active={activePanel === 'lighting'} label="Lighting" />
+            <ToolbarButton icon={Icons.LandscapeIcon} onClick={downloadSnapshot} label="Download Image" />
+            <ToolbarButton icon={Icons.CloudDownloadIcon} onClick={downloadOriginal} label="Download Original File" />
+          </div>
+
+          {/* Right Group: Viewport Modes (ABSOLUTELY PINNED TO RIGHT) */}
+          <div style={{ 
+            display: 'flex', 
+            gap: '4px', 
+            alignItems: 'center', 
+            background: '#0a0a0f',
+            paddingLeft: '12px',
+            borderLeft: '1px solid rgba(255, 255, 255, 0.1)',
+            flexShrink: 0
+          }}>
+            <ToolbarButton 
+              icon={Icons.CenterIcon} 
+              onClick={() => {
+                setResetKey(prev => prev + 1);
+                setZoomLevel(1);
+              }} 
+              label="Center & Reset View" 
+            />
+            <ToolbarButton icon={Icons.SettingsIcon} onClick={() => togglePanel('settings')} active={activePanel === 'settings'} label="Settings" />
+            <ToolbarButton 
+              icon={Icons.WireframeIcon} 
+              onClick={() => setViewportMode('wireframe')} 
+              active={viewportMode === 'wireframe'} 
+              label="Wireframe Mode" 
+            />
+            <ToolbarButton 
+              icon={Icons.SolidIcon} 
+              onClick={() => setViewportMode('solid')} 
+              active={viewportMode === 'solid'} 
+              label="Solid Mode" 
+            />
+            <div style={{ width: '1px', height: '18px', background: 'rgba(255,255,255,0.15)', margin: '0 4px' }} />
+            <ToolbarButton icon={Icons.FullscreenIcon} onClick={handleFullscreen} label="Toggle Fullscreen" />
+          </div>
         </div>
-      </div>
+      )}
 
       <div style={{ flex: 1, position: 'relative', display: 'flex', minHeight: 0, minWidth: 0, overflow: 'hidden' }}>
         {/* 2. DYNAMIC LEFT SIDEBAR */}
