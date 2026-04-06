@@ -2732,17 +2732,52 @@ const CostBreakdownModal = ({ request, onClose }) => {
 };
 
 // --- 3D Part Thumbnail Component ---
-const DesignThumbnail = ({ modelUrl, designName }: { modelUrl: string | null, designName: string }) => {
-    // Debug logging to catch missing URLs
-    useEffect(() => {
-        if (!modelUrl) {
-            console.warn(`[DesignThumbnail] ❌ No modelUrl for: ${designName}`);
-        } else {
-            console.log(`[DesignThumbnail] ✅ modelUrl for ${designName}: ${modelUrl}`);
-        }
-    }, [modelUrl, designName]);
+const DesignThumbnail = ({ modelUrl, designId, designName }: { modelUrl: string | null, designId: string, designName: string }) => {
+    const [actualUrl, setActualUrl] = useState<string | null>(modelUrl);
+    const [loading, setLoading] = useState(!modelUrl);
 
-    if (!modelUrl) {
+    useEffect(() => {
+        if (modelUrl) {
+            setActualUrl(modelUrl);
+            setLoading(false);
+            return;
+        }
+
+        let isMounted = true;
+        const fetchUrl = async () => {
+            try {
+                const design = await api.getDesignById(designId);
+                if (isMounted && design) {
+                    const viewUrl = design.view_url || design.s3_file_key;
+                    if (viewUrl) {
+                        const fullUrl = viewUrl.startsWith('http') ? viewUrl : `https://api.quotanic.com${viewUrl.startsWith('/') ? '' : '/media/'}${viewUrl}`;
+                        setActualUrl(fullUrl);
+                    }
+                }
+            } catch (err) {
+                console.error(`[DesignThumbnail] Failed to fetch design ${designId}:`, err);
+            } finally {
+                if (isMounted) setLoading(false);
+            }
+        };
+        fetchUrl();
+
+        return () => { isMounted = false; };
+    }, [modelUrl, designId]);
+
+    if (loading) {
+        return (
+            <div style={{ 
+                width: '64px', height: '64px', borderRadius: '8px', 
+                background: 'rgba(255,255,255,0.05)', display: 'flex', 
+                alignItems: 'center', justifyContent: 'center', border: `1px solid ${border_color}`
+            }}>
+                <div style={{ width: '16px', height: '16px', border: '2px solid var(--neon-cyan)', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
+            </div>
+        );
+    }
+
+    if (!actualUrl) {
         return (
             <div style={{ 
                 width: '64px', height: '64px', borderRadius: '8px', 
@@ -2754,7 +2789,7 @@ const DesignThumbnail = ({ modelUrl, designName }: { modelUrl: string | null, de
         );
     }
 
-    const fileExtension = modelUrl.split('.').pop()?.split('?')[0]?.toLowerCase() || 'stl';
+    const fileExtension = actualUrl.split('.').pop()?.split('?')[0]?.toLowerCase() || 'stl';
 
     return (
         <div style={{ 
@@ -2769,7 +2804,7 @@ const DesignThumbnail = ({ modelUrl, designName }: { modelUrl: string | null, de
                 }}
             >
                 <Viewer 
-                    modelUrl={modelUrl}
+                    modelUrl={actualUrl}
                     fileExtension={fileExtension as any}
                     view="iso"
                     isViewLocked={true}
@@ -2782,7 +2817,6 @@ const DesignThumbnail = ({ modelUrl, designName }: { modelUrl: string | null, de
         </div>
     );
 };
-
 const QuoteRequestsPage = ({ onViewFiles }) => {
     const [requests, setRequests] = useState([]);
     const [loading, setLoading] = useState(false);
@@ -2921,7 +2955,7 @@ const QuoteRequestsPage = ({ onViewFiles }) => {
                             <React.Fragment key={req.id}>
                                 <tr>
                                     <td style={styles.tableCell}>
-                                        <DesignThumbnail modelUrl={(req as any).designViewUrl} designName={req.designName} />
+                                        <DesignThumbnail modelUrl={(req as any).designViewUrl} designId={req.designId} designName={req.designName} />
                                     </td>
                                     <td style={styles.tableCell}>{req.designName}</td>
                                     <td style={styles.tableCell}>{req.customer}</td>
@@ -3249,7 +3283,7 @@ const InternalQuotationsPage = ({ onViewFiles, onNavigate }) => {
                             <React.Fragment key={req.id}>
                                 <tr>
                                     <td style={styles.tableCell}>
-                                        <DesignThumbnail modelUrl={(req as any).designViewUrl} designName={req.designName} />
+                                        <DesignThumbnail modelUrl={(req as any).designViewUrl} designId={req.designId} designName={req.designName} />
                                     </td>
                                     <td style={styles.tableCell}>{req.designName}</td>
                                     <td style={styles.tableCell}>{req.material}</td>
