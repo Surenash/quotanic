@@ -2769,6 +2769,7 @@ const DesignThumbnail = ({ modelUrl, designName }: { modelUrl: string | null, de
                     hideToolbar={true}
                     hideSidebar={true}
                     design={{ design_name: designName } as any}
+                    onUserInteraction={() => {}}
                 />
             </ErrorBoundary>
         </div>
@@ -2815,7 +2816,11 @@ const QuoteRequestsPage = ({ onViewFiles }) => {
                 id: quote.id,
                 designId: quote.design,
                 designName: quote.design_name || 'Unnamed Part',
-                designViewUrl: (quote as any).design_view_url,
+                designViewUrl: (quote as any).design_view_url 
+                    ? ((quote as any).design_view_url.startsWith('http') 
+                        ? (quote as any).design_view_url 
+                        : `${import.meta.env.VITE_API_BASE_URL || ''}${(quote as any).design_view_url}`)
+                    : null,
                 customer: quote.customer_name || quote.customer_email || 'Unknown',
                 material: quote.design_material || 'N/A',
                 quantity: quote.design_quantity || 0,
@@ -3175,7 +3180,11 @@ const InternalQuotationsPage = ({ onViewFiles, onNavigate }) => {
                     id: quote.id,
                     designId: quote.design,
                     designName: quote.design_name || 'Unnamed Part',
-                    designViewUrl: (quote as any).design_view_url,
+                    designViewUrl: (quote as any).design_view_url 
+                        ? ((quote as any).design_view_url.startsWith('http') 
+                            ? (quote as any).design_view_url 
+                            : `${import.meta.env.VITE_API_BASE_URL || ''}${(quote as any).design_view_url}`)
+                        : null,
                     material: quote.design_material || 'N/A',
                     quantity: quote.design_quantity || 0,
                     dateReceived: quote.created_at,
