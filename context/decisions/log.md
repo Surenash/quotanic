@@ -28,3 +28,18 @@
 **Decision 8:** Standardize on Node.js 20 for frontend builds on AWS Amplify.
 - **Context:** Build failures were occurring due to incompatible plugin requirements (e.g., `@vitejs/plugin-react`) and memory exhaustion.
 - **Reason:** Explicitly setting the Node version and increasing the memory limit (`max-old-space-size`) in the build spec ensures build stability for large dependency trees.
+
+**Decision 9:** Implement Multi-Provider Redundancy for Currency Fetching.
+- **Context:** Reliance on a single exchange rate API (Frankfurter) led to "silent" math errors when the API was blocked or down.
+- **Decision:** Use a sequential failover strategy: Frankfurter -> Open ER -> JSDelivr. If all fail, display a global error bar and disable conversion.
+- **Reason:** Ensuring financial accuracy in quotations is paramount; fallback hardcoded rates were rejected as they lead to inaccurate quotes.
+
+**Decision 10:** Use Non-Interactive `<Viewer />` for In-Table 3D Thumbnails.
+- **Context:** Users needed a visual reference ("iso photo") for each part in the dashboard tables.
+- **Decision:** Implement a `DesignThumbnail` component that renders a small (64x64) non-interactive instance of the existing `Viewer` component.
+- **Reason:** Avoids the complexity and storage overhead of generating/storing static JPEG/PNG screenshots on the backend while providing a consistent "isometric" look.
+
+**Decision 11:** Switch Dashboard Interactivity from URL Hashes to Internal State.
+- **Context:** Navigation between dashboard views was using `window.location.hash`, which is brittle and hard to manage with complex interactive components.
+- **Decision:** Use a centralized `activeView` state in the `ManufacturerDashboard` component and pass `setActiveView` down to child components.
+- **Reason:** Provides a smoother user experience, allows for better component modularity, and ensures accurate back-button behavior within the dashboard.

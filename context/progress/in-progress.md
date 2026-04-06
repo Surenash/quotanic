@@ -1,14 +1,14 @@
 # In-Progress Tasks
 
 **Active Tasks:**
-- Creating comprehensive context documentation (`context/` directory) for AI assistants.
-- Refactoring the main application's frontend.
-- Testing the FBM pricing logic and manufacturer matching (`test_matcher.py`, `test_pricing.py`).
+- Real-world verification of FBM pricing logic across different part geometries and materials.
+- Refactoring the main application's frontend to break down the monolithic `index.tsx` into smaller components.
+- Stress-testing the multi-provider currency engine and its error states.
 
 **Blockers:**
 - None currently reported.
 
 **Next Actions:**
-- Ensure the `context/` directory structure is fully populated and committed.
-- Review `index.tsx` for potential refactoring opportunities to improve maintainability.
-- Run `manual_test.py` and `test_quote_generation.py` to verify system stability.
+- Audit `index.tsx` for further refactoring opportunities (e.g., extracting modals into a `/modals` directory).
+- Verify 3D thumbnail rendering performance on the memory-constrained EC2 instance.
+- Run `manual_test.py` and `test_quote_generation.py` to verify system stability after recent UI changes.

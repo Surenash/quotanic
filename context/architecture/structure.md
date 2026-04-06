@@ -6,6 +6,7 @@
   - `FBM/`: Feature-Based Manufacturing engine; process CAD files, quotes, and pricing. Uses `python-occ-core` and `numpy-stl` for analysis.
   - `accounts/`, `orders/`, `quotes/`, `reviews/`, `designs/`: Django apps for respective domains.
   - `components/`, `pages/`, `utils/`, `types/`: React frontend structure within `manfacquot`.
+    - Key new components: `DesignThumbnail`, `RevenueDetailsModal`, `PipelineDetailsModal`, `ActivityDetailModal`.
 - `front end/`: The AI Studio standalone prototype.
 
 **Data Flow:**

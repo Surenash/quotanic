@@ -39,13 +39,14 @@ If you are looking for information related to a specific technical concept, star
 | **AWS, EC2, Deployment** | `integrations/connections.md` | `decisions/log.md` |
 | **CAD Files (.stl, .step)** | `glossary/terms.md` | `constraints/limits.md` |
 | **Celery, Background Tasks** | `architecture/patterns.md` | `constraints/limits.md` |
+| **Currency, Exchange Rates** | `architecture/patterns.md` | `decisions/log.md` |
+| **Dashboard, Analytics** | `changelog/log.md` | `scope/in-scope.md` |
 | **Database, PostgreSQL** | `integrations/connections.md` | `decisions/log.md` |
 | **Django APIs** | `architecture/structure.md` | `instructions/rules.md` |
 | **FBM (Feature Recognition)** | `theory/principles.md` | `glossary/terms.md` |
 | **Frontend, React, Vite** | `architecture/structure.md` | `research/findings.md` |
-| **Node.js, TypeScript** | `instructions/rules.md` | `constraints/limits.md` |
-| **Python, PEP 8** | `instructions/rules.md` | `constraints/limits.md` |
 | **S3 Uploads, Pre-signed URLs**| `architecture/patterns.md` | `decisions/log.md` |
+| **Thumbnails, 3D Rendering** | `architecture/patterns.md` | `decisions/log.md` |
 | **Target Audience, Personas** | `personas/users.md` | `scope/in-scope.md` |
 | **Testing, Quality** | `constraints/limits.md` | `roadmap/milestones.md` |
 

@@ -4,7 +4,9 @@
 - **Feature-Based Manufacturing (FBM) Engine:** Analyzing CAD geometry, extracting manufacturing features (holes, pockets, bends, etc.), and mapping them to processes.
 - **Quotation System:** Generating cost breakdowns, pricing logic, applying manufacturer rates, and managing the lifecycle of a quote.
 - **Live 3D Viewer:** Modular browser-based inspection for STL, OBJ, and STEP/IGES (via backend GLB conversion).
-- **Multi-Currency Support:** Real-time conversion using Frankfurter API for global reach.
+- **In-Table 3D Thumbnails:** Specialized lightweight 3D previews for high-density list views.
+- **Multi-Currency Support:** Redundant real-time conversion using multiple API providers.
+- **Interactive Dashboard Analytics:** Functional KPI deep-dives, clickable activity tracking, and modal-based data visualization.
 - **Informational Pages:** Fully developed content for mission (About Us), process (How It Works), and legal compliance (FAQ, Privacy, Terms).
 - **Session Persistence:** State management using History API to maintain user session across refreshes and tab changes.
 - **Manufacturer Settings:** Tools for manufacturers to configure capabilities, materials, and pricing structures (`manufacturer_settings_component.tsx`, `add_mfg_capabilities.py`).

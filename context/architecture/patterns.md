@@ -11,6 +11,8 @@
 - **Component-Based UI:** Reusable React components (`cost_breakdown_modal.tsx`, `manufacturer_settings_component.tsx`).
 - **Asynchronous Task Queue:** Heavy lifting (CAD processing via `analyze_cad_file` task) delegated to Celery workers.
 - **Direct S3 Uploads:** Frontend requests pre-signed URLs from Django (`/api/designs/upload-url`), uploads directly to S3, then notifies Django.
+- **Multi-Provider Sequential Failover:** Currency system attempts to fetch rates from prioritized providers (Frankfurter -> Open ER -> JSDelivr) to ensure 100% uptime for financial data.
+- **Lightweight 3D Rendering Pattern:** Using non-interactive, specialized instances of the `Viewer` component for high-density UI elements like table thumbnails (`DesignThumbnail`).
 
 **Avoided Patterns:**
 - Synchronous blocking operations in the request-response cycle for heavy tasks.
