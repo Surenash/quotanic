@@ -1,4 +1,6 @@
 import os
+import boto3
+from django.conf import settings
 from rest_framework import serializers
 from .models import Design, DesignStatus
 from accounts.models import UserRole # To validate user role if needed
@@ -51,9 +53,10 @@ class DesignSerializer(serializers.ModelSerializer):
         Supports STL directly. For STEP/IGES, returns GLB if available, 
         otherwise returns None to prevent frontend parsing errors.
         """
-        from django.conf import settings
-        
         file_key = obj.s3_file_key
+        if not file_key:
+            return None
+            
         file_ext = os.path.splitext(file_key)[1].lower()
         
         target_key = None
@@ -67,12 +70,10 @@ class DesignSerializer(serializers.ModelSerializer):
         if not target_key:
             return None
 
-        media_url = settings.MEDIA_URL
         if settings.USE_LOCAL_STORAGE:
-            return f"{media_url}{target_key}"
+            return f"{settings.MEDIA_URL}{target_key}"
         else:
             # Generate pre-signed S3 URL
-            import boto3
             s3_client = boto3.client(
                 's3',
                 aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
@@ -90,7 +91,8 @@ class DesignSerializer(serializers.ModelSerializer):
                     ExpiresIn=3600
                 )
                 return url
-            except Exception:
+            except Exception as e:
+                print(f"Error generating presigned URL: {e}")
                 return None
 
     def validate_customer(self, value):

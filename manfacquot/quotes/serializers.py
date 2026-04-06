@@ -46,7 +46,7 @@ class QuoteSerializer(serializers.ModelSerializer):
     def get_design_view_url(self, obj):
         """Get design view URL using DesignSerializer logic"""
         from designs.serializers import DesignSerializer
-        serializer = DesignSerializer()
+        serializer = DesignSerializer(context=self.context)
         return serializer.get_view_url(obj.design)
     
     def get_manufacturer_name(self, obj):
