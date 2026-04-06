@@ -66,9 +66,18 @@ class DesignSerializer(serializers.ModelSerializer):
         elif file_ext in ['.step', '.stp', '.iges', '.igs']:
             if obj.geometric_data:
                 target_key = obj.geometric_data.get('view_file_key') or obj.geometric_data.get('glb_file_key')
+            
+            # Fallback: if no view file, try to use the original file IF it's a format the viewer might handle
+            # (though STEP usually needs conversion, this ensures we return SOMETHING for STL/OBJ)
+            if not target_key and file_ext in ['.stl', '.obj', '.glb', '.gltf']:
+                target_key = file_key
         
         if not target_key:
-            return None
+            # Absolute last resort for STL/OBJ files that might have been missed
+            if file_ext in ['.stl', '.obj']:
+                target_key = file_key
+            else:
+                return None
 
         if settings.USE_LOCAL_STORAGE:
             return f"{settings.MEDIA_URL}{target_key}"

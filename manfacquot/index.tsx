@@ -2827,7 +2827,7 @@ const QuoteRequestsPage = ({ onViewFiles }) => {
                 designViewUrl: (quote as any).design_view_url 
                     ? ((quote as any).design_view_url.startsWith('http') 
                         ? (quote as any).design_view_url 
-                        : `${import.meta.env.VITE_API_BASE_URL || ''}${(quote as any).design_view_url}`)
+                        : `https://api.quotanic.com${(quote as any).design_view_url}`)
                     : null,
                 customer: quote.customer_name || quote.customer_email || 'Unknown',
                 material: quote.design_material || 'N/A',
@@ -3192,7 +3192,7 @@ const InternalQuotationsPage = ({ onViewFiles, onNavigate }) => {
                     designViewUrl: (quote as any).design_view_url 
                         ? ((quote as any).design_view_url.startsWith('http') 
                             ? (quote as any).design_view_url 
-                            : `${import.meta.env.VITE_API_BASE_URL || ''}${(quote as any).design_view_url}`)
+                            : `https://api.quotanic.com${(quote as any).design_view_url}`)
                         : null,
                     material: quote.design_material || 'N/A',
                     quantity: quote.design_quantity || 0,
