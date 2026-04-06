@@ -2731,6 +2731,43 @@ const CostBreakdownModal = ({ request, onClose }) => {
     );
 };
 
+// --- 3D Part Thumbnail Component ---
+const DesignThumbnail = ({ modelUrl, designName }: { modelUrl: string | null, designName: string }) => {
+    if (!modelUrl) {
+        return (
+            <div style={{ 
+                width: '64px', height: '64px', borderRadius: '8px', 
+                background: 'rgba(255,255,255,0.05)', display: 'flex', 
+                alignItems: 'center', justifyContent: 'center', border: `1px solid ${border_color}`
+            }}>
+                <LucideBox size={24} color="var(--text-secondary)" />
+            </div>
+        );
+    }
+
+    const fileExtension = modelUrl.split('.').pop()?.toLowerCase() || 'stl';
+
+    return (
+        <div style={{ 
+            width: '64px', height: '64px', borderRadius: '8px', 
+            background: '#0a0a0f', overflow: 'hidden', position: 'relative',
+            border: `1px solid ${border_color}`, boxShadow: 'inset 0 0 10px rgba(0,0,0,0.5)'
+        }}>
+            <ErrorBoundary fallback={() => <div style={{width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center'}}><LucideBox size={24} /></div>}>
+                <Viewer 
+                    modelUrl={modelUrl}
+                    fileExtension={fileExtension as any}
+                    view="iso"
+                    isViewLocked={true}
+                    hideToolbar={true}
+                    hideSidebar={true}
+                    design={{ design_name: designName } as any}
+                />
+            </ErrorBoundary>
+        </div>
+    );
+};
+
 const QuoteRequestsPage = ({ onViewFiles }) => {
     const [requests, setRequests] = useState([]);
     const [loading, setLoading] = useState(false);
@@ -2771,6 +2808,7 @@ const QuoteRequestsPage = ({ onViewFiles }) => {
                 id: quote.id,
                 designId: quote.design,
                 designName: quote.design_name || 'Unnamed Part',
+                designViewUrl: (quote as any).design_view_url,
                 customer: quote.customer_name || quote.customer_email || 'Unknown',
                 material: quote.design_material || 'N/A',
                 quantity: quote.design_quantity || 0,
@@ -2848,6 +2886,7 @@ const QuoteRequestsPage = ({ onViewFiles }) => {
                 <table style={styles.table}>
                     <thead>
                         <tr>
+                            <th style={styles.tableHeader}>Part</th>
                             <th style={styles.tableHeader}>Part Name</th>
                             <th style={styles.tableHeader}>Customer</th>
                             <th style={styles.tableHeader}>Material</th>
@@ -2861,6 +2900,9 @@ const QuoteRequestsPage = ({ onViewFiles }) => {
                         {requests.map(req => (
                             <React.Fragment key={req.id}>
                                 <tr>
+                                    <td style={styles.tableCell}>
+                                        <DesignThumbnail modelUrl={(req as any).designViewUrl} designName={req.designName} />
+                                    </td>
                                     <td style={styles.tableCell}>{req.designName}</td>
                                     <td style={styles.tableCell}>{req.customer}</td>
                                     <td style={styles.tableCell}>{req.material}</td>
@@ -2888,7 +2930,7 @@ const QuoteRequestsPage = ({ onViewFiles }) => {
                                 </tr>
                                 {expandedRequestId === req.id && (
                                     <tr>
-                                        <td colSpan={7} style={{ padding: '0 16px 24px 16px', backgroundColor: 'rgba(0,0,0,0.1)' }}>
+                                        <td colSpan={8} style={{ padding: '0 16px 24px 16px', backgroundColor: 'rgba(0,0,0,0.1)' }}>
                                             <div style={{ 
                                                 marginTop: '8px', 
                                                 padding: '24px', 
@@ -3126,6 +3168,7 @@ const InternalQuotationsPage = ({ onViewFiles, onNavigate }) => {
                     id: quote.id,
                     designId: quote.design,
                     designName: quote.design_name || 'Unnamed Part',
+                    designViewUrl: (quote as any).design_view_url,
                     material: quote.design_material || 'N/A',
                     quantity: quote.design_quantity || 0,
                     dateReceived: quote.created_at,
@@ -3167,6 +3210,7 @@ const InternalQuotationsPage = ({ onViewFiles, onNavigate }) => {
                 <table style={styles.table}>
                     <thead>
                         <tr>
+                            <th style={styles.tableHeader}>Part</th>
                             <th style={styles.tableHeader}>Part Name</th>
                             <th style={styles.tableHeader}>Material</th>
                             <th style={styles.tableHeader}>Qty</th>
@@ -3179,6 +3223,9 @@ const InternalQuotationsPage = ({ onViewFiles, onNavigate }) => {
                         {requests.length > 0 ? requests.map((req: any) => (
                             <React.Fragment key={req.id}>
                                 <tr>
+                                    <td style={styles.tableCell}>
+                                        <DesignThumbnail modelUrl={(req as any).designViewUrl} designName={req.designName} />
+                                    </td>
                                     <td style={styles.tableCell}>{req.designName}</td>
                                     <td style={styles.tableCell}>{req.material}</td>
                                     <td style={styles.tableCell}>{req.quantity}</td>
@@ -3197,7 +3244,7 @@ const InternalQuotationsPage = ({ onViewFiles, onNavigate }) => {
                                 </tr>
                                 {expandedRequestId === req.id && (
                                     <tr>
-                                        <td colSpan={6} style={{ padding: '0 16px 24px 16px', backgroundColor: 'rgba(0,0,0,0.1)' }}>
+                                        <td colSpan={8} style={{ padding: '0 16px 24px 16px', backgroundColor: 'rgba(0,0,0,0.1)' }}>
                                             <div style={{ 
                                                 marginTop: '8px', 
                                                 padding: '24px', 

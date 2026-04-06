@@ -14,6 +14,7 @@ class QuoteSerializer(serializers.ModelSerializer):
     customer_name = serializers.SerializerMethodField()
     customer_email = serializers.SerializerMethodField()
     is_internal = serializers.BooleanField(source='design.is_internal', read_only=True)
+    design_view_url = serializers.SerializerMethodField()
     
     class Meta:
         model = Quote
@@ -35,11 +36,18 @@ class QuoteSerializer(serializers.ModelSerializer):
             'design_name',
             'design_material',
             'design_quantity',
+            'design_view_url',
             'customer_name',
             'customer_email',
             'is_internal',
         ]
         read_only_fields = ['id', 'design', 'manufacturer', 'created_at', 'updated_at', 'is_internal']
+    
+    def get_design_view_url(self, obj):
+        """Get design view URL using DesignSerializer logic"""
+        from designs.serializers import DesignSerializer
+        serializer = DesignSerializer()
+        return serializer.get_view_url(obj.design)
     
     def get_manufacturer_name(self, obj):
         """Get manufacturer's company name or email"""
