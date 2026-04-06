@@ -35,6 +35,7 @@ import {
     Factory as LucideFactory,
     PieChart as LucidePieChart,
     Sparkles as LucideSparkles,
+    TrendingUp as LucideTrendingUp,
     AlertTriangle as LucideAlertTriangle
 } from 'lucide-react';
 
@@ -1843,7 +1844,7 @@ const DashboardOverview = ({ user, onViewFiles, onSetActiveView }: { user: any, 
                                                 onClick={() => setModalState({ isOpen: true, type: 'activity', data: item })}
                                             >
                                                 <td style={{ ...styles.dashboardActivityCell, color: text_primary, fontWeight: 500 }}>
-                                                    {item.type === 'quote' ? `Quote Request: ${item.design__design_name}` : `Order Update: #${item.id.substring(0, 8)}`}
+                                                    {item.type === 'quote' ? `Quote Request: ${item.design__design_name}` : `Order Update: #${String(item.id).substring(0, 8)}`}
                                                 </td>
                                                 <td style={styles.dashboardActivityCell}>
                                                     {new Date(item.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
