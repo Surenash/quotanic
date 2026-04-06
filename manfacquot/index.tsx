@@ -2736,7 +2736,9 @@ const DesignThumbnail = ({ modelUrl, designName }: { modelUrl: string | null, de
     // Debug logging to catch missing URLs
     useEffect(() => {
         if (!modelUrl) {
-            console.warn(`[DesignThumbnail] Missing modelUrl for: ${designName}`);
+            console.warn(`[DesignThumbnail] ❌ No modelUrl for: ${designName}`);
+        } else {
+            console.log(`[DesignThumbnail] ✅ modelUrl for ${designName}: ${modelUrl}`);
         }
     }, [modelUrl, designName]);
 
@@ -2752,7 +2754,7 @@ const DesignThumbnail = ({ modelUrl, designName }: { modelUrl: string | null, de
         );
     }
 
-    const fileExtension = modelUrl.split('.').pop()?.toLowerCase() || 'stl';
+    const fileExtension = modelUrl.split('.').pop()?.split('?')[0]?.toLowerCase() || 'stl';
 
     return (
         <div style={{ 
@@ -2760,7 +2762,12 @@ const DesignThumbnail = ({ modelUrl, designName }: { modelUrl: string | null, de
             background: '#0a0a0f', overflow: 'hidden', position: 'relative',
             border: `1px solid ${border_color}`, boxShadow: 'inset 0 0 10px rgba(0,0,0,0.5)'
         }}>
-            <ErrorBoundary fallback={() => <div style={{width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center'}}><LucideBox size={24} /></div>}>
+            <ErrorBoundary 
+                fallback={(error) => {
+                    console.error(`[DesignThumbnail] 💥 Error rendering ${designName}:`, error);
+                    return <div style={{width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center'}}><LucideBox size={24} color="red" /></div>;
+                }}
+            >
                 <Viewer 
                     modelUrl={modelUrl}
                     fileExtension={fileExtension as any}
@@ -2810,6 +2817,7 @@ const QuoteRequestsPage = ({ onViewFiles }) => {
         setLoading(true);
         try {
             const data = await api.getQuoteRequests();
+            console.log('[QuoteRequestsPage] Raw API Data:', data);
             const mappedData = data
                 .filter(quote => !quote.is_internal)
                 .map(quote => ({
@@ -3174,6 +3182,7 @@ const InternalQuotationsPage = ({ onViewFiles, onNavigate }) => {
         setLoading(true);
         try {
             const data = await api.getQuoteRequests();
+            console.log('[InternalQuotationsPage] Raw API Data:', data);
             const mappedData = data
                 .filter(quote => quote.is_internal)
                 .map(quote => ({
