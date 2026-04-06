@@ -1594,11 +1594,12 @@ const ManufacturerProfilePage = ({ manufacturerId, onNavigate }) => {
 
 // --- Manufacturer Dashboard Components ---
 
-const DashboardOverview = ({ user, onViewFiles }: { user: any, onViewFiles: (id: string) => void }) => {
+const DashboardOverview = ({ user, onViewFiles, onSetActiveView }: { user: any, onViewFiles: (id: string) => void, onSetActiveView: (view: string) => void }) => {
     const [stats, setStats] = useState(null);
     const [activity, setActivity] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
+    const [modalState, setModalState] = useState({ isOpen: false, type: '', data: null });
 
     useEffect(() => {
         const fetchDashboardData = async () => {
@@ -1670,13 +1671,19 @@ const DashboardOverview = ({ user, onViewFiles }: { user: any, onViewFiles: (id:
             <div style={{ display: 'grid', gridTemplateColumns: 'minmax(300px, 1.5fr) repeat(3, 1fr)', gap: '20px', marginBottom: '32px' }} className="animate-slide-up stagger-child-1">
 
                 {/* Primary KPI: Revenue */}
-                <div className="dashboard-hero-card-hover" style={styles.dashboardHeroCard}>
-                    <p style={styles.dashboardMetricLabel}>Revenue (This Month)</p>
+                <div 
+                    className="dashboard-hero-card-hover" 
+                    style={{ ...styles.dashboardHeroCard, cursor: 'pointer' }}
+                    onClick={() => setModalState({ isOpen: true, type: 'revenue', data: stats })}
+                >
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <p style={styles.dashboardMetricLabel}>Revenue (This Month)</p>
+                        <LucideTrendingUp size={16} color={neon_magenta} />
+                    </div>
                     <h3 style={{ ...styles.dashboardMetricValue, color: neon_magenta, textShadow: `0 0 10px ${neon_magenta}` }}>
                         {formatPrice(stats?.monthly_revenue)}
                     </h3>
                     <div style={{ display: 'flex', gap: '12px', alignItems: 'center', marginTop: '12px' }}>
-                        {/* Mock comparison for demonstration */}
                         <span style={styles.dashboardComparisonUp}>↑ 12% vs last month</span>
                         <span style={{ fontSize: '13px', color: text_secondary }}>
                             {formatPrice(stats?.total_revenue)} all-time
@@ -1685,7 +1692,11 @@ const DashboardOverview = ({ user, onViewFiles }: { user: any, onViewFiles: (id:
                 </div>
 
                 {/* Secondary KPIs */}
-                <div className="dashboard-card-hover" style={styles.dashboardCard}>
+                <div 
+                    className="dashboard-card-hover" 
+                    style={{ ...styles.dashboardCard, cursor: 'pointer' }}
+                    onClick={() => onSetActiveView('orders')}
+                >
                     <p style={styles.dashboardMetricLabel}>Active Orders</p>
                     <h3 style={styles.dashboardMetricValue}>{stats?.active_orders || 0}</h3>
                     <span style={{ fontSize: '13px', color: text_secondary, marginTop: 'auto' }}>
@@ -1693,7 +1704,10 @@ const DashboardOverview = ({ user, onViewFiles }: { user: any, onViewFiles: (id:
                     </span>
                 </div>
 
-                <div style={{ ...styles.dashboardCard, borderColor: stats?.pending_quotes > 0 ? neon_cyan : border_color, boxShadow: stats?.pending_quotes > 0 ? `inset 0 0 15px rgba(var(--neon-cyan-rgb),0.1)` : 'none' }}>
+                <div 
+                    style={{ ...styles.dashboardCard, cursor: 'pointer', borderColor: stats?.pending_quotes > 0 ? neon_cyan : border_color, boxShadow: stats?.pending_quotes > 0 ? `inset 0 0 15px rgba(var(--neon-cyan-rgb),0.1)` : 'none' }}
+                    onClick={() => onSetActiveView('quotes')}
+                >
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                         <p style={styles.dashboardMetricLabel}>Pending Quotes</p>
                         {stats?.pending_quotes > 0 && <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: neon_cyan, boxShadow: `0 0 8px ${neon_cyan}` }} />}
@@ -1731,6 +1745,7 @@ const DashboardOverview = ({ user, onViewFiles }: { user: any, onViewFiles: (id:
                 <div className="dashboard-card-hover" style={styles.dashboardCard}>
                     <div style={styles.dashboardSectionHeader}>
                         <span>Revenue Trend (6mo)</span>
+                        <LucideTrendingUp size={16} color={neon_magenta} />
                     </div>
                     {stats?.revenue_trend && stats.revenue_trend.length > 0 ? (
                         <div style={styles.dashboardBarChartContainer}>
@@ -1753,9 +1768,14 @@ const DashboardOverview = ({ user, onViewFiles }: { user: any, onViewFiles: (id:
                 </div>
 
                 {/* Quote Pipeline */}
-                <div className="dashboard-card-hover" style={styles.dashboardCard}>
+                <div 
+                    className="dashboard-card-hover" 
+                    style={{ ...styles.dashboardCard, cursor: 'pointer' }}
+                    onClick={() => setModalState({ isOpen: true, type: 'pipeline', data: quoteFunnel })}
+                >
                     <div style={styles.dashboardSectionHeader}>
                         <span>Quote Pipeline</span>
+                        <LucidePieChart size={16} color={neon_cyan} />
                     </div>
                     <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', marginTop: '16px' }}>
                         <div style={styles.dashboardHorizontalBarGroup}>
@@ -1797,7 +1817,12 @@ const DashboardOverview = ({ user, onViewFiles }: { user: any, onViewFiles: (id:
                 <div className="dashboard-card-hover" style={styles.dashboardCard}>
                     <div style={styles.dashboardSectionHeader}>
                         <span>Recent Activity</span>
-                        <a href="#quotes" style={{ fontSize: '13px', color: neon_cyan, textDecoration: 'none' }}>View All</a>
+                        <button 
+                            onClick={(e) => { e.preventDefault(); onSetActiveView('quotes'); }} 
+                            style={{ background: 'none', border: 'none', fontSize: '13px', color: neon_cyan, textDecoration: 'none', cursor: 'pointer' }}
+                        >
+                            View All
+                        </button>
                     </div>
                     {activity?.recent_quotes?.length === 0 && activity?.recent_orders?.length === 0 ? (
                         <div style={{ textAlign: 'center', padding: '40px', color: text_secondary }}>
@@ -1812,7 +1837,11 @@ const DashboardOverview = ({ user, onViewFiles }: { user: any, onViewFiles: (id:
                                         .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()) // sort ascending to get oldest first so that later slice gives newest? Wait slice(0, 5) gives first 5... want newest first. a.created_at is newest if Date(b) - Date(a)
                                         .slice(0, 5)
                                         .map((item, idx) => (
-                                            <tr key={idx} style={styles.dashboardActivityRow}>
+                                            <tr 
+                                                key={idx} 
+                                                style={{ ...styles.dashboardActivityRow, cursor: 'pointer' }}
+                                                onClick={() => setModalState({ isOpen: true, type: 'activity', data: item })}
+                                            >
                                                 <td style={{ ...styles.dashboardActivityCell, color: text_primary, fontWeight: 500 }}>
                                                     {item.type === 'quote' ? `Quote Request: ${item.design__design_name}` : `Order Update: #${item.id.substring(0, 8)}`}
                                                 </td>
@@ -1867,9 +1896,11 @@ const DashboardOverview = ({ user, onViewFiles }: { user: any, onViewFiles: (id:
                                 color: stats?.pending_quotes > 0 ? neon_cyan : text_primary,
                                 padding: '16px',
                                 justifyContent: 'space-between',
-                                width: '100%'
+                                width: '100%',
+                                display: 'flex',
+                                alignItems: 'center'
                             }}
-                            onClick={() => window.location.hash = '#quotes'}
+                            onClick={() => onSetActiveView('quotes')}
                         >
                             <span>Review Pending Quotes</span>
                             {stats?.pending_quotes > 0 && <span style={{ background: neon_cyan, color: '#000', padding: '2px 8px', borderRadius: '12px', fontSize: '12px', fontWeight: 800 }}>{stats.pending_quotes}</span>}
@@ -1880,9 +1911,11 @@ const DashboardOverview = ({ user, onViewFiles }: { user: any, onViewFiles: (id:
                                 ...styles.buttonSecondary,
                                 padding: '16px',
                                 justifyContent: 'space-between',
-                                width: '100%'
+                                width: '100%',
+                                display: 'flex',
+                                alignItems: 'center'
                             }}
-                            onClick={() => window.location.hash = '#orders'}
+                            onClick={() => onSetActiveView('orders')}
                         >
                             <span>Manage Active Orders</span>
                         </button>
@@ -1895,9 +1928,11 @@ const DashboardOverview = ({ user, onViewFiles }: { user: any, onViewFiles: (id:
                                 color: text_secondary,
                                 padding: '16px',
                                 justifyContent: 'space-between',
-                                width: '100%'
+                                width: '100%',
+                                display: 'flex',
+                                alignItems: 'center'
                             }}
-                            onClick={() => window.location.hash = '#profile'}
+                            onClick={() => onSetActiveView('profile')}
                         >
                             <span>Update Profile Info</span>
                         </button>
@@ -1937,7 +1972,12 @@ const DashboardOverview = ({ user, onViewFiles }: { user: any, onViewFiles: (id:
                 <div className="dashboard-card-hover" style={styles.dashboardCard}>
                     <div style={styles.dashboardSectionHeader}>
                         <span>Upcoming Deadlines</span>
-                        <a href="#orders" style={{ fontSize: '13px', color: neon_cyan, textDecoration: 'none' }}>View Orders</a>
+                        <button 
+                            onClick={() => onSetActiveView('orders')} 
+                            style={{ background: 'none', border: 'none', fontSize: '13px', color: neon_cyan, textDecoration: 'none', cursor: 'pointer' }}
+                        >
+                            View Orders
+                        </button>
                     </div>
                     {stats?.upcoming_deadlines?.length === 0 ? (
                         <div style={{ textAlign: 'center', padding: '40px', color: text_secondary }}>
@@ -1966,6 +2006,17 @@ const DashboardOverview = ({ user, onViewFiles }: { user: any, onViewFiles: (id:
                     )}
                 </div>
             </div>
+
+            {/* Detail Modals */}
+            {modalState.isOpen && modalState.type === 'revenue' && (
+                <RevenueDetailsModal stats={modalState.data} onClose={() => setModalState({ isOpen: false, type: '', data: null })} formatPrice={formatPrice} />
+            )}
+            {modalState.isOpen && modalState.type === 'pipeline' && (
+                <PipelineDetailsModal data={modalState.data} stats={stats} onClose={() => setModalState({ isOpen: false, type: '', data: null })} />
+            )}
+            {modalState.isOpen && modalState.type === 'activity' && (
+                <ActivityDetailModal item={modalState.data} onClose={() => setModalState({ isOpen: false, type: '', data: null })} onViewFiles={onViewFiles} formatPrice={formatPrice} onSetActiveView={onSetActiveView} />
+            )}
         </div>
     );
 };
@@ -3175,6 +3226,167 @@ const InternalQuotationsPage = ({ onViewFiles, onNavigate }) => {
     );
 };
 
+// --- Modal Components for Dashboard ---
+
+const ActivityDetailModal = ({ item, onClose, onViewFiles, formatPrice, onSetActiveView }) => {
+    return (
+        <div style={styles.modalBackdrop}>
+            <div style={{ ...styles.modalContent, maxWidth: '600px' }}>
+                <div style={styles.modalHeader}>
+                    <h3 style={styles.modalTitle}>
+                        {item.type === 'quote' ? 'Quote Request Details' : 'Order Update Details'}
+                    </h3>
+                    <button onClick={onClose} style={styles.modalCloseButton}><LucideX size={24} /></button>
+                </div>
+                <div style={styles.modalBody}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                            <div>
+                                <p style={styles.quoteDetailLabel}>Part Name</p>
+                                <p style={styles.quoteDetailValue}>{item.design__design_name || item.design_name || 'N/A'}</p>
+                            </div>
+                            <div>
+                                <p style={styles.quoteDetailLabel}>Date</p>
+                                <p style={styles.quoteDetailValue}>{new Date(item.created_at).toLocaleString()}</p>
+                            </div>
+                            <div>
+                                <p style={styles.quoteDetailLabel}>Status</p>
+                                <span style={{
+                                    padding: '4px 12px',
+                                    borderRadius: '12px',
+                                    fontSize: '12px',
+                                    fontWeight: 700,
+                                    textTransform: 'uppercase',
+                                    backgroundColor: 'rgba(var(--neon-cyan-rgb), 0.1)',
+                                    color: neon_cyan,
+                                    border: `1px solid rgba(var(--neon-cyan-rgb), 0.3)`
+                                }}>
+                                    {item.status.replace('_', ' ')}
+                                </span>
+                            </div>
+                            {item.price_usd && (
+                                <div>
+                                    <p style={styles.quoteDetailLabel}>Price</p>
+                                    <p style={{ ...styles.quoteDetailValue, color: neon_magenta }}>{formatPrice(item.price_usd)}</p>
+                                </div>
+                            )}
+                        </div>
+
+                        <div style={{ padding: '16px', background: 'rgba(255,255,255,0.02)', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                            <p style={{ ...styles.quoteDetailLabel, marginBottom: '8px' }}>Action Items</p>
+                            <div style={{ display: 'flex', gap: '12px' }}>
+                                <CtaButton text="View Design Files" onClick={() => { onViewFiles(item.design || item.design_id); onClose(); }} className="button-small" />
+                                {item.type === 'quote' && item.status === 'pending' && (
+                                    <CtaButton text="Go to Quotes" primary onClick={() => { onSetActiveView('quotes'); onClose(); }} className="button-small" />
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div style={styles.modalFooter}>
+                    <CtaButton text="Close" onClick={onClose} />
+                </div>
+            </div>
+        </div>
+    );
+};
+
+const RevenueDetailsModal = ({ stats, onClose, formatPrice }) => {
+    return (
+        <div style={styles.modalBackdrop}>
+            <div style={{ ...styles.modalContent, maxWidth: '800px' }}>
+                <div style={styles.modalHeader}>
+                    <h3 style={{ ...styles.modalTitle, color: neon_magenta }}>Revenue Analytics</h3>
+                    <button onClick={onClose} style={styles.modalCloseButton}><LucideX size={24} /></button>
+                </div>
+                <div style={styles.modalBody}>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '20px', marginBottom: '32px' }}>
+                        <div style={{ ...styles.dashboardCard, background: 'rgba(255,255,255,0.03)' }}>
+                            <p style={styles.dashboardMetricLabel}>Total Revenue</p>
+                            <h3 style={{ ...styles.dashboardMetricValue, color: neon_magenta }}>{formatPrice(stats?.total_revenue)}</h3>
+                        </div>
+                        <div style={{ ...styles.dashboardCard, background: 'rgba(255,255,255,0.03)' }}>
+                            <p style={styles.dashboardMetricLabel}>Monthly Revenue</p>
+                            <h3 style={{ ...styles.dashboardMetricValue, color: neon_cyan }}>{formatPrice(stats?.monthly_revenue)}</h3>
+                        </div>
+                        <div style={{ ...styles.dashboardCard, background: 'rgba(255,255,255,0.03)' }}>
+                            <p style={styles.dashboardMetricLabel}>Average Order</p>
+                            <h3 style={{ ...styles.dashboardMetricValue, color: 'var(--status-success)' }}>{formatPrice(stats?.total_revenue / (stats?.completed_orders || 1))}</h3>
+                        </div>
+                    </div>
+
+                    <h4 style={{ color: text_primary, marginBottom: '16px', fontSize: '16px' }}>Monthly Breakdown</h4>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                        {stats?.revenue_trend?.map((item, idx) => (
+                            <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', padding: '12px 16px', background: 'rgba(255,255,255,0.02)', borderRadius: '8px' }}>
+                                <span style={{ color: text_secondary }}>{item.month}</span>
+                                <span style={{ fontWeight: 600, color: text_primary }}>{formatPrice(item.revenue)}</span>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+                <div style={styles.modalFooter}>
+                    <CtaButton text="Close" onClick={onClose} />
+                </div>
+            </div>
+        </div>
+    );
+};
+
+const PipelineDetailsModal = ({ data, stats, onClose }) => {
+    return (
+        <div style={styles.modalBackdrop}>
+            <div style={{ ...styles.modalContent, maxWidth: '800px' }}>
+                <div style={styles.modalHeader}>
+                    <h3 style={{ ...styles.modalTitle, color: neon_cyan }}>Quote Pipeline Analytics</h3>
+                    <button onClick={onClose} style={styles.modalCloseButton}><LucideX size={24} /></button>
+                </div>
+                <div style={styles.modalBody}>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px', marginBottom: '32px' }}>
+                        <div style={{ ...styles.dashboardCard, textAlign: 'center' }}>
+                            <p style={styles.dashboardMetricLabel}>Total Requests</p>
+                            <h3 style={styles.dashboardMetricValue}>{data.total}</h3>
+                        </div>
+                        <div style={{ ...styles.dashboardCard, textAlign: 'center' }}>
+                            <p style={styles.dashboardMetricLabel}>Pending</p>
+                            <h3 style={{ ...styles.dashboardMetricValue, color: neon_orange }}>{data.pending}</h3>
+                        </div>
+                        <div style={{ ...styles.dashboardCard, textAlign: 'center' }}>
+                            <p style={styles.dashboardMetricLabel}>Accepted</p>
+                            <h3 style={{ ...styles.dashboardMetricValue, color: neon_magenta }}>{data.accepted}</h3>
+                        </div>
+                        <div style={{ ...styles.dashboardCard, textAlign: 'center' }}>
+                            <p style={styles.dashboardMetricLabel}>Completed</p>
+                            <h3 style={{ ...styles.dashboardMetricValue, color: 'var(--status-success)' }}>{stats?.completed_orders}</h3>
+                        </div>
+                    </div>
+
+                    <h4 style={{ color: text_primary, marginBottom: '16px', fontSize: '16px' }}>Performance Metrics</h4>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+                        <div style={{ padding: '20px', background: 'rgba(255,255,255,0.03)', borderRadius: '12px' }}>
+                            <p style={{ color: text_secondary, fontSize: '13px' }}>Acceptance Rate</p>
+                            <div style={{ display: 'flex', alignItems: 'flex-end', gap: '12px', marginTop: '8px' }}>
+                                <span style={{ fontSize: '32px', fontWeight: 800, color: neon_cyan }}>{stats?.acceptance_rate}%</span>
+                                <span style={{ color: 'var(--status-success)', fontSize: '13px', paddingBottom: '8px' }}>↑ 4% this week</span>
+                            </div>
+                        </div>
+                        <div style={{ padding: '20px', background: 'rgba(255,255,255,0.03)', borderRadius: '12px' }}>
+                            <p style={{ color: text_secondary, fontSize: '13px' }}>Avg. Response Time</p>
+                            <div style={{ display: 'flex', alignItems: 'flex-end', gap: '12px', marginTop: '8px' }}>
+                                <span style={{ fontSize: '32px', fontWeight: 800, color: neon_magenta }}>4.2h</span>
+                                <span style={{ color: 'var(--status-success)', fontSize: '13px', paddingBottom: '8px' }}>↓ 1.5h faster</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div style={styles.modalFooter}>
+                    <CtaButton text="Close" onClick={onClose} />
+                </div>
+            </div>
+        </div>
+    );
+};
+
 const ManufacturerDashboard = ({ user, onViewFiles, onNavigate }) => {
     const [activeView, setActiveView] = useState('overview'); // overview, profile, quotes, orders, internal, settings
     const navItems = [
@@ -3195,7 +3407,7 @@ const ManufacturerDashboard = ({ user, onViewFiles, onNavigate }) => {
             case 'orders': return <ActiveOrdersPage onViewFiles={onViewFiles} />;
             case 'overview':
             default:
-                return <DashboardOverview user={user} onViewFiles={onViewFiles} />;
+                return <DashboardOverview user={user} onViewFiles={onViewFiles} onSetActiveView={setActiveView} />;
         }
     };
 
