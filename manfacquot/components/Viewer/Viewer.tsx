@@ -144,14 +144,17 @@ const Viewer: React.FC<ViewerProps> = ({
         <div style={{
           height: '48px',
           width: '100%',
-          background: '#0a0a0f',
+          background: 'rgba(10, 10, 15, 0.9)',
+          backdropFilter: 'blur(8px)',
           borderBottom: '1px solid rgba(255, 255, 255, 0.15)',
           display: 'grid',
           gridTemplateColumns: 'minmax(0, 1fr) auto',
           alignItems: 'center',
           padding: '0 8px',
           zIndex: 110,
-          position: 'relative',
+          position: 'absolute',
+          top: 0,
+          left: 0,
           userSelect: 'none'
         }}>
           {/* Left Group: Contextual Tools */}
@@ -211,7 +214,7 @@ const Viewer: React.FC<ViewerProps> = ({
         </div>
       )}
 
-      <div style={{ flex: 1, position: 'relative', display: 'flex', minHeight: 0, minWidth: 0, overflow: 'hidden' }}>
+      <div style={{ flex: 1, position: 'relative', display: 'flex', minHeight: 0, minWidth: 0, overflow: 'hidden', paddingTop: !hideToolbar ? '48px' : 0 }}>
         {/* 2. DYNAMIC SIDEBAR PANEL (Only shown when a tool is selected) */}
         {activePanel && (
           <div style={{
@@ -221,9 +224,14 @@ const Viewer: React.FC<ViewerProps> = ({
             borderRight: '1px solid rgba(255, 255, 255, 0.1)',
             display: 'flex',
             flexDirection: 'column',
-            zIndex: 90,
+            zIndex: 120,
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            bottom: 0,
             animation: 'slideIn 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
-            boxShadow: '10px 0 30px rgba(0,0,0,0.5)'
+            boxShadow: '10px 0 30px rgba(0,0,0,0.5)',
+            paddingTop: '48px'
           }}>
             <div style={{ 
               padding: '14px 18px', 
@@ -309,6 +317,16 @@ const Viewer: React.FC<ViewerProps> = ({
         .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(59, 130, 246, 0.3); borderRadius: 10px; }
         input[type="range"] { height: 4px; -webkit-appearance: none; background: #1e293b; border-radius: 2px; }
         input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 12px; height: 12px; background: #3b82f6; border-radius: 50%; cursor: pointer; }
+        
+        /* Fullscreen-specific fixes */
+        #viewer-container:fullscreen {
+          width: 100vw !important;
+          height: 100vh !important;
+          background: #0a0a0f !important;
+        }
+        #viewer-container:fullscreen .viewer-tool-btn {
+          color: #fff !important;
+        }
       `}</style>
     </div>
   );
