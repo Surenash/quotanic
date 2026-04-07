@@ -2815,7 +2815,6 @@ const DesignThumbnail = ({ modelUrl, designId, designName }: { modelUrl: string 
                     view={ViewPreset.ISO}
                     isViewLocked={true}
                     hideToolbar={true}
-                    hideSidebar={true}
                     design={{ design_name: designName } as any}
                     onUserInteraction={() => {}}
                 />

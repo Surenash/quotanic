@@ -212,30 +212,7 @@ const Viewer: React.FC<ViewerProps> = ({
       )}
 
       <div style={{ flex: 1, position: 'relative', display: 'flex', minHeight: 0, minWidth: 0, overflow: 'hidden' }}>
-        {/* 2. PERMANENT LEFT TOOLBAR (VERTICAL) */}
-        {!hideSidebar && (
-          <div style={{
-            width: '48px',
-            background: '#0a0a0f',
-            borderRight: '1px solid rgba(255, 255, 255, 0.1)',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '8px',
-            padding: '8px 0',
-            alignItems: 'center',
-            zIndex: 100,
-            flexShrink: 0
-          }}>
-            <ToolbarButton icon={Icons.BackgroundIcon} onClick={() => togglePanel('background')} active={activePanel === 'background'} label="Background" />
-            <ToolbarButton icon={Icons.ModelColorIcon} onClick={() => togglePanel('material')} active={activePanel === 'material'} label="Model Color" />
-            <ToolbarButton icon={Icons.AnimationIcon} onClick={() => togglePanel('animation')} active={activePanel === 'animation'} label="Animation" />
-            <ToolbarButton icon={Icons.LightingIcon} onClick={() => togglePanel('lighting')} active={activePanel === 'lighting'} label="Lighting" />
-            <div style={{ flex: 1 }} />
-            <ToolbarButton icon={Icons.SettingsIcon} onClick={() => togglePanel('settings')} active={activePanel === 'settings'} label="Viewer Settings" />
-          </div>
-        )}
-
-        {/* 3. DYNAMIC SIDEBAR PANEL */}
+        {/* 2. DYNAMIC SIDEBAR PANEL (Only shown when a tool is selected) */}
         {activePanel && (
           <div style={{
             width: '300px',
@@ -290,7 +267,7 @@ const Viewer: React.FC<ViewerProps> = ({
           </div>
         )}
 
-        {/* 4. MAIN CANVAS */}
+        {/* 3. MAIN CANVAS */}
         <div style={{ flex: 1, position: 'relative', minWidth: 0, minHeight: 0, overflow: 'hidden' }}>
           <Suspense fallback={<Loader />}>
             <Canvas
