@@ -39,6 +39,8 @@ const Viewer: React.FC<ViewerProps> = ({
   const [showAxes, setShowAxes] = useState(false);
   const [resetKey, setResetKey] = useState(0); // Counter to trigger recentering
   
+  const containerRef = useRef<HTMLDivElement>(null);
+  
   const [background, setBackground] = useState({
     top: '#1a1a2e',
     bottom: '#0a0a0f',
@@ -73,7 +75,7 @@ const Viewer: React.FC<ViewerProps> = ({
   };
 
   const handleFullscreen = () => {
-    const element = document.getElementById('viewer-container');
+    const element = containerRef.current;
     if (!element) return;
     if (!document.fullscreenElement) {
       element.requestFullscreen().catch(err => console.error(err));
@@ -83,7 +85,8 @@ const Viewer: React.FC<ViewerProps> = ({
   };
 
   const downloadSnapshot = () => {
-    const canvas = document.querySelector('#viewer-container canvas') as HTMLCanvasElement;
+    if (!containerRef.current) return;
+    const canvas = containerRef.current.querySelector('canvas') as HTMLCanvasElement;
     if (!canvas) return;
     const link = document.createElement('a');
     link.download = `quotanic-3d-view-${design?.design_name || 'model'}.png`;
@@ -126,7 +129,8 @@ const Viewer: React.FC<ViewerProps> = ({
 
   return (
     <div 
-      id="viewer-container"
+      ref={containerRef}
+      className="viewer-container"
       style={{ 
         width: '100%', 
         height: '100%', 
@@ -319,12 +323,12 @@ const Viewer: React.FC<ViewerProps> = ({
         input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 12px; height: 12px; background: #3b82f6; border-radius: 50%; cursor: pointer; }
         
         /* Fullscreen-specific fixes */
-        #viewer-container:fullscreen {
+        .viewer-container:fullscreen {
           width: 100vw !important;
           height: 100vh !important;
           background: #0a0a0f !important;
         }
-        #viewer-container:fullscreen .viewer-tool-btn {
+        .viewer-container:fullscreen .viewer-tool-btn {
           color: #fff !important;
         }
       `}</style>
