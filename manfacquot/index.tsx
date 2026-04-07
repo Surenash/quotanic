@@ -2812,7 +2812,7 @@ const DesignThumbnail = ({ modelUrl, designId, designName }: { modelUrl: string 
                 <Viewer 
                     modelUrl={actualUrl}
                     fileExtension={fileExtension as any}
-                    view="iso"
+                    view={ViewPreset.ISO}
                     isViewLocked={true}
                     hideToolbar={true}
                     hideSidebar={true}
