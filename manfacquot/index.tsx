@@ -2746,12 +2746,18 @@ const DesignThumbnail = ({ modelUrl, designId, designName }: { modelUrl: string 
         let isMounted = true;
         const fetchUrl = async () => {
             try {
+                console.log(`[DesignThumbnail] Fetching details for ${designId}...`);
                 const design = await api.getDesignById(designId);
+                console.log(`[DesignThumbnail] API response for ${designId}:`, design);
                 if (isMounted && design) {
                     const viewUrl = design.view_url || design.s3_file_key;
+                    console.log(`[DesignThumbnail] Found viewUrl: ${viewUrl}`);
                     if (viewUrl) {
                         const fullUrl = viewUrl.startsWith('http') ? viewUrl : `https://api.quotanic.com${viewUrl.startsWith('/') ? '' : '/media/'}${viewUrl}`;
+                        console.log(`[DesignThumbnail] Setting actualUrl to: ${fullUrl}`);
                         setActualUrl(fullUrl);
+                    } else {
+                        console.warn(`[DesignThumbnail] Design ${designId} has no view_url or s3_file_key`);
                     }
                 }
             } catch (err) {
