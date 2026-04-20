@@ -46,13 +46,13 @@ export const ManufacturerDashboard = ({ user, onViewFiles, navigate }) => {
     const renderActiveView = () => {
         switch (activeView) {
             case 'settings': return <ManufacturerSettingsPage />;
-            case 'profile': return <ManufacturerProfileManagementPage user={user} />;
-            case 'quotes': return <QuoteRequestsPage onViewFiles={onViewFiles} />;
-            case 'internal': return <InternalQuotationsPage onViewFiles={onViewFiles} navigate={navigate} />;
-            case 'orders': return <ActiveOrdersPage onViewFiles={onViewFiles} />;
+            case 'profile': return <Components.ManufacturerProfileManagementPage user={user} />;
+            case 'quotes': return <Components.QuoteRequestsPage />;
+            case 'internal': return <Components.InternalQuotationsPage />;
+            case 'orders': return <Components.ActiveOrdersPage />;
             case 'overview':
             default:
-                return <DashboardOverview user={user} onViewFiles={onViewFiles} onSetActiveView={setActiveView} />;
+                return <Components.DashboardOverview user={user} onSetActiveView={setActiveView} />;
         }
     };
 

@@ -53,8 +53,13 @@ export const DesignQuotationsPage = ({ designId, navigate, onViewFiles }: { desi
             try {
                 return JSON.parse(jsonStr);
             } catch (e) {
-                const fixedJson = jsonStr.replace(/'/g, '"').replace(/None/g, 'null').replace(/True/g, 'true').replace(/False/g, 'false');
-                return JSON.parse(fixedJson);
+                // Backend should fix string formatting eventually to output valid json
+                try {
+                    const fixedJson = jsonStr.replace(/'/g, '"').replace(/None/g, 'null').replace(/True/g, 'true').replace(/False/g, 'false');
+                    return JSON.parse(fixedJson);
+                } catch(e2) {
+                    return null; // Don't crash if it's unparseable note
+                }
             }
         } catch (e) { return null; }
     };
@@ -289,7 +294,7 @@ export const DesignQuotationsPage = ({ designId, navigate, onViewFiles }: { desi
                                                                 <h4 style={{ margin: 0, color: 'var(--neon-cyan)', fontSize: '14px', textTransform: 'uppercase' }}>Quotation Breakdown</h4>
                                                                 <CtaButton text="Open in Popup" className="button-small" onClick={() => setBreakdownModalInfo({ isOpen: true, request: requestObj })} />
                                                             </div>
-                                                            <CostBreakdownContent breakdown={parseBreakdown(quote.notes)} request={requestObj} formatPrice={formatPrice} />
+                                                            <Components.CostBreakdownContent breakdown={parseBreakdown(quote.notes)} request={requestObj} formatPrice={formatPrice} />
                                                         </div>
                                                     </td>
                                                 </tr>
@@ -302,7 +307,7 @@ export const DesignQuotationsPage = ({ designId, navigate, onViewFiles }: { desi
                     </div>
                 </>
             )}
-            {breakdownModalInfo.isOpen && <CostBreakdownModal request={breakdownModalInfo.request} onClose={() => setBreakdownModalInfo({ isOpen: false, request: null })} />}
+            {breakdownModalInfo.isOpen && <Components.CostBreakdownModal request={breakdownModalInfo.request} onClose={() => setBreakdownModalInfo({ isOpen: false, request: null })} />}
         </div>
     );
 };

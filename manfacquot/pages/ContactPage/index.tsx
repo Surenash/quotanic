@@ -1,54 +1,74 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { useNavigate, useParams, useLocation, Link, Navigate, Outlet } from 'react-router-dom';
-import { useAuth } from '../../contexts/AuthContext';
-import { useFileViewer } from '../../contexts/FileViewerContext';
-import { api, setTokens, getTokens, clearTokens } from '../../utils/api';
-import { useCurrency } from '../../utils/currency';
-import { styles, bg_deep_space, text_primary, text_secondary, border_color, border_color_strong, neon_cyan, neon_magenta, neon_orange } from '../../types/theme';
+import React, { useState } from 'react';
+import { styles } from '../../types/theme';
 import CtaButton from '../../components/CtaButton';
-import Notification from '../../components/Notification';
-import CheckboxGroup from '../../components/CheckboxGroup';
-import ManufacturerSettingsPage from '../../components/ManufacturerSettings';
-import Viewer, { ErrorBoundary } from '../../components/Viewer';
-import { ViewPreset } from '../../types/types';
-import {
-    ArrowLeftIcon, UploadIcon, QuoteIcon, ManufactureIcon, FileIcon, ShieldCheckIcon,
-    GlobeAltIcon, ScaleIcon, LightningBoltIcon, SparklesIcon, CodeBracketIcon,
-    WrenchScrewdriverIcon, CubeIcon, GithubIcon, LinkedInIcon, TwitterIcon,
-    SearchIcon, LocationMarkerIcon, StarIcon, BuildingOfficeIcon, XMarkIcon,
-    ChartPieIcon, UserCircleIcon, CogIcon, ArchiveBoxIcon, DocumentTextIcon,
-    VideoCameraIcon, DownloadIcon, EyeIcon, iconStyle
-} from "../../components/icons";
 
-const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || '') + '/api';
-const MEDIA_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
+export const ContactPage = () => {
+    const [formData, setFormData] = useState({ name: '', email: '', message: '' });
+    const [loading, setLoading] = useState(false);
+    const [success, setSuccess] = useState(false);
 
-import {
-    PRODUCTION_VOLUMES, CERTIFICATIONS, MACHINING_PROCESSES, SHEET_METAL_PROCESSES, CASTING_PROCESSES, FORGING_PROCESSES,
-    INJECTION_MOLDING_PROCESSES, ADDITIVE_PROCESSES, WELDING_JOINING_PROCESSES, MATERIALS_METALS, MATERIALS_PLASTICS,
-    MATERIALS_COMPOSITES, MATERIALS_OTHERS, SURFACE_FINISHES, POST_PROCESSING_ASSEMBLY, FILE_FORMATS, INCOTERMS,
-    SPECIAL_CAPABILITIES, ORDER_STATUSES, ALL_CAPABILITIES_GROUPS, ALL_CAPABILITIES_FLAT
-} from '../../utils/constants';
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setLoading(true);
+        // Simulate API call
+        setTimeout(() => {
+            setLoading(false);
+            setSuccess(true);
+            setFormData({ name: '', email: '', message: '' });
+            setTimeout(() => setSuccess(false), 5000);
+        }, 1000);
+    };
 
-import * as Components from '../../components';
-
-export const ContactPage = () => (
-    <div style={{ ...styles.container, padding: '64px 24px' }}>
-        <div style={{ maxWidth: '600px', margin: '0 auto', textAlign: 'center' }}>
+    return (
+        <div style={{ ...styles.container, padding: '64px 24px' }}>
             <h1 style={styles.heroTitle}>Contact Us</h1>
-            <p style={styles.heroSubtitle}>Have a question or feedback? We'd love to hear from you.</p>
-            <div style={{ ...styles.featureCard, marginTop: '48px', textAlign: 'left' }}>
-                <form onSubmit={(e) => { e.preventDefault(); alert('Message sent! We will get back to you shortly.'); }}>
-                    <div style={styles.formGroup}><label style={styles.label}>Name</label><input type="text" style={styles.input} required /></div>
-                    <div style={styles.formGroup}><label style={styles.label}>Email</label><input type="email" style={styles.input} required /></div>
-                    <div style={styles.formGroup}><label style={styles.label}>Message</label><textarea style={{ ...styles.input, height: '120px' }} required></textarea></div>
-                    <CtaButton text="Send Message" type="submit" primary />
-                </form>
-            </div>
-            <div style={{ marginTop: '48px', color: 'var(--text-secondary)' }}>
-                <p>Direct Email: support@quotanic.com</p>
-                <p>Office: Mumbai, India</p>
+            <p style={styles.heroSubtitle}>We're here to help. Reach out with any questions or inquiries.</p>
+            <div style={{ maxWidth: '600px', margin: '48px auto', backgroundColor: 'var(--bg-card)', padding: '32px', borderRadius: '12px', border: '1px solid var(--border-color)' }}>
+                {success ? (
+                    <div style={{ padding: '24px', backgroundColor: 'rgba(10, 240, 240, 0.1)', color: 'var(--neon-cyan)', borderRadius: '8px', textAlign: 'center' }}>
+                        Message sent successfully! We will get back to you shortly.
+                    </div>
+                ) : (
+                    <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+                        <div style={styles.formGroup}>
+                            <label htmlFor="name" style={styles.label}>Name</label>
+                            <input
+                                type="text"
+                                id="name"
+                                name="name"
+                                value={formData.name}
+                                onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+                                style={styles.input}
+                                required
+                            />
+                        </div>
+                        <div style={styles.formGroup}>
+                            <label htmlFor="email" style={styles.label}>Email</label>
+                            <input
+                                type="email"
+                                id="email"
+                                name="email"
+                                value={formData.email}
+                                onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
+                                style={styles.input}
+                                required
+                            />
+                        </div>
+                        <div style={styles.formGroup}>
+                            <label htmlFor="message" style={styles.label}>Message</label>
+                            <textarea
+                                id="message"
+                                name="message"
+                                value={formData.message}
+                                onChange={(e) => setFormData(prev => ({ ...prev, message: e.target.value }))}
+                                style={{ ...styles.input, minHeight: '150px', resize: 'vertical' }}
+                                required
+                            ></textarea>
+                        </div>
+                        <CtaButton text={loading ? "Sending..." : "Send Message"} primary type="submit" disabled={loading} />
+                    </form>
+                )}
             </div>
         </div>
-    </div>
-);
+    );
+};

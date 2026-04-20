@@ -32,7 +32,9 @@ import {
 
 import * as Components from '../../components';
 
-export const ManufacturerProfilePage = ({ manufacturerId, navigate }) => {
+export const ManufacturerProfilePage = () => {
+    const { id: manufacturerId } = useParams<{ id: string }>();
+    const navigate = useNavigate();
     const [manufacturer, setManufacturer] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
@@ -115,7 +117,7 @@ export const ManufacturerProfilePage = ({ manufacturerId, navigate }) => {
                         <section style={styles.profileSection}>
                             <h2 style={styles.profileSectionTitle}>Project Portfolio</h2>
                             <div style={styles.profilePortfolioGrid}>
-                                {manufacturer.portfolio.map(item => (
+                                {(manufacturer.portfolio || []).map(item => (
                                     <div key={item.id} style={styles.portfolioItem}>
                                         {item.type === 'video' ? (
                                             <div style={styles.portfolioVideoPlaceholder}>
@@ -134,7 +136,7 @@ export const ManufacturerProfilePage = ({ manufacturerId, navigate }) => {
                         <section style={styles.profileSection}>
                             <h2 style={styles.profileSectionTitle}>Customer Reviews</h2>
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                                {manufacturer.reviews.map(review => (
+                                {(manufacturer.reviews || []).map(review => (
                                     <div key={review.id} style={{ border: `1px solid var(--border-color)`, backgroundColor: 'rgba(var(--bg-deep-space-rgb), 0.5)', borderRadius: '8px', padding: '16px' }}>
                                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
                                             <p style={{ fontWeight: 600, color: 'var(--text-primary)', margin: 0 }}>{review.author}</p>
@@ -151,7 +153,7 @@ export const ManufacturerProfilePage = ({ manufacturerId, navigate }) => {
                     </main>
                     <aside style={styles.profileSidebar}>
                         <div style={{ ...styles.profileSection, border: '1px solid var(--neon-cyan)', padding: '24px', background: 'rgba(var(--neon-cyan-rgb), 0.1)', textAlign: 'center', boxShadow: '0 0 15px rgba(var(--neon-cyan-rgb), 0.3)' }}>
-                            <CtaButton text="Request Quote" primary onClick={() => navigate('upload', manufacturer.id)} className="button-full-width" />
+                            <CtaButton text="Request Quote" primary onClick={() => navigate(`/upload?manufacturer=${manufacturer.id}`)} className="button-full-width" />
                         </div>
                         <div style={styles.profileSection}>
                             <h2 style={styles.profileSectionTitle}>Capabilities</h2>
@@ -183,7 +185,7 @@ export const ManufacturerProfilePage = ({ manufacturerId, navigate }) => {
                         <div style={styles.profileSection}>
                             <h2 style={styles.profileSectionTitle}>Equipment List</h2>
                             <ul style={{ ...styles.featureList, listStyle: 'disc', paddingLeft: '20px', gap: '8px', margin: 0 }}>
-                                {manufacturer.equipment.map(e => <li key={e}>{e}</li>)}
+                                {(manufacturer.equipment || []).map(e => <li key={e}>{e}</li>)}
                             </ul>
                         </div>
                         {manufacturer.qualityControl && (

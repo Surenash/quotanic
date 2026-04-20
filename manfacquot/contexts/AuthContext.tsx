@@ -54,6 +54,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
       if (fetchedUser.role !== role && role !== 'admin') {
           clearTokens();
+          setIsAuthenticated(false);
+          setUser(null);
           throw new Error(`Please use the ${fetchedUser.role} login portal.`);
       }
 
@@ -61,6 +63,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setIsAuthenticated(true);
     } catch (error) {
       console.error('Login failed:', error);
+      clearTokens();
+      setIsAuthenticated(false);
+      setUser(null);
       throw error;
     }
   };

@@ -1,6 +1,6 @@
 import React from 'react';
 import { Outlet } from 'react-router-dom';
-import { BackgroundAnimation, Header, CurrencyRatesWarning, Footer, FileViewerModal } from '../pages';
+import { BackgroundAnimation, Header, CurrencyRatesWarning, Footer, FileViewerModal } from '../components';
 import { useFileViewer } from '../contexts/FileViewerContext';
 import { styles, bg_deep_space } from '../types/theme';
 

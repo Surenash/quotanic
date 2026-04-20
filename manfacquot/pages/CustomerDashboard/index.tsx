@@ -43,12 +43,12 @@ export const CustomerDashboard = ({ user, onViewFiles, navigate }) => {
 
     const renderActiveView = () => {
         switch (activeView) {
-            case 'designs': return <CustomerDesignsPage onViewFiles={onViewFiles} navigate={navigate} />;
-            case 'orders': return <CustomerOrdersPage onViewFiles={onViewFiles} />;
-            case 'profile': return <CustomerProfilePage />;
+            case 'designs': return <Components.CustomerDesignsPage />;
+            case 'orders': return <Components.CustomerOrdersPage />;
+            case 'profile': return <Components.CustomerProfilePage />;
             case 'overview':
             default:
-                return <CustomerDashboardOverview user={user} navigate={navigate} onViewFiles={onViewFiles} />;
+                return <Components.CustomerDashboardOverview user={user} />;
         }
     };
 
