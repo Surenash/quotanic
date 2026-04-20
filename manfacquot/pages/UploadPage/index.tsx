@@ -32,7 +32,11 @@ import {
 
 import * as Components from '../../components';
 
-export const UploadPage = ({ setLoginReasonMessage, navigate, isAuthenticated, user, pendingData = null, targetManufacturerId, isInternal = false }: UploadPageProps) => {
+export const UploadPage = ({ isInternal = false }: { isInternal?: boolean }) => {
+    const { isAuthenticated, user, setLoginReasonMessage, setPendingUploadData } = useAuth();
+    const navigate = useNavigate();
+    const targetManufacturerId = new URLSearchParams(useLocation().search).get("manufacturer");
+    const pendingData = null;
     const [formData, setFormData] = useState({
         designName: '',
         material: '',

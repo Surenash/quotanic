@@ -85,7 +85,7 @@ export const ManufacturerProfilePage = ({ manufacturerId, navigate }) => {
         <div style={styles.profilePageContainer}>
             <header style={profileHeaderStyle}>
                 <div style={styles.container}>
-                    <button onClick={() => navigate('directory')} style={styles.backButton}>
+                    <button onClick={() => navigate('/directory')} style={styles.backButton}>
                         <ArrowLeftIcon style={{ width: '20px', height: '20px', marginRight: '8px' }} />
                         Back to Directory
                     </button>
