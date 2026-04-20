@@ -317,7 +317,7 @@ export const Header = () => {
         <header style={styles.header} role="banner">
             <div style={styles.container}>
                 <div style={styles.headerContent}>
-                    <a href="#" style={{ ...styles.logo, display: 'flex', alignItems: 'center', gap: '12px', textDecoration: 'none' }} onClick={(e) => { e.preventDefault(); navigate('landing'); }}>
+                    <a href="#" style={{ ...styles.logo, display: 'flex', alignItems: 'center', gap: '12px', textDecoration: 'none' }} onClick={(e) => { e.preventDefault(); navigate('/'); }}>
                         <img src="/media/quotanic-logo.png" alt="Quotanic Logo" style={{ height: '32px', width: 'auto' }} />
                         <span style={{ fontSize: '24px', fontWeight: 'bold', color: text_primary, letterSpacing: '2px' }}>
                             QUOTA<span style={{ color: neon_cyan }}>NIC</span>
@@ -382,8 +382,8 @@ export const Header = () => {
                             </>
                         ) : (
                             <>
-                                <a href="#" style={{ ...styles.navLink, ...(hoveredLink === 'login' && styles.navLinkHover) }} onMouseEnter={() => setHoveredLink('login')} onMouseLeave={() => setHoveredLink('')} onClick={(e) => { e.preventDefault(); navigate('login'); }}>Log In</a>
-                                <CtaButton text="Get Started" primary onClick={() => navigate('signup')} />
+                                <a href="#" style={{ ...styles.navLink, ...(hoveredLink === 'login' && styles.navLinkHover) }} onMouseEnter={() => setHoveredLink('login')} onMouseLeave={() => setHoveredLink('')} onClick={(e) => { e.preventDefault(); navigate('/login'); }}>Log In</a>
+                                <CtaButton text="Get Started" primary onClick={() => navigate('/signup')} />
                             </>
                         )}
                     </div>
@@ -407,7 +407,7 @@ export const Hero = () => {
                 <p style={styles.heroSubtitle} className="animate-slide-up stagger-child-2">Get instant quotes from a global network of vetted manufacturers. Upload your design and compare prices, lead times, and quality in one place.</p>
                 <div style={styles.heroActions} className="animate-slide-up stagger-child-3">
                     <CtaButton text="Get an Instant Quote" primary onClick={() => navigate('/upload')} />
-                    <CtaButton text="Join as a Manufacturer" onClick={() => navigate('signup-manufacturer')} />
+                    <CtaButton text="Join as a Manufacturer" onClick={() => navigate('/signup/manufacturer')} />
                 </div>
             </div>
         </div>
@@ -471,7 +471,7 @@ export const ForWhom = () => {
                     <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}><WrenchScrewdriverIcon style={{ ...styles.forWhomIcon, color: 'var(--neon-magenta)' }} /><h3 style={styles.featureTitle}>For Manufacturers</h3></div>
                     <p style={styles.forWhomText}>Access a global customer base, streamline your quoting workflow, and fill your production capacity. Let us bring the jobs to you so you can focus on what you do best: making things.</p>
                     <ul style={styles.featureList}><li>✓ Access a New Stream of Orders</li><li>✓ Automate Your Quoting Process</li><li>✓ Reduce Administrative Overhead</li><li>✓ Grow Your Business</li></ul>
-                    <CtaButton text="Join Our Network" onClick={() => navigate('signup-manufacturer')} />
+                    <CtaButton text="Join Our Network" onClick={() => navigate('/signup/manufacturer')} />
                 </div>
             </div>
         </div>
@@ -519,10 +519,10 @@ export const Footer = () => {
     <footer style={styles.footer} role="contentinfo">
         <div style={styles.container}>
             <div style={styles.footerGrid}>
-                <div style={styles.footerColumn}><h3 style={styles.footerHeading}>Platform</h3><a href="#" style={styles.footerLink} onClick={(e) => { e.preventDefault(); navigate('how-it-works-detailed'); }}>How It Works</a><a href="#" style={styles.footerLink} onClick={(e) => { e.preventDefault(); navigate('directory'); }}>Manufacturer Directory</a><a href="#" style={styles.footerLink} onClick={(e) => { e.preventDefault(); navigate('trust-and-security'); }}>Trust & Security</a></div>
-                <div style={styles.footerColumn}><h3 style={styles.footerHeading}>Company</h3><a href="#" style={styles.footerLink} onClick={(e) => { e.preventDefault(); navigate('about'); }}>About Us</a><a href="#" style={styles.footerLink} onClick={(e) => { e.preventDefault(); navigate('blog'); }}>Blog</a><a href="#" style={styles.footerLink} onClick={(e) => { e.preventDefault(); navigate('contact'); }}>Contact Us</a></div>
-                <div style={styles.footerColumn}><h3 style={styles.footerHeading}>Resources</h3><a href="#" style={styles.footerLink} onClick={(e) => { e.preventDefault(); navigate('faq'); }}>FAQ</a><a href="#" style={styles.footerLink}>Help Center</a></div>
-                <div style={styles.footerColumn}><h3 style={styles.footerHeading}>Legal</h3><a href="#" style={styles.footerLink} onClick={(e) => { e.preventDefault(); navigate('privacy'); }}>Privacy Policy</a><a href="#" style={styles.footerLink} onClick={(e) => { e.preventDefault(); navigate('terms'); }}>Terms of Service</a></div>
+                <div style={styles.footerColumn}><h3 style={styles.footerHeading}>Platform</h3><a href="#" style={styles.footerLink} onClick={(e) => { e.preventDefault(); navigate('/how-it-works'); }}>How It Works</a><a href="#" style={styles.footerLink} onClick={(e) => { e.preventDefault(); navigate('/directory'); }}>Manufacturer Directory</a><a href="#" style={styles.footerLink} onClick={(e) => { e.preventDefault(); navigate('/trust-and-security'); }}>Trust & Security</a></div>
+                <div style={styles.footerColumn}><h3 style={styles.footerHeading}>Company</h3><a href="#" style={styles.footerLink} onClick={(e) => { e.preventDefault(); navigate('/about'); }}>About Us</a><a href="#" style={styles.footerLink} onClick={(e) => { e.preventDefault(); navigate('/blog'); }}>Blog</a><a href="#" style={styles.footerLink} onClick={(e) => { e.preventDefault(); navigate('/contact'); }}>Contact Us</a></div>
+                <div style={styles.footerColumn}><h3 style={styles.footerHeading}>Resources</h3><a href="#" style={styles.footerLink} onClick={(e) => { e.preventDefault(); navigate('/faq'); }}>FAQ</a><a href="#" style={styles.footerLink}>Help Center</a></div>
+                <div style={styles.footerColumn}><h3 style={styles.footerHeading}>Legal</h3><a href="#" style={styles.footerLink} onClick={(e) => { e.preventDefault(); navigate('/privacy'); }}>Privacy Policy</a><a href="#" style={styles.footerLink} onClick={(e) => { e.preventDefault(); navigate('/terms'); }}>Terms of Service</a></div>
             </div>
             <div style={styles.footerBottom}>
                 <p style={styles.footerCopyright}>© {new Date().getFullYear()} Quotanic. All rights reserved.</p>
@@ -547,15 +547,7 @@ export const Footer = () => {
 
 // --- Dashboard & Upload Components ---
 
-type UploadPageProps = {
-    onProceedToLogin: (data: any) => void;
-    navigate: (page: string) => void;
-    isAuthenticated: boolean;
-    user: any;
-    pendingData?: any;
-    targetManufacturerId?: string;
-    isInternal?: boolean;
-};
+
 
 
 
@@ -563,7 +555,7 @@ type UploadPageProps = {
 export const ManufacturerCard = ({ manufacturer, navigate }) => {
     const [hover, setHover] = useState(false);
     return (
-        <div style={{ ...styles.mfgCard, ...(hover && styles.mfgCardHover) }} onMouseEnter={() => setHover(true)} onMouseLeave={() => setHover(false)} onClick={() => navigate('manufacturer-profile', manufacturer.id)} className="hover-lift">
+        <div style={{ ...styles.mfgCard, ...(hover && styles.mfgCardHover) }} onMouseEnter={() => setHover(true)} onMouseLeave={() => setHover(false)} onClick={() => navigate(`/manufacturer/${manufacturer.id}`)} className="hover-lift">
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px' }}>
                 <img src={manufacturer.logoUrl} alt={`${manufacturer.company_name} logo`} style={styles.mfgCardLogo} />
                 <div style={{ flex: 1 }}>
@@ -609,7 +601,8 @@ export const ManufacturerCard = ({ manufacturer, navigate }) => {
 
 // --- Manufacturer Dashboard Components ---
 
-export const DashboardOverview = ({ user, onViewFiles, onSetActiveView }: { user: any, onViewFiles: (id: string) => void, onSetActiveView: (view: string) => void }) => {
+export const DashboardOverview = ({ user, onSetActiveView }: { user: any, onSetActiveView: (view: string) => void }) => {
+    const { openViewer: onViewFiles } = useFileViewer();
     const [stats, setStats] = useState(null);
     const [activity, setActivity] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -1836,7 +1829,8 @@ export const DesignThumbnail = ({ modelUrl, designId, designName }: { modelUrl: 
         </div>
     );
 };
-export const QuoteRequestsPage = ({ onViewFiles }) => {
+export const QuoteRequestsPage = () => {
+    const { openViewer: onViewFiles } = useFileViewer();
     const [requests, setRequests] = useState([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
@@ -2100,7 +2094,8 @@ export const UpdateOrderModal = ({ order, onClose, onUpdate }) => {
     );
 };
 
-export const ActiveOrdersPage = ({ onViewFiles }) => {
+export const ActiveOrdersPage = () => {
+    const { openViewer: onViewFiles } = useFileViewer();
     const [orders, setOrders] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
@@ -2203,7 +2198,9 @@ export const ActiveOrdersPage = ({ onViewFiles }) => {
     );
 };
 
-export const InternalQuotationsPage = ({ onViewFiles, navigate }) => {
+export const InternalQuotationsPage = () => {
+    const { openViewer: onViewFiles } = useFileViewer();
+    const navigate = useNavigate();
     const [requests, setRequests] = useState([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
@@ -2281,7 +2278,7 @@ export const InternalQuotationsPage = ({ onViewFiles, navigate }) => {
                     <h2 style={{...styles.dashboardPageTitle, marginBottom: '8px'}}>Internal Quotations</h2>
                     <p style={styles.dashboardPageSubtitle}>Assess parts and generate instant 14-point manufacturing quotes.</p>
                 </div>
-                <CtaButton text="Upload New Design" primary onClick={() => navigate('internal-upload')} />
+                <CtaButton text="Upload New Design" primary onClick={() => navigate('/upload')} />
             </div>
 
             <div style={styles.tableContainer}>
@@ -3103,7 +3100,9 @@ export const CustomerProfilePage = () => {
     );
 };
 
-export const CustomerDesignsPage = ({ onViewFiles, navigate }) => {
+export const CustomerDesignsPage = () => {
+    const { openViewer: onViewFiles } = useFileViewer();
+    const navigate = useNavigate();
     const [designs, setDesigns] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
@@ -3181,7 +3180,7 @@ export const CustomerDesignsPage = ({ onViewFiles, navigate }) => {
                                         {design.status === 'analysis_complete' && (
                                             <CtaButton
                                                 text="View Quotes"
-                                                onClick={() => navigate('view-quotes', { designId: design.id })}
+                                                onClick={() => navigate(`/view-quotes/${design.id}`)}
                                                 className="button-small"
                                                 primary
                                             />
@@ -3201,7 +3200,8 @@ export const CustomerDesignsPage = ({ onViewFiles, navigate }) => {
     );
 };
 
-export const CustomerOrdersPage = ({ onViewFiles }) => {
+export const CustomerOrdersPage = () => {
+    const { openViewer: onViewFiles } = useFileViewer();
     const [orders, setOrders] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
