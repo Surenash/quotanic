@@ -22,8 +22,32 @@ import {
 
 export const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || '') + '/api';
 export const MEDIA_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
-import { DollarSign as LucideDollarSign, PieChart as LucidePieChart, TrendingUp as LucideTrendingUp, Activity as LucideActivity, Wrench as LucideWrench, Settings as LucideSettings, FileText as LucideFileText, ShieldCheck as LucideShieldCheck, Globe as LucideGlobe, MapPin as LucideMapPin, Box as LucideBox, Sparkles as LucideSparkles, Zap as LucideZap } from "lucide-react";
-import { Nut as LucideNut, Drill as LucideDrill, CircleDot as LucideCircleDot, Cylinder as LucideCylinder, Cog as LucideCog } from "lucide-react";
+import { 
+    DollarSign as LucideDollarSign, 
+    PieChart as LucidePieChart, 
+    TrendingUp as LucideTrendingUp, 
+    Activity as LucideActivity, 
+    Wrench as LucideWrench, 
+    Settings as LucideSettings, 
+    FileText as LucideFileText, 
+    ShieldCheck as LucideShieldCheck, 
+    Globe as LucideGlobe, 
+    MapPin as LucideMapPin, 
+    Box as LucideBox, 
+    Sparkles as LucideSparkles, 
+    Zap as LucideZap,
+    X as LucideX,
+    AlertTriangle as LucideAlertTriangle,
+    File as LucideFile,
+    Archive as LucideArchive
+} from "lucide-react";
+import { 
+    Nut as LucideNut, 
+    Drill as LucideDrill, 
+    CircleDot as LucideCircleDot, 
+    Cylinder as LucideCylinder, 
+    Cog as LucideCog 
+} from "lucide-react";
 
 import {
     PRODUCTION_VOLUMES, CERTIFICATIONS, MACHINING_PROCESSES, SHEET_METAL_PROCESSES, CASTING_PROCESSES, FORGING_PROCESSES,
