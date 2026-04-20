@@ -1,6 +1,6 @@
 // Notification Component
 import React from 'react';
-import { X as LucideX } from 'lucide-react';
+import { XMarkIcon } from './icons';
 
 const Notification = ({ message, type = 'success', onDismiss }: { message: string, type?: 'success' | 'error', onDismiss: () => void }) => {
     const baseStyle = {
@@ -20,7 +20,7 @@ const Notification = ({ message, type = 'success', onDismiss }: { message: strin
         <div style={{ ...baseStyle, ...typeStyles[type] }}>
             <span>{message}</span>
             <button onClick={onDismiss} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'inherit' }}>
-                <LucideX style={{ width: '20px', height: '20px' }} />
+                <XMarkIcon style={{ width: '20px', height: '20px' }} />
             </button>
         </div>
     );

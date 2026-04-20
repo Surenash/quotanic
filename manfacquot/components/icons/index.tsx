@@ -157,5 +157,37 @@ export const EyeIcon = ({ style }: { style?: React.CSSProperties }) => (
     <LucideEye style={style} />
 );
 
+export const TrendingUpIcon = ({ style }: { style?: React.CSSProperties }) => (
+    <LucideTrendingUp style={style} />
+);
+
+export const AlertTriangleIcon = ({ style }: { style?: React.CSSProperties }) => (
+    <LucideAlertTriangle style={style} />
+);
+
+export const NutIcon = ({ style }: { style?: React.CSSProperties }) => (
+    <LucideNut style={style} />
+);
+
+export const DrillIcon = ({ style }: { style?: React.CSSProperties }) => (
+    <LucideDrill style={style} />
+);
+
+export const CircleDotIcon = ({ style }: { style?: React.CSSProperties }) => (
+    <LucideCircleDot style={style} />
+);
+
+export const CylinderIcon = ({ style }: { style?: React.CSSProperties }) => (
+    <LucideCylinder style={style} />
+);
+
+export const CogWheelIcon = ({ style }: { style?: React.CSSProperties }) => (
+    <LucideCog style={style} />
+);
+
+export const DollarSignIcon = ({ style }: { style?: React.CSSProperties }) => (
+    <LucideDollarSign style={style} />
+);
+
 // Default icon style for components that use iconStyle
 export const iconStyle = { width: '48px', height: '48px', color: 'currentColor', marginBottom: '16px' };

@@ -17,37 +17,13 @@ import {
     WrenchScrewdriverIcon, CubeIcon, GithubIcon, LinkedInIcon, TwitterIcon,
     SearchIcon, LocationMarkerIcon, StarIcon, BuildingOfficeIcon, XMarkIcon,
     ChartPieIcon, UserCircleIcon, CogIcon, ArchiveBoxIcon, DocumentTextIcon,
-    VideoCameraIcon, DownloadIcon, EyeIcon, iconStyle
+    VideoCameraIcon, DownloadIcon, EyeIcon, TrendingUpIcon, AlertTriangleIcon,
+    NutIcon, DrillIcon, CircleDotIcon, CylinderIcon, CogWheelIcon, DollarSignIcon,
+    iconStyle
 } from "./components/icons";
 
 export const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || '') + '/api';
 export const MEDIA_BASE_URL = 'https://api.quotanic.com';
-import { 
-    DollarSign as LucideDollarSign, 
-    PieChart as LucidePieChart, 
-    TrendingUp as LucideTrendingUp, 
-    Activity as LucideActivity, 
-    Wrench as LucideWrench, 
-    Settings as LucideSettings, 
-    FileText as LucideFileText, 
-    ShieldCheck as LucideShieldCheck, 
-    Globe as LucideGlobe, 
-    MapPin as LucideMapPin, 
-    Box as LucideBox, 
-    Sparkles as LucideSparkles, 
-    Zap as LucideZap,
-    X as LucideX,
-    AlertTriangle as LucideAlertTriangle,
-    File as LucideFile,
-    Archive as LucideArchive
-} from "lucide-react";
-import { 
-    Nut as LucideNut, 
-    Drill as LucideDrill, 
-    CircleDot as LucideCircleDot, 
-    Cylinder as LucideCylinder, 
-    Cog as LucideCog 
-} from "lucide-react";
 
 import {
     PRODUCTION_VOLUMES, CERTIFICATIONS, MACHINING_PROCESSES, SHEET_METAL_PROCESSES, CASTING_PROCESSES, FORGING_PROCESSES,
@@ -114,7 +90,7 @@ export const FileViewerModal = ({ design, onClose }) => {
                             Details
                         </button>
                         <div style={{ width: '1px', background: border_color, margin: '0 8px' }} />
-                        <button onClick={onClose} style={styles.modalCloseButton}><LucideX style={{ width: '24px', height: '24px' }} /></button>
+                        <button onClick={onClose} style={styles.modalCloseButton}><XMarkIcon style={{ width: '24px', height: '24px' }} /></button>
                     </div>
                 </div>
 
@@ -125,7 +101,7 @@ export const FileViewerModal = ({ design, onClose }) => {
                                 {isSupported && modelUrl ? (
                                     <ErrorBoundary fallback={(error) => (
                                         <div style={{ height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: 'var(--status-error)', padding: '24px', textAlign: 'center' }}>
-                                            <LucideAlertTriangle style={{ width: '48px', height: '48px', marginBottom: '16px' }} />
+                                            <AlertTriangleIcon style={{ width: '48px', height: '48px', marginBottom: '16px' }} />
                                             <p>Failed to load 3D preview.</p>
                                             <p style={{ fontSize: '12px', color: text_secondary, marginTop: '8px' }}>{error.message}</p>
                                             <CtaButton text="Download to View Externally" onClick={() => window.open(modelUrl, '_blank')} style={{ marginTop: '16px' }} />
@@ -186,7 +162,7 @@ export const FileViewerModal = ({ design, onClose }) => {
                                     </div>
                                 ) : (
                                     <div style={{ height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: text_secondary, gap: '16px' }}>
-                                        <LucideFile style={{ width: '64px', height: '64px', opacity: 0.5 }} />
+                                        <FileIcon />
                                         <p>3D Preview not available for .{fileExtension} files</p>
                                         <CtaButton text="Download to View" onClick={() => window.open(`${MEDIA_BASE_URL}/media/${design.s3_file_key}`, '_blank')} />
                                     </div>
@@ -358,7 +334,7 @@ export const Header = () => {
                     </nav>
                     <div style={{ ...styles.headerActions, gap: '20px' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                            <LucideDollarSign style={{ width: '16px', height: '16px', color: neon_cyan }} />
+                            <DollarSignIcon style={{ width: '16px', height: '16px', color: neon_cyan }} />
                             <select
                                 value={currency}
                                 onChange={(e) => setCurrency(e.target.value)}
@@ -712,7 +688,7 @@ export const DashboardOverview = ({ user, onSetActiveView }: { user: any, onSetA
                 >
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                         <p style={styles.dashboardMetricLabel}>Revenue (This Month)</p>
-                        <LucideTrendingUp size={16} color={neon_magenta} />
+                        <TrendingUpIcon style={{ width: '16px', height: '16px' }} color={neon_magenta} />
                     </div>
                     <h3 style={{ ...styles.dashboardMetricValue, color: neon_magenta, textShadow: `0 0 10px ${neon_magenta}` }}>
                         {formatPrice(stats?.monthly_revenue)}
@@ -779,7 +755,7 @@ export const DashboardOverview = ({ user, onSetActiveView }: { user: any, onSetA
                 <div className="dashboard-card-hover" style={styles.dashboardCard}>
                     <div style={styles.dashboardSectionHeader}>
                         <span>Revenue Trend (6mo)</span>
-                        <LucideTrendingUp size={16} color={neon_magenta} />
+                        <TrendingUpIcon style={{ width: '16px', height: '16px' }} color={neon_magenta} />
                     </div>
                     {stats?.revenue_trend && stats.revenue_trend.length > 0 ? (
                         <div style={styles.dashboardBarChartContainer}>
@@ -809,7 +785,7 @@ export const DashboardOverview = ({ user, onSetActiveView }: { user: any, onSetA
                 >
                     <div style={styles.dashboardSectionHeader}>
                         <span>Quote Pipeline</span>
-                        <LucidePieChart size={16} color={neon_cyan} />
+                        <ChartPieIcon style={{ width: '16px', height: '16px' }} color={neon_cyan} />
                     </div>
                     <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', marginTop: '16px' }}>
                         <div style={styles.dashboardHorizontalBarGroup}>
@@ -1402,7 +1378,7 @@ export const CostBreakdownContent = ({ breakdown, request, formatPrice }) => {
             <div style={{ background: 'linear-gradient(135deg, rgba(var(--neon-cyan-rgb), 0.1), rgba(var(--neon-magenta-rgb), 0.05))', borderRadius: '12px', border: '1px solid rgba(var(--neon-cyan-rgb), 0.3)', overflow: 'hidden', boxShadow: '0 4px 20px rgba(0,0,0,0.2)' }}>
                 <div style={{ padding: '16px 24px', background: 'rgba(var(--neon-cyan-rgb), 0.1)', borderBottom: '1px solid rgba(var(--neon-cyan-rgb), 0.2)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <h3 style={{ margin: 0, color: 'var(--neon-cyan)', fontSize: '18px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <LucideFileText size={20} />
+                        <DocumentTextIcon style={{ width: '20px', height: '20px' }} />
                         Comprehensive Quote Summary
                     </h3>
                     <span style={{ fontSize: '12px', color: 'var(--text-secondary)', background: 'rgba(0,0,0,0.3)', padding: '4px 8px', borderRadius: '4px' }}>Ref: {request.id || request.designId || 'N/A'}</span>
@@ -1431,19 +1407,19 @@ export const CostBreakdownContent = ({ breakdown, request, formatPrice }) => {
                 {/* Detailed Cost Breakdown Table */}
                 <div style={{ backgroundColor: 'var(--bg-panel)', borderRadius: '12px', border: '1px solid var(--border-color)', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
                     <div style={{ padding: '16px 20px', background: 'rgba(255,255,255,0.03)', borderBottom: '1px solid var(--border-color)', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <LucidePieChart size={18} color="var(--neon-magenta)" />
+                        <ChartPieIcon style={{ width: '18px', height: '18px' }} color="var(--neon-magenta)" />
                         <h4 style={{ margin: 0, fontSize: '14px', fontWeight: 'bold', color: 'var(--text-primary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Cost Components Analysis</h4>
                     </div>
                     <table style={{ width: '100%', borderCollapse: 'collapse', flexGrow: 1 }}>
                         <tbody>
                             {(() => {
                                 let components = [
-                                    { label: 'Material Cost (per unit)', value: material_cost_per_unit, extra: material_yield ? `Calculated Yield: ${material_yield}` : null, icon: <LucideBox size={14} /> },
-                                    { label: 'Labor & Machining', value: labor_cost_per_unit, extra: applied_hourly_rate ? `Applied Rate: ${applied_hourly_rate}` : null, icon: <WrenchScrewdriverIcon size={14} /> },
-                                    { label: 'Finishing & Treatments', value: finishing_cost_per_unit, icon: <LucideSparkles size={14} /> },
+                                    { label: 'Material Cost (per unit)', value: material_cost_per_unit, extra: material_yield ? `Calculated Yield: ${material_yield}` : null, icon: <CubeIcon style={{ width: '14px', height: '14px' }} /> },
+                                    { label: 'Labor & Machining', value: labor_cost_per_unit, extra: applied_hourly_rate ? `Applied Rate: ${applied_hourly_rate}` : null, icon: <WrenchScrewdriverIcon style={{ width: '14px', height: '14px' }} /> },
+                                    { label: 'Finishing & Treatments', value: finishing_cost_per_unit, icon: <SparklesIcon style={{ width: '14px', height: '14px' }} /> },
                                     { label: 'Setup & Programming', value: setup_fee, icon: <CodeBracketIcon style={{ width: '14px', height: '14px' }} /> },
-                                    { label: 'Packaging & Handling', value: packaging_fee, icon: <LucideArchive size={14} /> },
-                                    { label: 'Logistics & Shipping', value: logistics_estimate, icon: <LucideMapPin size={14} /> }
+                                    { label: 'Packaging & Handling', value: packaging_fee, icon: <ArchiveBoxIcon style={{ width: '14px', height: '14px' }} /> },
+                                    { label: 'Logistics & Shipping', value: logistics_estimate, icon: <LocationMarkerIcon style={{ width: '14px', height: '14px' }} /> }
                                 ];
 
                                 // FBM AI Engine output parser (comma-separated string includes Overhead, Margin, Machining, etc.)
@@ -1453,19 +1429,19 @@ export const CostBreakdownContent = ({ breakdown, request, formatPrice }) => {
                                     if (pairs.length > 3 && pairs.some(p => p.includes('Lab:') || p.includes('Mach:'))) {
                                         components = pairs.map(pair => {
                                             const [k, v] = pair.split(/[:\t\s]+/).reduce((acc, curr, i) => i === 0 ? [curr, ''] : [acc[0], (acc[1] + ' ' + curr).trim()], ['', '']);
-                                            let icon = <LucideFileText size={14} />;
+                                            let icon = <DocumentTextIcon style={{ width: '14px', height: '14px' }} />;
                                             let label = k;
                                             let extra = null;
 
                                             const keyLower = k.toLowerCase();
-                                            if (keyLower.includes('mat')) { icon = <LucideBox size={14} />; label = 'Material Cost'; extra = material_yield ? `Yield: ${material_yield}` : null; }
+                                            if (keyLower.includes('mat')) { icon = <CubeIcon style={{ width: '14px', height: '14px' }} />; label = 'Material Cost'; extra = material_yield ? `Yield: ${material_yield}` : null; }
                                             else if (keyLower.includes('lab')) { icon = <WrenchScrewdriverIcon size={14} />; label = 'Labor Cost'; extra = applied_hourly_rate ? `Rate: ${applied_hourly_rate}` : null; }
-                                            else if (keyLower.includes('mach')) { icon = <LucideZap size={14} />; label = 'Machining Cost'; }
+                                            else if (keyLower.includes('mach')) { icon = <LightningBoltIcon style={{ width: '14px', height: '14px' }} />; label = 'Machining Cost'; }
                                             else if (keyLower.includes('setup')) { icon = <CodeBracketIcon style={{ width: '14px', height: '14px' }} />; label = 'Setup & Programming'; }
-                                            else if (keyLower.includes('pkg') || keyLower.includes('log')) { icon = <LucideMapPin size={14} />; label = 'Packaging & Logistics'; }
-                                            else if (keyLower.includes('risk') || keyLower.includes('margin')) { icon = <LucideDollarSign size={14} />; label = 'Risk & Profit Margin'; }
+                                            else if (keyLower.includes('pkg') || keyLower.includes('log')) { icon = <LocationMarkerIcon style={{ width: '14px', height: '14px' }} />; label = 'Packaging & Logistics'; }
+                                            else if (keyLower.includes('risk') || keyLower.includes('margin')) { icon = <DollarSignIcon style={{ width: '14px', height: '14px' }} />; label = 'Risk & Profit Margin'; }
                                             else if (keyLower.includes('overhead')) { icon = <BuildingOfficeIcon size={14} />; label = 'Facility Overhead'; }
-                                            else if (keyLower.includes('urgency')) { icon = <LucideFileText size={14} />; label = 'Urgency Premium'; }
+                                            else if (keyLower.includes('urgency')) { icon = <DocumentTextIcon style={{ width: '14px', height: '14px' }} />; label = 'Urgency Premium'; }
 
                                             return { label, value: v, icon, extra };
                                         });
@@ -1499,7 +1475,7 @@ export const CostBreakdownContent = ({ breakdown, request, formatPrice }) => {
                                     <td style={{ padding: '16px 20px', fontSize: '18px', fontWeight: '600', textAlign: 'right', color: 'var(--text-primary)' }}>{formatPrice(unit_price)}</td>
                                 </tr>
                                 <tr style={{ borderBottom: '1px solid rgba(var(--neon-cyan-rgb), 0.2)' }}>
-                                    <td style={{ padding: '12px 20px 16px 20px', fontSize: '14px', color: 'var(--text-secondary)', fontWeight: 500, display: 'flex', alignItems: 'center', gap: '8px' }}><LucideX size={14} color="var(--neon-cyan)"/> Production Volume</td>
+                                    <td style={{ padding: '12px 20px 16px 20px', fontSize: '14px', color: 'var(--text-secondary)', fontWeight: 500, display: 'flex', alignItems: 'center', gap: '8px' }}><XMarkIcon style={{ width: '14px', height: '14px' }} color="var(--neon-cyan)" /> Production Volume</td>
                                     <td style={{ padding: '12px 20px 16px 20px', fontSize: '16px', fontWeight: '600', textAlign: 'right', color: 'var(--text-primary)' }}>{request.quantity} units</td>
                                 </tr>
                                 <tr style={{ background: 'rgba(var(--neon-cyan-rgb), 0.1)' }}>
@@ -1516,7 +1492,7 @@ export const CostBreakdownContent = ({ breakdown, request, formatPrice }) => {
                     <div style={{ backgroundColor: 'rgba(var(--neon-cyan-rgb), 0.05)', borderRadius: '12px', border: '1px solid rgba(var(--neon-cyan-rgb), 0.2)', padding: '20px' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px' }}>
                             <div style={{ background: 'rgba(var(--neon-cyan-rgb), 0.2)', padding: '8px', borderRadius: '8px' }}>
-                                <LucideZap size={20} color="var(--neon-cyan)" />
+                                <LightningBoltIcon style={{ width: '20px', height: '20px' }} color="var(--neon-cyan)" />
                             </div>
                             <h4 style={{ margin: 0, fontSize: '14px', fontWeight: 'bold', color: 'var(--neon-cyan)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>AI Process Intelligence</h4>
                         </div>
@@ -1545,7 +1521,7 @@ export const CostBreakdownContent = ({ breakdown, request, formatPrice }) => {
                     {summary_text && (
                         <div style={{ backgroundColor: 'var(--bg-panel)', borderRadius: '12px', border: '1px solid var(--border-color)', overflow: 'hidden', boxShadow: '0 2px 10px rgba(0,0,0,0.1)' }}>
                             <div style={{ padding: '16px 20px', background: 'rgba(255,255,255,0.03)', borderBottom: '1px solid var(--border-color)', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                <LucideFileText size={18} color="var(--text-secondary)" />
+                                <DocumentTextIcon style={{ width: '18px', height: '18px' }} color="var(--text-secondary)" />
                                 <h4 style={{ margin: 0, fontSize: '13px', fontWeight: 'bold', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Executive Summary & Technical Overview</h4>
                             </div>
                             <div style={{ padding: '20px' }}>
@@ -1649,7 +1625,7 @@ export const CostBreakdownContent = ({ breakdown, request, formatPrice }) => {
                                                     </div>
                                                     <div>
                                                         <div style={{ fontSize: '12px', color: 'var(--text-secondary)', textTransform: 'uppercase', fontWeight: 600, marginBottom: '4px' }}>Tooling / Resource</div>
-                                                        <div style={{ fontSize: '14px', color: '#CBD5E1', display: 'flex', alignItems: 'center', gap: '6px' }}><LucideNut size={14} color="var(--text-secondary)"/> {step.tool || 'Standard'}</div>
+                                                        <div style={{ fontSize: '14px', color: '#CBD5E1', display: 'flex', alignItems: 'center', gap: '6px' }}><NutIcon style={{ width: '14px', height: '14px' }} color="var(--text-secondary)" /> {step.tool || 'Standard'}</div>
                                                     </div>
                                                     <div style={{ textAlign: 'right' }}>
                                                         <div style={{ fontSize: '12px', color: 'var(--text-secondary)', textTransform: 'uppercase', fontWeight: 600, marginBottom: '4px' }}>Est. Time & Cost</div>
@@ -1673,7 +1649,7 @@ export const CostBreakdownContent = ({ breakdown, request, formatPrice }) => {
             {feature_sequences && (
                 <div style={{ backgroundColor: 'var(--bg-panel)', borderRadius: '12px', border: '1px solid var(--border-color)', overflow: 'hidden' }}>
                     <div style={{ padding: '16px 20px', background: 'rgba(255,255,255,0.03)', borderBottom: '1px solid var(--border-color)', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <LucideCircleDot size={18} color="var(--neon-magenta)" />
+                        <CircleDotIcon style={{ width: '18px', height: '18px' }} color="var(--neon-magenta)" />
                         <h4 style={{ margin: 0, fontSize: '14px', fontWeight: 'bold', color: 'var(--text-primary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Feature-Specific Manufacturing Sequences</h4>
                     </div>
                     <div style={{ padding: '20px', display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '16px' }}>
@@ -1682,7 +1658,7 @@ export const CostBreakdownContent = ({ breakdown, request, formatPrice }) => {
                                 const sequences = typeof feature_sequences === 'string' ? JSON.parse(feature_sequences) : feature_sequences;
                                 return Object.entries(sequences).map(([feature, sequence], idx) => (
                                     <div key={idx} style={{ padding: '16px', background: 'rgba(var(--neon-magenta-rgb), 0.03)', borderRadius: '8px', borderLeft: '4px solid var(--neon-magenta)', borderTop: '1px solid rgba(255,255,255,0.05)', borderRight: '1px solid rgba(255,255,255,0.05)', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-                                        <p style={{ fontSize: '14px', fontWeight: '700', color: 'var(--text-primary)', margin: '0 0 8px 0', display: 'flex', alignItems: 'center', gap: '6px' }}><LucideCylinder size={14} color="var(--neon-magenta)"/> {feature}</p>
+                                        <p style={{ fontSize: '14px', fontWeight: '700', color: 'var(--text-primary)', margin: '0 0 8px 0', display: 'flex', alignItems: 'center', gap: '6px' }}><CylinderIcon style={{ width: '14px', height: '14px' }} color="var(--neon-magenta)" /> {feature}</p>
                                         <p style={{ fontSize: '13px', color: 'var(--text-secondary)', margin: 0, lineHeight: '1.5' }}>{sequence as string}</p>
                                     </div>
                                 ));
@@ -1698,7 +1674,7 @@ export const CostBreakdownContent = ({ breakdown, request, formatPrice }) => {
             {(terms_validity || terms_payment) && (
                 <div style={{ display: 'flex', gap: '24px', padding: '16px 24px', background: 'rgba(0,0,0,0.3)', borderRadius: '12px', border: '1px dashed rgba(255,255,255,0.2)' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                        <LucideShieldCheck size={20} color="var(--text-secondary)" />
+                        <ShieldCheckIcon style={{ width: '20px', height: '20px' }} color="var(--text-secondary)" />
                         <div>
                             <div style={{ fontSize: '11px', color: 'var(--text-secondary)', textTransform: 'uppercase', fontWeight: 600 }}>Quote Validity</div>
                             <div style={{ fontSize: '14px', color: 'var(--text-primary)', fontWeight: 500 }}>{terms_validity || '30 Days'}</div>
@@ -1706,7 +1682,7 @@ export const CostBreakdownContent = ({ breakdown, request, formatPrice }) => {
                     </div>
                     <div style={{ width: '1px', background: 'rgba(255,255,255,0.1)' }}></div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                        <LucideDollarSign size={20} color="var(--text-secondary)" />
+                        <DollarSignIcon style={{ width: '20px', height: '20px' }} color="var(--text-secondary)" />
                         <div>
                             <div style={{ fontSize: '11px', color: 'var(--text-secondary)', textTransform: 'uppercase', fontWeight: 600 }}>Payment Terms</div>
                             <div style={{ fontSize: '14px', color: 'var(--text-primary)', fontWeight: 500 }}>{terms_payment || 'Net 30'}</div>
@@ -1776,14 +1752,11 @@ export const DesignThumbnail = ({ modelUrl, designId, designName }: { modelUrl: 
             ([entry]) => {
                 if (entry.isIntersecting) {
                     setIsInView(true);
-                    // Once in view, we can stop observing if we want it to stay loaded,
-                    // or keep observing to unload when it leaves view.
-                    // To be safe with WebGL context limits, let's keep observing and unload when not visible.
                 } else {
                     setIsInView(false);
                 }
             },
-            { threshold: 0.1, rootMargin: '100px' }
+            { threshold: 0.1, rootMargin: '0px' }
         );
 
         if (containerRef.current) {
@@ -1851,7 +1824,7 @@ export const DesignThumbnail = ({ modelUrl, designId, designName }: { modelUrl: 
                 background: 'rgba(255,255,255,0.05)', display: 'flex',
                 alignItems: 'center', justifyContent: 'center', border: `1px solid ${border_color}`
             }} title={`No 3D preview for ${designName}`}>
-                <LucideBox size={24} color="var(--text-secondary)" />
+                <CubeIcon style={{ width: '24px', height: '24px' }} color="var(--text-secondary)" />
             </div>
         );
     }
@@ -1871,7 +1844,7 @@ export const DesignThumbnail = ({ modelUrl, designId, designName }: { modelUrl: 
                 <ErrorBoundary
                     fallback={(error) => {
                         console.error(`[DesignThumbnail] 💥 Error rendering ${designName}:`, error);
-                        return <div style={{width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center'}}><LucideBox size={24} color="red" /></div>;
+                        return <div style={{width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center'}}><CubeIcon style={{ width: '24px', height: '24px' }} color="red" /></div>;
                     }}
                 >
                     <Viewer
@@ -1880,6 +1853,7 @@ export const DesignThumbnail = ({ modelUrl, designId, designName }: { modelUrl: 
                         view={ViewPreset.ISO}
                         isViewLocked={true}
                         hideToolbar={true}
+                        lowQuality={true}
                         design={{ design_name: designName } as any}
                         onUserInteraction={() => {}}
                     />
@@ -2418,7 +2392,7 @@ export const ActivityDetailModal = ({ item, onClose, onViewFiles, formatPrice, o
                     <h3 style={styles.modalTitle}>
                         {item.type === 'quote' ? 'Quote Request Details' : 'Order Update Details'}
                     </h3>
-                    <button onClick={onClose} style={styles.modalCloseButton}><LucideX size={24} /></button>
+                    <button onClick={onClose} style={styles.modalCloseButton}><XMarkIcon style={{ width: '24px', height: '24px' }} /></button>
                 </div>
                 <div style={styles.modalBody}>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
@@ -2479,7 +2453,7 @@ export const RevenueDetailsModal = ({ stats, onClose, formatPrice }) => {
             <div style={{ ...styles.modalContent, maxWidth: '800px' }}>
                 <div style={styles.modalHeader}>
                     <h3 style={{ ...styles.modalTitle, color: neon_magenta }}>Revenue Analytics</h3>
-                    <button onClick={onClose} style={styles.modalCloseButton}><LucideX size={24} /></button>
+                    <button onClick={onClose} style={styles.modalCloseButton}><XMarkIcon style={{ width: '24px', height: '24px' }} /></button>
                 </div>
                 <div style={styles.modalBody}>
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '20px', marginBottom: '32px' }}>
@@ -2521,7 +2495,7 @@ export const PipelineDetailsModal = ({ data, stats, onClose }) => {
             <div style={{ ...styles.modalContent, maxWidth: '800px' }}>
                 <div style={styles.modalHeader}>
                     <h3 style={{ ...styles.modalTitle, color: neon_cyan }}>Quote Pipeline Analytics</h3>
-                    <button onClick={onClose} style={styles.modalCloseButton}><LucideX size={24} /></button>
+                    <button onClick={onClose} style={styles.modalCloseButton}><XMarkIcon style={{ width: '24px', height: '24px' }} /></button>
                 </div>
                 <div style={styles.modalBody}>
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px', marginBottom: '32px' }}>
@@ -3354,17 +3328,17 @@ export const CustomerOrdersPage = () => {
 const backgroundParts = [
     { id: 1, initialTop: '10%', initialLeft: '10%', initialRotate: { x: 20, y: -30, z: 45 }, size: 250, depth: -300, icon: WrenchScrewdriverIcon, color: neon_cyan, factors: { y: -0.4, x: 0.3, rotateX: 0.01, rotateY: 0.02, rotateZ: 0.05 } },
     { id: 2, initialTop: '40%', initialLeft: '80%', initialRotate: { x: 0, y: 0, z: 10 }, size: 200, depth: 200, icon: ManufactureIcon, color: neon_magenta, factors: { y: 0.2, x: -0.5, rotateX: -0.02, rotateY: -0.01, rotateZ: -0.08 } },
-    { id: 3, initialTop: '70%', initialLeft: '20%', initialRotate: { x: 45, y: 45, z: 0 }, size: 180, depth: -100, icon: LucideDollarSign, color: neon_orange, factors: { y: 0.6, x: 0.2, rotateX: 0.05, rotateY: 0.05, rotateZ: 0.1 } },
-    { id: 4, initialTop: '80%', initialLeft: '85%', initialRotate: { x: -20, y: 0, z: 0 }, size: 220, depth: 300, icon: LucideZap, color: neon_cyan, factors: { y: -0.2, x: 0.6, rotateX: 0.03, rotateY: -0.04, rotateZ: -0.03 } },
-    { id: 5, initialTop: '20%', initialLeft: '60%', initialRotate: { x: 0, y: 60, z: -30 }, size: 150, depth: 50, icon: LucideShieldCheck, color: neon_magenta, factors: { y: 0.5, x: -0.3, rotateX: -0.01, rotateY: -0.05, rotateZ: 0.15 } },
-    { id: 6, initialTop: '60%', initialLeft: '50%', initialRotate: { x: -60, y: 0, z: 120 }, size: 160, depth: -250, icon: LucideFileText, color: neon_cyan, factors: { y: -0.6, x: -0.4, rotateX: 0.1, rotateY: -0.1, rotateZ: 0.2 } },
+    { id: 3, initialTop: '70%', initialLeft: '20%', initialRotate: { x: 45, y: 45, z: 0 }, size: 180, depth: -100, icon: DollarSignIcon, color: neon_orange, factors: { y: 0.6, x: 0.2, rotateX: 0.05, rotateY: 0.05, rotateZ: 0.1 } },
+    { id: 4, initialTop: '80%', initialLeft: '85%', initialRotate: { x: -20, y: 0, z: 0 }, size: 220, depth: 300, icon: LightningBoltIcon, color: neon_cyan, factors: { y: -0.2, x: 0.6, rotateX: 0.03, rotateY: -0.04, rotateZ: -0.03 } },
+    { id: 5, initialTop: '20%', initialLeft: '60%', initialRotate: { x: 0, y: 60, z: -30 }, size: 150, depth: 50, icon: ShieldCheckIcon, color: neon_magenta, factors: { y: 0.5, x: -0.3, rotateX: -0.01, rotateY: -0.05, rotateZ: 0.15 } },
+    { id: 6, initialTop: '60%', initialLeft: '50%', initialRotate: { x: -60, y: 0, z: 120 }, size: 160, depth: -250, icon: DocumentTextIcon, color: neon_cyan, factors: { y: -0.6, x: -0.4, rotateX: 0.1, rotateY: -0.1, rotateZ: 0.2 } },
     { id: 10, initialTop: '50%', initialLeft: '15%', initialRotate: { x: 0, y: 0, z: 90 }, size: 190, depth: 150, icon: BuildingOfficeIcon, color: neon_cyan, factors: { y: -0.1, x: 0.5, rotateX: 0.02, rotateY: -0.06, rotateZ: -0.02 } },
-    { id: 14, initialTop: '65%', initialLeft: '95%', initialRotate: { x: 90, y: 0, z: 0 }, size: 100, depth: 80, icon: LucideNut, color: neon_magenta, factors: { y: -0.2, x: -0.3, rotateX: 0.1, rotateY: 0.0, rotateZ: 0.05 } },
-    { id: 15, initialTop: '45%', initialLeft: '5%', initialRotate: { x: 0, y: 45, z: 45 }, size: 120, depth: -120, icon: LucideDrill, color: neon_orange, factors: { y: 0.5, x: 0.4, rotateX: -0.05, rotateY: 0.08, rotateZ: 0.02 } },
-    { id: 16, initialTop: '95%', initialLeft: '30%', initialRotate: { x: 0, y: 90, z: 0 }, size: 150, depth: 100, icon: LucideCylinder, color: neon_cyan, factors: { y: -0.4, x: -0.1, rotateX: 0.02, rotateY: 0.1, rotateZ: 0.01 } },
+    { id: 14, initialTop: '65%', initialLeft: '95%', initialRotate: { x: 90, y: 0, z: 0 }, size: 100, depth: 80, icon: NutIcon, color: neon_magenta, factors: { y: -0.2, x: -0.3, rotateX: 0.1, rotateY: 0.0, rotateZ: 0.05 } },
+    { id: 15, initialTop: '45%', initialLeft: '5%', initialRotate: { x: 0, y: 45, z: 45 }, size: 120, depth: -120, icon: DrillIcon, color: neon_orange, factors: { y: 0.5, x: 0.4, rotateX: -0.05, rotateY: 0.08, rotateZ: 0.02 } },
+    { id: 16, initialTop: '95%', initialLeft: '30%', initialRotate: { x: 0, y: 90, z: 0 }, size: 150, depth: 100, icon: CylinderIcon, color: neon_cyan, factors: { y: -0.4, x: -0.1, rotateX: 0.02, rotateY: 0.1, rotateZ: 0.01 } },
     // Adding 3 more items (filling gaps)
     { id: 17, initialTop: '15%', initialLeft: '40%', initialRotate: { x: 30, y: 30, z: 0 }, size: 140, depth: 20, icon: ManufactureIcon, color: neon_magenta, factors: { y: 0.3, x: 0.2, rotateX: 0.04, rotateY: -0.02, rotateZ: 0.1 } },
-    { id: 18, initialTop: '85%', initialLeft: '55%', initialRotate: { x: -15, y: -15, z: 15 }, size: 110, depth: -80, icon: LucideCircleDot, color: neon_orange, factors: { y: -0.3, x: -0.2, rotateX: -0.03, rotateY: 0.05, rotateZ: -0.04 } },
+    { id: 18, initialTop: '85%', initialLeft: '55%', initialRotate: { x: -15, y: -15, z: 15 }, size: 110, depth: -80, icon: CircleDotIcon, color: neon_orange, factors: { y: -0.3, x: -0.2, rotateX: -0.03, rotateY: 0.05, rotateZ: -0.04 } },
     { id: 19, initialTop: '10%', initialLeft: '85%', initialRotate: { x: 0, y: 45, z: -45 }, size: 130, depth: 120, icon: WrenchScrewdriverIcon, color: neon_cyan, factors: { y: 0.1, x: -0.4, rotateX: 0.02, rotateY: -0.06, rotateZ: 0.03 } },
 ];
 
@@ -3517,7 +3491,7 @@ export const CurrencyRatesWarning = () => {
             fontWeight: 500,
             animation: 'slideDown 0.3s ease-out'
         }}>
-            <LucideAlertTriangle size={18} />
+            <AlertTriangleIcon style={{ width: '18px', height: '18px' }} />
             <p style={{ margin: 0 }}>{ratesError}</p>
         </div>
     );
