@@ -88,7 +88,7 @@ export const AppRoutes = () => {
                          <div style={{ padding: '64px 24px', textAlign: 'center' }}>Loading dashboard...</div>}
                     </ProtectedRoute>} />
 
-                    <Route path="/upload" element={<UploadPage isAuthenticated={isAuthenticated} user={user} />} />
+                    <Route path="/upload" element={<UploadPage />} />
                     <Route path="/view-quotes/:designId" element={<DesignQuotationsPage />} />
                 </Route>
             </Routes>

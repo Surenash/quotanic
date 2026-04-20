@@ -1,11 +1,14 @@
 import { test, expect } from '@playwright/test';
 
 test('capture browser errors', async ({ page }) => {
-  page.on('pageerror', error => console.error('Browser Error:', error));
+  const errors = [];
+  page.on('pageerror', error => errors.push(error.message));
 
   await page.goto('http://localhost:3000/login');
-  await page.waitForTimeout(1000);
+  await page.waitForLoadState('networkidle');
 
   await page.goto('http://localhost:3000/how-it-works');
-  await page.waitForTimeout(1000);
+  await page.waitForLoadState('networkidle');
+
+  expect(errors).toEqual([]);
 });

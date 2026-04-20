@@ -116,7 +116,7 @@ export const ManufacturerDirectoryPage = ({ navigate }) => {
                         <p style={{ color: 'red' }}>{error}</p>
                     ) : filteredManufacturers.length > 0 ? (
                         <div style={styles.mfgGrid}>
-                            {filteredManufacturers.map(mfg => <ManufacturerCard key={mfg.id} manufacturer={mfg} navigate={navigate} />)}
+                            {filteredManufacturers.map(mfg => <Components.ManufacturerCard key={mfg.id} manufacturer={mfg} />)}
                         </div>
                     ) : (
                         <div style={{ textAlign: 'center', padding: '64px', border: '2px dashed var(--border-color)', borderRadius: '8px' }}>
