@@ -14,6 +14,7 @@ interface ViewerProps {
   design?: any; // To get the original file key for download
   hideToolbar?: boolean;
   hideSidebar?: boolean;
+  lowQuality?: boolean;
   children?: React.ReactNode;
 }
 
@@ -29,6 +30,7 @@ const Viewer: React.FC<ViewerProps> = ({
   design, 
   hideToolbar = false,
   hideSidebar = false,
+  lowQuality = false,
   children 
 }) => {
   // --- STATE ---
@@ -284,8 +286,13 @@ const Viewer: React.FC<ViewerProps> = ({
           <Suspense fallback={<Loader />}>
             <Canvas
               camera={{ fov: 50 }}
-              shadows
-              gl={{ preserveDrawingBuffer: true, antialias: true }}
+              shadows={!lowQuality}
+              gl={{ 
+                  preserveDrawingBuffer: !lowQuality, 
+                  antialias: !lowQuality,
+                  powerPreference: lowQuality ? 'low-power' : 'high-performance'
+              }}
+              dpr={lowQuality ? 1 : [1, 2]}
             >
               <Scene 
                 modelUrl={modelUrl} 
