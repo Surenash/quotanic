@@ -32,15 +32,30 @@ import {
 
 import * as Components from '../../components';
 
-export const LoginPage = ({ onLogin, navigate, role }) => {
-    const [email, setEmail] = useState(''); const [password, setPassword] = useState(''); const [error, setError] = useState(''); const [loading, setLoading] = useState(false);
+export const LoginPage = ({ role }: { role: string }) => {
+    const { login } = useAuth();
+    const navigate = useNavigate();
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
+    const [error, setError] = useState('');
+    const [loading, setLoading] = useState(false);
+    
     const isCustomer = role === 'customer';
     const title = isCustomer ? "Customer Sign In" : "Manufacturer Sign In";
     const subtitle = isCustomer ? "Access your account to manage your designs and orders." : "Access your dashboard to manage quotes and production.";
     const signupText = isCustomer ? "Don't have an account? Sign Up" : "Want to join our network? Apply here";
+
     const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault(); setLoading(true); setError('');
-        try { await onLogin({ email, password }, role); } catch (err) { setError(err.message); setLoading(false); }
+        e.preventDefault();
+        setLoading(true);
+        setError('');
+        try {
+            await login({ email, password }, role);
+            navigate('/dashboard');
+        } catch (err: any) {
+            setError(err.message || 'Login failed');
+            setLoading(false);
+        }
     };
     return (<div style={styles.loginPage}><div style={styles.loginContainer}><h2 style={styles.loginTitle}>{title}</h2><p style={styles.loginSubtitle}>{subtitle}</p><form onSubmit={handleSubmit} style={styles.loginForm}>{error && <p style={styles.loginError}>{error}</p>}<div style={styles.formGroup}><label htmlFor="email" style={styles.label}>Email Address</label><input type="email" id="email" value={email} onChange={(e) => setEmail(e.target.value)} style={styles.input} required autoComplete="email" /></div><div style={styles.formGroup}><label htmlFor="password" style={styles.label}>Password</label><input type="password" id="password" value={password} onChange={(e) => setPassword(e.target.value)} style={styles.input} required autoComplete="current-password" /></div><CtaButton text={loading ? "Signing In..." : "Sign In"} primary type="submit" disabled={loading} /></form><div style={styles.loginLinks}><a href="#" style={{ ...styles.loginLink }} onClick={(e) => { e.preventDefault(); }}>Forgot password?</a><a href="#" style={styles.loginLink} onClick={(e) => { e.preventDefault(); navigate('/signup'); }}>{signupText}</a></div></div></div>);
 };

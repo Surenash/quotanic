@@ -324,8 +324,8 @@ export const Header = () => {
                         </span>
                     </a>
                     <nav style={styles.nav} role="navigation" aria-label="Main Navigation">
-                        {[{ id: 'how-it-works-detailed', text: 'How It Works' }, { id: 'directory', text: 'Manufacturer Directory' }].map(page => (
-                            <a key={page.id} href="#" style={{ ...styles.navLink, ...(hoveredLink === page.id && styles.navLinkHover) }} onClick={(e) => { e.preventDefault(); navigate(page.id); }} onMouseEnter={() => setHoveredLink(page.id)} onMouseLeave={() => setHoveredLink('')}>
+                        {[{ id: 'how-it-works', text: 'How It Works' }, { id: 'directory', text: 'Manufacturer Directory' }].map(page => (
+                            <a key={page.id} href="#" style={{ ...styles.navLink, ...(hoveredLink === page.id && styles.navLinkHover) }} onClick={(e) => { e.preventDefault(); navigate('/' + page.id); }} onMouseEnter={() => setHoveredLink(page.id)} onMouseLeave={() => setHoveredLink('')}>
                                 {page.text}
                             </a>
                         ))}
