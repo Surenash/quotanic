@@ -63,20 +63,24 @@ export const ManufacturerProfilePage = () => {
         fetchManufacturer();
     }, [manufacturerId]);
 
-    const getCapabilitiesByGroup = () => {
-        if (!manufacturer?.capabilities) return [];
-        return ALL_CAPABILITIES_GROUPS.map(group => ({
-            title: group.title,
-            processes: group.processes.filter(p => manufacturer.capabilities.includes(p))
-        })).filter(g => g.processes.length > 0);
-    };
-
     if (loading) return <div style={{ ...styles.container, padding: '64px 24px', textAlign: 'center' }}>Loading profile...</div>;
     if (error) return <div style={{ ...styles.container, padding: '64px 24px', textAlign: 'center', color: 'red' }}>{error}</div>;
     if (!manufacturer) return <div style={{ ...styles.container, padding: '64px 24px', textAlign: 'center' }}>Manufacturer profile could not be loaded.</div>;
 
+    // Normalize capabilities and certifications to empty arrays if missing
+    const capabilities = manufacturer.capabilities || [];
+    const certifications = manufacturer.certifications || [];
+
+    const getCapabilitiesByGroup = () => {
+        if (!capabilities.length) return [];
+        return ALL_CAPABILITIES_GROUPS.map(group => ({
+            title: group.title,
+            processes: group.processes.filter(p => capabilities.includes(p))
+        })).filter(g => g.processes.length > 0);
+    };
+
     const capabilityGroups = getCapabilitiesByGroup();
-    const materials = manufacturer.capabilities.filter(c => [...MATERIALS_METALS, ...MATERIALS_PLASTICS, ...MATERIALS_COMPOSITES, ...MATERIALS_OTHERS].includes(c));
+    const materials = capabilities.filter(c => [...MATERIALS_METALS, ...MATERIALS_PLASTICS, ...MATERIALS_COMPOSITES, ...MATERIALS_OTHERS].includes(c));
 
     const profileHeaderStyle: React.CSSProperties = {
         ...styles.profileHeader,
@@ -136,18 +140,24 @@ export const ManufacturerProfilePage = () => {
                         <section style={styles.profileSection}>
                             <h2 style={styles.profileSectionTitle}>Customer Reviews</h2>
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                                {(manufacturer.reviews || []).map(review => (
-                                    <div key={review.id} style={{ border: `1px solid var(--border-color)`, backgroundColor: 'rgba(var(--bg-deep-space-rgb), 0.5)', borderRadius: '8px', padding: '16px' }}>
-                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                                            <p style={{ fontWeight: 600, color: 'var(--text-primary)', margin: 0 }}>{review.author}</p>
-                                            <div style={{ display: 'flex', gap: '2px', color: '#FFD700' }}>
-                                                {[...Array(review.rating)].map((_, i) => <StarIcon key={i} style={{ width: '16px', height: '16px', filter: 'drop-shadow(0 0 2px #FFD700)' }} />)}
-                                                {[...Array(5 - review.rating)].map((_, i) => <StarIcon key={i} style={{ width: '16px', height: '16px', color: 'rgba(175, 200, 255, 0.2)' }} />)}
+                                {(manufacturer.reviews || []).map(review => {
+                                    // Sanitize and clamp rating to 0-5 range
+                                    const rawRating = typeof review.rating === 'number' ? review.rating : parseFloat(review.rating);
+                                    const sanitizedRating = Math.max(0, Math.min(5, Math.round(isNaN(rawRating) ? 0 : rawRating)));
+
+                                    return (
+                                        <div key={review.id} style={{ border: `1px solid var(--border-color)`, backgroundColor: 'rgba(var(--bg-deep-space-rgb), 0.5)', borderRadius: '8px', padding: '16px' }}>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                                                <p style={{ fontWeight: 600, color: 'var(--text-primary)', margin: 0 }}>{review.author}</p>
+                                                <div style={{ display: 'flex', gap: '2px', color: '#FFD700' }}>
+                                                    {[...Array(sanitizedRating)].map((_, i) => <StarIcon key={`filled-${i}`} style={{ width: '16px', height: '16px', filter: 'drop-shadow(0 0 2px #FFD700)' }} />)}
+                                                    {[...Array(5 - sanitizedRating)].map((_, i) => <StarIcon key={`empty-${i}`} style={{ width: '16px', height: '16px', color: 'rgba(175, 200, 255, 0.2)' }} />)}
+                                                </div>
                                             </div>
+                                            <p style={{ ...styles.stepText, fontSize: '14px' }}>{review.comment}</p>
                                         </div>
-                                        <p style={{ ...styles.stepText, fontSize: '14px' }}>{review.comment}</p>
-                                    </div>
-                                ))}
+                                    );
+                                })}
                             </div>
                         </section>
                     </main>
@@ -169,8 +179,8 @@ export const ManufacturerProfilePage = () => {
                         <div style={styles.profileSection}>
                             <h2 style={styles.profileSectionTitle}>Certifications</h2>
                             <div style={styles.mfgCardTagContainer}>
-                                {manufacturer.certifications.length > 0 ?
-                                    manufacturer.certifications.map(c => <span key={c} style={{ ...styles.mfgCardTag, ...styles.mfgCardCertTag }}>{c}</span>)
+                                {certifications.length > 0 ?
+                                    certifications.map(c => <span key={c} style={{ ...styles.mfgCardTag, ...styles.mfgCardCertTag }}>{c}</span>)
                                     : <p style={styles.stepText}>No certifications listed.</p>}
                             </div>
                         </div>

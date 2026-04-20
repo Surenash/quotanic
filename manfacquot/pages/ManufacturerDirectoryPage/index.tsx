@@ -32,22 +32,43 @@ import {
 
 import * as Components from '../../components';
 
+interface Manufacturer {
+    id: string | number;
+    company_name: string;
+    capabilities: string[];
+    certifications: string[];
+    [key: string]: any;
+}
+
 export const ManufacturerDirectoryPage = ({ navigate }) => {
-    const [manufacturers, setManufacturers] = useState([]);
-    const [filteredManufacturers, setFilteredManufacturers] = useState([]);
+    const [manufacturers, setManufacturers] = useState<Manufacturer[]>([]);
+    const [filteredManufacturers, setFilteredManufacturers] = useState<Manufacturer[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedCapabilities, setSelectedCapabilities] = useState([]);
     const [selectedCertifications, setSelectedCertifications] = useState([]);
+    const [showAllCapabilities, setShowAllCapabilities] = useState(false);
+    const [showAllCertifications, setShowAllCertifications] = useState(false);
 
     useEffect(() => {
         const fetchManufacturers = async () => {
             try {
                 const data = await api.getManufacturers();
                 if (Array.isArray(data)) {
-                    setManufacturers(data);
-                    setFilteredManufacturers(data);
+                    // Validate and normalize each manufacturer record
+                    const validatedManufacturers: Manufacturer[] = data
+                        .filter((item: any) => item && typeof item === 'object')
+                        .map((item: any) => ({
+                            ...item,
+                            company_name: typeof item.company_name === 'string' ? item.company_name : '',
+                            capabilities: Array.isArray(item.capabilities) ? item.capabilities : [],
+                            certifications: Array.isArray(item.certifications) ? item.certifications : [],
+                        }))
+                        .filter((item: Manufacturer) => item.company_name); // Only keep items with valid company_name
+
+                    setManufacturers(validatedManufacturers);
+                    setFilteredManufacturers(validatedManufacturers);
                 } else {
                     setError('Received invalid data for manufacturers.');
                 }
@@ -63,13 +84,13 @@ export const ManufacturerDirectoryPage = ({ navigate }) => {
     useEffect(() => {
         let results = manufacturers;
         if (searchTerm) {
-            results = results.filter(m => m.company_name.toLowerCase().includes(searchTerm.toLowerCase()));
+            results = results.filter(m => m.company_name && m.company_name.toLowerCase().includes(searchTerm.toLowerCase()));
         }
         if (selectedCapabilities.length > 0) {
-            results = results.filter(m => selectedCapabilities.every(cap => m.capabilities.includes(cap)));
+            results = results.filter(m => m.capabilities && selectedCapabilities.every(cap => m.capabilities.includes(cap)));
         }
         if (selectedCertifications.length > 0) {
-            results = results.filter(m => selectedCertifications.every(cert => m.certifications.includes(cert)));
+            results = results.filter(m => m.certifications && selectedCertifications.every(cert => m.certifications.includes(cert)));
         }
         setFilteredManufacturers(results);
     }, [searchTerm, selectedCapabilities, selectedCertifications, manufacturers]);
@@ -80,6 +101,14 @@ export const ManufacturerDirectoryPage = ({ navigate }) => {
 
     const handleCertificationChange = (certification) => {
         setSelectedCertifications(prev => prev.includes(certification) ? prev.filter(c => c !== certification) : [...prev, certification]);
+    };
+
+    const toggleShowAllCapabilities = () => {
+        setShowAllCapabilities(prev => !prev);
+    };
+
+    const toggleShowAllCertifications = () => {
+        setShowAllCertifications(prev => !prev);
     };
 
     return (
@@ -102,11 +131,40 @@ export const ManufacturerDirectoryPage = ({ navigate }) => {
                         />
                     </div>
                     <div style={{ marginTop: '24px' }}>
-                        <CheckboxGroup title="Capabilities" options={ALL_CAPABILITIES_FLAT.slice(0, 9)} selected={selectedCapabilities} onChange={handleCapabilityChange} columns={1} />
-                        {ALL_CAPABILITIES_FLAT.length > 9 && <a href="#" style={{ ...styles.loginLink, fontSize: '14px' }}>Show all...</a>}
+                        <CheckboxGroup
+                            title="Capabilities"
+                            options={showAllCapabilities ? ALL_CAPABILITIES_FLAT : ALL_CAPABILITIES_FLAT.slice(0, 9)}
+                            selected={selectedCapabilities}
+                            onChange={handleCapabilityChange}
+                            columns={1}
+                        />
+                        {ALL_CAPABILITIES_FLAT.length > 9 && (
+                            <a
+                                href="#"
+                                onClick={(e) => { e.preventDefault(); toggleShowAllCapabilities(); }}
+                                style={{ ...styles.loginLink, fontSize: '14px' }}
+                            >
+                                {showAllCapabilities ? 'Show fewer' : 'Show all...'}
+                            </a>
+                        )}
                     </div>
                     <div style={{ marginTop: '24px' }}>
-                        <CheckboxGroup title="Certifications" options={CERTIFICATIONS} selected={selectedCertifications} onChange={handleCertificationChange} columns={1} />
+                        <CheckboxGroup
+                            title="Certifications"
+                            options={showAllCertifications ? CERTIFICATIONS : CERTIFICATIONS.slice(0, 9)}
+                            selected={selectedCertifications}
+                            onChange={handleCertificationChange}
+                            columns={1}
+                        />
+                        {CERTIFICATIONS.length > 9 && (
+                            <a
+                                href="#"
+                                onClick={(e) => { e.preventDefault(); toggleShowAllCertifications(); }}
+                                style={{ ...styles.loginLink, fontSize: '14px' }}
+                            >
+                                {showAllCertifications ? 'Show fewer' : 'Show all...'}
+                            </a>
+                        )}
                     </div>
                 </aside>
                 <main style={styles.directoryResults}>

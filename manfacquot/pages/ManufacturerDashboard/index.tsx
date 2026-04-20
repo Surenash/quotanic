@@ -65,15 +65,16 @@ export const ManufacturerDashboard = ({ user, onViewFiles, navigate }) => {
                         const Icon = item.icon;
                         const isActive = activeView === item.id;
                         return (
-                            <a
+                            <button
                                 key={item.id}
-                                href="#"
-                                onClick={(e) => { e.preventDefault(); setActiveView(item.id); }}
+                                type="button"
+                                onClick={() => setActiveView(item.id)}
                                 style={{ ...styles.dashboardNavLink, ...(isActive && styles.dashboardNavLinkActive) }}
+                                aria-pressed={activeView === item.id}
                             >
                                 <Icon style={{ width: '20px', height: '20px', marginRight: '12px' }} />
                                 {item.label}
-                            </a>
+                            </button>
                         );
                     })}
                 </nav>
