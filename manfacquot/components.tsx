@@ -1415,7 +1415,7 @@ export const CostBreakdownContent = ({ breakdown, request, formatPrice }) => {
                                     { label: 'Material Cost (per unit)', value: material_cost_per_unit, extra: material_yield ? `Calculated Yield: ${material_yield}` : null, icon: <LucideBox size={14} /> },
                                     { label: 'Labor & Machining', value: labor_cost_per_unit, extra: applied_hourly_rate ? `Applied Rate: ${applied_hourly_rate}` : null, icon: <WrenchScrewdriverIcon size={14} /> },
                                     { label: 'Finishing & Treatments', value: finishing_cost_per_unit, icon: <LucideSparkles size={14} /> },
-                                    { label: 'Setup & Programming', value: setup_fee, icon: <LucideCode2 size={14} /> },
+                                    { label: 'Setup & Programming', value: setup_fee, icon: <CodeBracketIcon style={{ width: '14px', height: '14px' }} /> },
                                     { label: 'Packaging & Handling', value: packaging_fee, icon: <LucideArchive size={14} /> },
                                     { label: 'Logistics & Shipping', value: logistics_estimate, icon: <LucideMapPin size={14} /> }
                                 ];
@@ -1435,7 +1435,7 @@ export const CostBreakdownContent = ({ breakdown, request, formatPrice }) => {
                                             if (keyLower.includes('mat')) { icon = <LucideBox size={14} />; label = 'Material Cost'; extra = material_yield ? `Yield: ${material_yield}` : null; }
                                             else if (keyLower.includes('lab')) { icon = <WrenchScrewdriverIcon size={14} />; label = 'Labor Cost'; extra = applied_hourly_rate ? `Rate: ${applied_hourly_rate}` : null; }
                                             else if (keyLower.includes('mach')) { icon = <LucideZap size={14} />; label = 'Machining Cost'; }
-                                            else if (keyLower.includes('setup')) { icon = <LucideCode2 size={14} />; label = 'Setup & Programming'; }
+                                            else if (keyLower.includes('setup')) { icon = <CodeBracketIcon style={{ width: '14px', height: '14px' }} />; label = 'Setup & Programming'; }
                                             else if (keyLower.includes('pkg') || keyLower.includes('log')) { icon = <LucideMapPin size={14} />; label = 'Packaging & Logistics'; }
                                             else if (keyLower.includes('risk') || keyLower.includes('margin')) { icon = <LucideDollarSign size={14} />; label = 'Risk & Profit Margin'; }
                                             else if (keyLower.includes('overhead')) { icon = <BuildingOfficeIcon size={14} />; label = 'Facility Overhead'; }
