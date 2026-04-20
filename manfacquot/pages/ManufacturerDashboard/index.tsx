@@ -66,11 +66,11 @@ export const ManufacturerDashboard = ({ user, onViewFiles, navigate }) => {
                         const isActive = activeView === item.id;
                         return (
                             <button
-                                key={item.id}
                                 type="button"
+                                key={item.id}
                                 onClick={() => setActiveView(item.id)}
-                                style={{ ...styles.dashboardNavLink, ...(isActive && styles.dashboardNavLinkActive) }}
-                                aria-pressed={activeView === item.id}
+                                style={{ ...styles.dashboardNavLink, ...(isActive && styles.dashboardNavLinkActive), border: 'none', background: 'none', cursor: 'pointer', textAlign: 'left', width: '100%', fontFamily: 'inherit', fontSize: 'inherit' }}
+                                aria-pressed={isActive}
                             >
                                 <Icon style={{ width: '20px', height: '20px', marginRight: '12px' }} />
                                 {item.label}

@@ -1,36 +1,10 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { useNavigate, useParams, useLocation, Link, Navigate, Outlet } from 'react-router-dom';
-import { useAuth } from '../../contexts/AuthContext';
-import { useFileViewer } from '../../contexts/FileViewerContext';
-import { api, setTokens, getTokens, clearTokens } from '../../utils/api';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
+import { api } from '../../utils/api';
 import { useCurrency } from '../../utils/currency';
-import { styles, bg_deep_space, text_primary, text_secondary, border_color, border_color_strong, neon_cyan, neon_magenta, neon_orange } from '../../types/theme';
-import CtaButton from '../../components/CtaButton';
-import Notification from '../../components/Notification';
-import CheckboxGroup from '../../components/CheckboxGroup';
-import ManufacturerSettingsPage from '../../components/ManufacturerSettings';
-import Viewer, { ErrorBoundary } from '../../components/Viewer';
-import { ViewPreset } from '../../types/types';
-import {
-    ArrowLeftIcon, UploadIcon, QuoteIcon, ManufactureIcon, FileIcon, ShieldCheckIcon,
-    GlobeAltIcon, ScaleIcon, LightningBoltIcon, SparklesIcon, CodeBracketIcon,
-    WrenchScrewdriverIcon, CubeIcon, GithubIcon, LinkedInIcon, TwitterIcon,
-    SearchIcon, LocationMarkerIcon, StarIcon, BuildingOfficeIcon, XMarkIcon,
-    ChartPieIcon, UserCircleIcon, CogIcon, ArchiveBoxIcon, DocumentTextIcon,
-    VideoCameraIcon, DownloadIcon, EyeIcon, iconStyle
-} from "../../components/icons";
-
-const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || '') + '/api';
-const MEDIA_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
-
-import {
-    PRODUCTION_VOLUMES, CERTIFICATIONS, MACHINING_PROCESSES, SHEET_METAL_PROCESSES, CASTING_PROCESSES, FORGING_PROCESSES,
-    INJECTION_MOLDING_PROCESSES, ADDITIVE_PROCESSES, WELDING_JOINING_PROCESSES, MATERIALS_METALS, MATERIALS_PLASTICS,
-    MATERIALS_COMPOSITES, MATERIALS_OTHERS, SURFACE_FINISHES, POST_PROCESSING_ASSEMBLY, FILE_FORMATS, INCOTERMS,
-    SPECIAL_CAPABILITIES, ORDER_STATUSES, ALL_CAPABILITIES_GROUPS, ALL_CAPABILITIES_FLAT
-} from '../../utils/constants';
-
+import { styles } from '../../types/theme';
 import * as Components from '../../components';
+import { ALL_CAPABILITIES_GROUPS } from '../../utils/constants';
 
 export const ManufacturerProfilePage = () => {
     const { id: manufacturerId } = useParams<{ id: string }>();
@@ -63,24 +37,20 @@ export const ManufacturerProfilePage = () => {
         fetchManufacturer();
     }, [manufacturerId]);
 
+    const getCapabilitiesByGroup = () => {
+        if (!manufacturer?.capabilities) return [];
+        return ALL_CAPABILITIES_GROUPS.map(group => ({
+            title: group.title,
+            processes: group.processes.filter(p => manufacturer.capabilities.includes(p))
+        })).filter(g => g.processes.length > 0);
+    };
+
     if (loading) return <div style={{ ...styles.container, padding: '64px 24px', textAlign: 'center' }}>Loading profile...</div>;
     if (error) return <div style={{ ...styles.container, padding: '64px 24px', textAlign: 'center', color: 'red' }}>{error}</div>;
     if (!manufacturer) return <div style={{ ...styles.container, padding: '64px 24px', textAlign: 'center' }}>Manufacturer profile could not be loaded.</div>;
 
-    // Normalize capabilities and certifications to empty arrays if missing
-    const capabilities = manufacturer.capabilities || [];
-    const certifications = manufacturer.certifications || [];
-
-    const getCapabilitiesByGroup = () => {
-        if (!capabilities.length) return [];
-        return ALL_CAPABILITIES_GROUPS.map(group => ({
-            title: group.title,
-            processes: group.processes.filter(p => capabilities.includes(p))
-        })).filter(g => g.processes.length > 0);
-    };
-
     const capabilityGroups = getCapabilitiesByGroup();
-    const materials = capabilities.filter(c => [...MATERIALS_METALS, ...MATERIALS_PLASTICS, ...MATERIALS_COMPOSITES, ...MATERIALS_OTHERS].includes(c));
+    const materials = manufacturer.capabilities.filter(c => [...MATERIALS_METALS, ...MATERIALS_PLASTICS, ...MATERIALS_COMPOSITES, ...MATERIALS_OTHERS].includes(c));
 
     const profileHeaderStyle: React.CSSProperties = {
         ...styles.profileHeader,
@@ -140,24 +110,18 @@ export const ManufacturerProfilePage = () => {
                         <section style={styles.profileSection}>
                             <h2 style={styles.profileSectionTitle}>Customer Reviews</h2>
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                                {(manufacturer.reviews || []).map(review => {
-                                    // Sanitize and clamp rating to 0-5 range
-                                    const rawRating = typeof review.rating === 'number' ? review.rating : parseFloat(review.rating);
-                                    const sanitizedRating = Math.max(0, Math.min(5, Math.round(isNaN(rawRating) ? 0 : rawRating)));
-
-                                    return (
-                                        <div key={review.id} style={{ border: `1px solid var(--border-color)`, backgroundColor: 'rgba(var(--bg-deep-space-rgb), 0.5)', borderRadius: '8px', padding: '16px' }}>
-                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                                                <p style={{ fontWeight: 600, color: 'var(--text-primary)', margin: 0 }}>{review.author}</p>
-                                                <div style={{ display: 'flex', gap: '2px', color: '#FFD700' }}>
-                                                    {[...Array(sanitizedRating)].map((_, i) => <StarIcon key={`filled-${i}`} style={{ width: '16px', height: '16px', filter: 'drop-shadow(0 0 2px #FFD700)' }} />)}
-                                                    {[...Array(5 - sanitizedRating)].map((_, i) => <StarIcon key={`empty-${i}`} style={{ width: '16px', height: '16px', color: 'rgba(175, 200, 255, 0.2)' }} />)}
-                                                </div>
+                                {(manufacturer.reviews || []).map(review => (
+                                    <div key={review.id} style={{ border: `1px solid var(--border-color)`, backgroundColor: 'rgba(var(--bg-deep-space-rgb), 0.5)', borderRadius: '8px', padding: '16px' }}>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                                            <p style={{ fontWeight: 600, color: 'var(--text-primary)', margin: 0 }}>{review.author}</p>
+                                            <div style={{ display: 'flex', gap: '2px', color: '#FFD700' }}>
+                                                {[...Array(review.rating)].map((_, i) => <StarIcon key={i} style={{ width: '16px', height: '16px', filter: 'drop-shadow(0 0 2px #FFD700)' }} />)}
+                                                {[...Array(5 - review.rating)].map((_, i) => <StarIcon key={i} style={{ width: '16px', height: '16px', color: 'rgba(175, 200, 255, 0.2)' }} />)}
                                             </div>
-                                            <p style={{ ...styles.stepText, fontSize: '14px' }}>{review.comment}</p>
                                         </div>
-                                    );
-                                })}
+                                        <p style={{ ...styles.stepText, fontSize: '14px' }}>{review.comment}</p>
+                                    </div>
+                                ))}
                             </div>
                         </section>
                     </main>

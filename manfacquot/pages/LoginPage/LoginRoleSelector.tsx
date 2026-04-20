@@ -1,5 +1,5 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { styles } from '../../types/theme';
 import CtaButton from '../../components/CtaButton';
 
@@ -17,10 +17,10 @@ export const LoginRoleSelector = ({ reasonMessage }: { reasonMessage?: string })
                 </div>
                 <div style={{ textAlign: 'center', marginTop: '24px' }}>
                     <p style={{ color: 'var(--text-secondary)', fontSize: '14px' }}>
-                        New to Quotanic? <a href="#" style={{ ...styles.loginLink, fontSize: '14px' }} onClick={(e) => { e.preventDefault(); navigate('/signup'); }}>Create an account</a>
+                        New to Quotanic? <Link to="/signup" style={{ ...styles.loginLink, fontSize: '14px' }}>Create an account</Link>
                     </p>
                     <p style={{ marginTop: '16px' }}>
-                        <a href="#" style={{ ...styles.loginLink, color: 'var(--text-secondary)', fontSize: '14px' }} onClick={(e) => { e.preventDefault(); navigate('/'); }}>← Back to Homepage</a>
+                        <Link to="/" style={{ ...styles.loginLink, color: 'var(--text-secondary)', fontSize: '14px' }}>← Back to Homepage</Link>
                     </p>
                 </div>
             </div>
