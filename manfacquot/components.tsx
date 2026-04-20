@@ -318,7 +318,7 @@ export const Header = () => {
             <div style={styles.container}>
                 <div style={styles.headerContent}>
                     <a href="#" style={{ ...styles.logo, display: 'flex', alignItems: 'center', gap: '12px', textDecoration: 'none' }} onClick={(e) => { e.preventDefault(); navigate('/'); }}>
-                        <img src="/media/quotanic-logo.png" alt="Quotanic Logo" style={{ height: '32px', width: 'auto' }} />
+                        <img src="/quotanic-logo.png" alt="Quotanic Logo" style={{ height: '32px', width: 'auto' }} />
                         <span style={{ fontSize: '24px', fontWeight: 'bold', color: text_primary, letterSpacing: '2px' }}>
                             QUOTA<span style={{ color: neon_cyan }}>NIC</span>
                         </span>
@@ -400,7 +400,7 @@ export const Hero = () => {
         <div style={{ ...styles.container, position: 'relative', zIndex: 1 }}>
             <div style={styles.heroContent}>
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: '40px' }} className="animate-slide-up">
-                    <img src="/media/quotanic-logo.png" alt="Quotanic Logo" style={{ height: '300px', width: 'auto', marginBottom: '1px', filter: `drop-shadow(0 0 20px ${neon_cyan})` }} className="animate-float" />
+                    <img src="/quotanic-logo.png" alt="Quotanic Logo" style={{ height: '300px', width: 'auto', marginBottom: '1px', filter: `drop-shadow(0 0 20px ${neon_cyan})` }} className="animate-float" />
                     <h1 style={{ fontSize: '76px', fontWeight: '900', margin: 0, background: `linear-gradient(to right, ${neon_cyan}, var(--logo-center, var(--text-primary)), ${neon_magenta})`, WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', textShadow: '0 0 30px rgba(var(--neon-cyan-rgb), 0.5)', letterSpacing: '-2px' }}>QUOTANIC</h1>
                 </div>
                 <h1 style={styles.heroTitle} className="animate-slide-up stagger-child-1">From Design to Production, Faster Than Ever.</h1>

@@ -67,3 +67,7 @@ cloudflared*
 !manfacquot/cors.json
 secrets/
 credentials/
+
+# Agent / Gemini context
+.agent/
+.gemini/
