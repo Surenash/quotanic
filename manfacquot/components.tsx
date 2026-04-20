@@ -1768,6 +1768,34 @@ export const CostBreakdownModal = ({ request, onClose }) => {
 export const DesignThumbnail = ({ modelUrl, designId, designName }: { modelUrl: string | null, designId: string, designName: string }) => {
     const [actualUrl, setActualUrl] = useState<string | null>(modelUrl);
     const [loading, setLoading] = useState(!modelUrl);
+    const [isInView, setIsInView] = useState(false);
+    const containerRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        const observer = new IntersectionObserver(
+            ([entry]) => {
+                if (entry.isIntersecting) {
+                    setIsInView(true);
+                    // Once in view, we can stop observing if we want it to stay loaded,
+                    // or keep observing to unload when it leaves view.
+                    // To be safe with WebGL context limits, let's keep observing and unload when not visible.
+                } else {
+                    setIsInView(false);
+                }
+            },
+            { threshold: 0.1, rootMargin: '100px' }
+        );
+
+        if (containerRef.current) {
+            observer.observe(containerRef.current);
+        }
+
+        return () => {
+            if (containerRef.current) {
+                observer.unobserve(containerRef.current);
+            }
+        };
+    }, []);
 
     useEffect(() => {
         if (modelUrl) {
@@ -1831,27 +1859,32 @@ export const DesignThumbnail = ({ modelUrl, designId, designName }: { modelUrl: 
     const fileExtension = actualUrl.split('.').pop()?.split('?')[0]?.toLowerCase() || 'stl';
 
     return (
-        <div style={{
-            width: '64px', height: '64px', borderRadius: '8px',
-            background: '#0a0a0f', overflow: 'hidden', position: 'relative',
-            border: `1px solid ${border_color}`, boxShadow: 'inset 0 0 10px rgba(0,0,0,0.5)'
-        }}>
-            <ErrorBoundary
-                fallback={(error) => {
-                    console.error(`[DesignThumbnail] 💥 Error rendering ${designName}:`, error);
-                    return <div style={{width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center'}}><LucideBox size={24} color="red" /></div>;
-                }}
-            >
-                <Viewer
-                    modelUrl={actualUrl}
-                    fileExtension={fileExtension as any}
-                    view={ViewPreset.ISO}
-                    isViewLocked={true}
-                    hideToolbar={true}
-                    design={{ design_name: designName } as any}
-                    onUserInteraction={() => {}}
-                />
-            </ErrorBoundary>
+        <div 
+            ref={containerRef}
+            style={{
+                width: '64px', height: '64px', borderRadius: '8px',
+                background: '#0a0a0f', overflow: 'hidden', position: 'relative',
+                border: `1px solid ${border_color}`, boxShadow: 'inset 0 0 10px rgba(0,0,0,0.5)'
+            }}
+        >
+            {isInView && (
+                <ErrorBoundary
+                    fallback={(error) => {
+                        console.error(`[DesignThumbnail] 💥 Error rendering ${designName}:`, error);
+                        return <div style={{width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center'}}><LucideBox size={24} color="red" /></div>;
+                    }}
+                >
+                    <Viewer
+                        modelUrl={actualUrl}
+                        fileExtension={fileExtension as any}
+                        view={ViewPreset.ISO}
+                        isViewLocked={true}
+                        hideToolbar={true}
+                        design={{ design_name: designName } as any}
+                        onUserInteraction={() => {}}
+                    />
+                </ErrorBoundary>
+            )}
         </div>
     );
 };
