@@ -68,7 +68,7 @@ export const ManufacturerSignupPage = ({ onLogin, navigate }: { onLogin: (creden
         Forging: 'forging',
         'Injection Molding': 'injectionMolding', // fixed the processes inner prop
         '3D Printing': 'threeDPrinting',
-        'Welding & Joining': 'weldingAndJoining',
+        'Welding & Joining': 'weldingJoining',
     };
 
     const getSelectedProcesses = (category: string): string[] => {

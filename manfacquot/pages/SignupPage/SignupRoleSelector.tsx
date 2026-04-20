@@ -1,5 +1,5 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { styles } from '../../types/theme';
 import CtaButton from '../../components/CtaButton';
 
@@ -16,7 +16,7 @@ export const SignupRoleSelector = () => {
                 </div>
                 <div style={{ textAlign: 'center', marginTop: '24px' }}>
                     <p style={{ color: 'var(--text-secondary)', fontSize: '14px' }}>
-                        Already have an account? <a href="#" style={{ ...styles.loginLink, fontSize: '14px' }} onClick={(e) => { e.preventDefault(); navigate('/login'); }}>Log In</a>
+                        Already have an account? <Link to="/login" style={{ ...styles.loginLink, fontSize: '14px' }}>Log In</Link>
                     </p>
                 </div>
             </div>
