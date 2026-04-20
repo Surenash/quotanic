@@ -33,7 +33,7 @@ import {
 import * as Components from '../../components';
 
 export const ManufacturerSignupPage = ({ onLogin, navigate }: { onLogin: (credentials: object, role: string) => Promise<void>, navigate: (page: string) => void }) => {
-    const [formData, setFormData] = useState({ companyName: '', email: '', password: '', password2: '', location: '', website: '', productionVolume: '', leadTimeRange: '', certifications: [], otherCertifications: '', qualityControlProcesses: '', materialTesting: '', moq: '', machining: [], sheetMetal: [], casting: [], forging: [], injectionMolding: { processes: [], cavityCount: '', moldClass: '' }, threeDPrinting: [], weldingJoining: [], supportedMaterials: [], generalTolerance: '', specificTolerances: '', gdtSupport: false, minSizeX: '', minSizeY: '', minSizeZ: '', maxSizeX: '', maxSizeY: '', maxSizeZ: '', maxWeightKg: '', thinWallCapabilityMm: '', surfaceFinishes: [], postProcessing: [], acceptedFileFormats: [], incoterms: [], specialCapabilities: [], });
+    const [formData, setFormData] = useState<ManufacturerSignupFormData>({ companyName: '', email: '', password: '', password2: '', location: '', website: '', productionVolume: '', leadTimeRange: '', certifications: [], otherCertifications: '', qualityControlProcesses: '', materialTesting: '', moq: '', machining: [], sheetMetal: [], casting: [], forging: [], injectionMolding: { processes: [], cavityCount: '', moldClass: '' }, threeDPrinting: [], weldingJoining: [], supportedMaterials: [], generalTolerance: '', specificTolerances: '', gdtSupport: false, minSizeX: '', minSizeY: '', minSizeZ: '', maxSizeX: '', maxSizeY: '', maxSizeZ: '', maxWeightKg: '', thinWallCapabilityMm: '', surfaceFinishes: [], postProcessing: [], acceptedFileFormats: [], incoterms: [], specialCapabilities: [], });
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
     const [fieldErrors, setFieldErrors] = useState<{ [key: string]: string }>({});
@@ -79,7 +79,7 @@ export const ManufacturerSignupPage = ({ onLogin, navigate }: { onLogin: (creden
         return (formData as Record<string, any>)[category] as string[] || [];
     };
 
-    const handleCheckboxGroupChange = (category, value) => {
+    const handleCheckboxGroupChange = (category: string, value: string) => {
         if (category === 'injectionMolding') {
             setFormData(prev => { const list = prev.injectionMolding.processes || []; const newList = list.includes(value) ? list.filter(item => item !== value) : [...list, value]; return { ...prev, injectionMolding: { ...prev.injectionMolding, processes: newList } }; });
         } else { setFormData(prev => { const list = (prev[category] as string[]) || []; const newList = list.includes(value) ? list.filter(item => item !== value) : [...list, value]; return { ...prev, [category]: newList }; }); }

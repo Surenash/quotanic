@@ -32,7 +32,7 @@ import {
 
 import * as Components from '../../components';
 
-export const ManufacturerDirectoryPage = ({ navigate }) => {
+export const ManufacturerDirectoryPage = () => {
     const [manufacturers, setManufacturers] = useState<Manufacturer[]>([]);
     const [filteredManufacturers, setFilteredManufacturers] = useState<Manufacturer[]>([]);
     const [loading, setLoading] = useState(true);
