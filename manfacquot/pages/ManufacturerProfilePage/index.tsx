@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { api } from '../../utils/api';
-import { useCurrency } from '../../utils/currency';
 import { styles } from '../../types/theme';
-import * as Components from '../../components';
-import { ALL_CAPABILITIES_GROUPS } from '../../utils/constants';
+import CtaButton from '../../components/CtaButton';
+import {
+    ArrowLeftIcon, LocationMarkerIcon, StarIcon, VideoCameraIcon
+} from "../../components/icons";
+import { ALL_CAPABILITIES_GROUPS, MATERIALS_METALS, MATERIALS_PLASTICS, MATERIALS_COMPOSITES, MATERIALS_OTHERS } from '../../utils/constants';
 
 export const ManufacturerProfilePage = () => {
     const { id: manufacturerId } = useParams<{ id: string }>();
