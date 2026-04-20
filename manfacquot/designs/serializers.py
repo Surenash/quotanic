@@ -50,34 +50,26 @@ class DesignSerializer(serializers.ModelSerializer):
     def get_view_url(self, obj):
         """
         Returns the URL for the 3D viewer.
-        Supports STL directly. For STEP/IGES, returns GLB if available, 
-        otherwise returns None to prevent frontend parsing errors.
+        Supports STL/OBJ directly. For STEP/IGES, returns the converted file if available.
         """
         file_key = obj.s3_file_key
         if not file_key:
             return None
             
         file_ext = os.path.splitext(file_key)[1].lower()
-        
         target_key = None
         
-        if file_ext == '.stl':
-            target_key = file_key
-        elif file_ext in ['.step', '.stp', '.iges', '.igs']:
-            if obj.geometric_data:
-                target_key = obj.geometric_data.get('view_file_key') or obj.geometric_data.get('glb_file_key')
+        # Priority 1: Converted file for ALL types (if available)
+        if obj.geometric_data:
+            target_key = obj.geometric_data.get('view_file_key') or obj.geometric_data.get('glb_file_key')
             
-            # Fallback: if no view file, try to use the original file IF it's a format the viewer might handle
-            # (though STEP usually needs conversion, this ensures we return SOMETHING for STL/OBJ)
-            if not target_key and file_ext in ['.stl', '.obj', '.glb', '.gltf']:
-                target_key = file_key
-        
+        # Priority 2: Original file if it's a browser-supported format (STL/OBJ)
+        if not target_key and file_ext in ['.stl', '.obj']:
+            target_key = file_key
+
+        # If it's a STEP/IGES and we don't have a conversion, we can't show it yet
         if not target_key:
-            # Absolute last resort for STL/OBJ files that might have been missed
-            if file_ext in ['.stl', '.obj']:
-                target_key = file_key
-            else:
-                return None
+            return None
 
         if settings.USE_LOCAL_STORAGE:
             return f"{settings.MEDIA_URL}{target_key}"

@@ -21,7 +21,7 @@ import {
 } from "./components/icons";
 
 export const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || '') + '/api';
-export const MEDIA_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
+export const MEDIA_BASE_URL = 'https://api.quotanic.com';
 import { 
     DollarSign as LucideDollarSign, 
     PieChart as LucidePieChart, 
@@ -65,7 +65,9 @@ export const FileViewerModal = ({ design, onClose }) => {
 
     const fileExtension = design.s3_file_key?.split('.').pop()?.toLowerCase() || 'stl';
     const isSupported = ['stl', 'obj', 'gltf', 'glb', 'step', 'stp', 'iges', 'igs'].includes(fileExtension);
-    const modelUrl = design.view_url?.startsWith('http') ? design.view_url : (design.view_url ? `${MEDIA_BASE_URL}${design.view_url}` : null);
+    const modelUrl = design.view_url?.startsWith('http') 
+        ? design.view_url 
+        : (design.view_url ? `${MEDIA_BASE_URL}${design.view_url}` : null);
 
     return (
         <div style={styles.modalBackdrop}>
@@ -1784,7 +1786,7 @@ export const DesignThumbnail = ({ modelUrl, designId, designName }: { modelUrl: 
                     const viewUrl = design.view_url || design.s3_file_key;
                     console.log(`[DesignThumbnail] Found viewUrl: ${viewUrl}`);
                     if (viewUrl) {
-                        const fullUrl = viewUrl.startsWith('http') ? viewUrl : `https://api.quotanic.com${viewUrl.startsWith('/') ? '' : '/media/'}${viewUrl}`;
+                        const fullUrl = viewUrl.startsWith('http') ? viewUrl : `${MEDIA_BASE_URL}${viewUrl.startsWith('/') ? '' : '/media/'}${viewUrl}`;
                         console.log(`[DesignThumbnail] Setting actualUrl to: ${fullUrl}`);
                         setActualUrl(fullUrl);
                     } else {
