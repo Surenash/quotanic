@@ -215,9 +215,13 @@ class DesignCreateSerializer(serializers.ModelSerializer):
         user = self.context['request'].user
         is_internal = validated_data.get('is_internal', False)
         
+        # Validation logic: 
+        # 1. Customers can create both external and internal designs.
+        # 2. Manufacturers can ONLY create internal designs.
         if user.role != UserRole.CUSTOMER and not is_internal:
-            raise serializers.ValidationError("Only customers can create external designs.")
-        if user.role == 'manufacturer' and not is_internal:
+            raise serializers.ValidationError("Only customers can create external designs. Use 'is_internal=True' for manufacturer uploads.")
+        
+        if user.role == UserRole.MANUFACTURER and not is_internal:
             raise serializers.ValidationError("Manufacturers can only upload internal designs.")
 
         design = Design.objects.create(

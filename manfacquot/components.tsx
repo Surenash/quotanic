@@ -2342,7 +2342,7 @@ export const InternalQuotationsPage = () => {
                     <h2 style={{...styles.dashboardPageTitle, marginBottom: '8px'}}>Internal Quotations</h2>
                     <p style={styles.dashboardPageSubtitle}>Assess parts and generate instant 14-point manufacturing quotes.</p>
                 </div>
-                <CtaButton text="Upload New Design" primary onClick={() => navigate('/upload')} />
+                <CtaButton text="Upload New Design" primary onClick={() => navigate('/upload-internal')} />
             </div>
 
             <div style={styles.tableContainer}>

@@ -89,6 +89,7 @@ export const AppRoutes = () => {
                     </ProtectedRoute>} />
 
                     <Route path="/upload" element={<UploadPage />} />
+                    <Route path="/upload-internal" element={<UploadPage isInternal={true} />} />
                     <Route path="/view-quotes/:designId" element={<DesignQuotationsPage />} />
                 </Route>
             </Routes>
