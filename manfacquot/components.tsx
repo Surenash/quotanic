@@ -32,10 +32,43 @@ import {
     SPECIAL_CAPABILITIES, ORDER_STATUSES, ALL_CAPABILITIES_GROUPS, ALL_CAPABILITIES_FLAT
 } from './utils/constants';
 
-export const FileViewerModal = ({ design, onClose }) => {
+export const FileViewerModal = ({ design: initialDesign, onClose }) => {
     const [view, setView] = useState(ViewPreset.ISO);
     const [isViewLocked, setIsViewLocked] = useState(true);
     const [activeTab, setActiveTab] = useState('viewer'); // 'viewer' or 'details'
+    const [design, setDesign] = useState<any>(typeof initialDesign === 'string' ? null : initialDesign);
+    const [loading, setLoading] = useState(typeof initialDesign === 'string');
+
+    useEffect(() => {
+        if (typeof initialDesign === 'string') {
+            setLoading(true);
+            api.getDesignById(initialDesign)
+                .then(res => {
+                    console.log("[FileViewerModal] Loaded design:", res);
+                    setDesign(res);
+                })
+                .catch(err => {
+                    console.error("[FileViewerModal] Error fetching design:", err);
+                })
+                .finally(() => {
+                    setLoading(false);
+                });
+        } else {
+            setDesign(initialDesign);
+            setLoading(false);
+        }
+    }, [initialDesign]);
+
+    if (loading) {
+        return (
+            <div style={styles.modalBackdrop}>
+                <div style={{ ...styles.modalContent, maxWidth: '400px', padding: '40px', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                    <div style={{ width: '40px', height: '40px', border: '3px solid rgba(10, 240, 240, 0.1)', borderTopColor: neon_cyan, borderRadius: '50%', animation: 'spin 1s linear infinite', marginBottom: '16px' }} />
+                    <p style={{ color: text_secondary }}>Loading Design Details...</p>
+                </div>
+            </div>
+        );
+    }
 
     if (!design) return null;
 
@@ -1744,31 +1777,7 @@ export const CostBreakdownModal = ({ request, onClose }) => {
 export const DesignThumbnail = ({ modelUrl, designId, designName }: { modelUrl: string | null, designId: string, designName: string }) => {
     const [actualUrl, setActualUrl] = useState<string | null>(modelUrl);
     const [loading, setLoading] = useState(!modelUrl);
-    const [isInView, setIsInView] = useState(false);
-    const containerRef = useRef<HTMLDivElement>(null);
-
-    useEffect(() => {
-        const observer = new IntersectionObserver(
-            ([entry]) => {
-                if (entry.isIntersecting) {
-                    setIsInView(true);
-                } else {
-                    setIsInView(false);
-                }
-            },
-            { threshold: 0.1, rootMargin: '0px' }
-        );
-
-        if (containerRef.current) {
-            observer.observe(containerRef.current);
-        }
-
-        return () => {
-            if (containerRef.current) {
-                observer.unobserve(containerRef.current);
-            }
-        };
-    }, []);
+    const [isHovered, setIsHovered] = useState(false);
 
     useEffect(() => {
         if (modelUrl) {
@@ -1782,16 +1791,11 @@ export const DesignThumbnail = ({ modelUrl, designId, designName }: { modelUrl: 
             try {
                 console.log(`[DesignThumbnail] Fetching details for ${designId}...`);
                 const design = await api.getDesignById(designId);
-                console.log(`[DesignThumbnail] API response for ${designId}:`, design);
                 if (isMounted && design) {
                     const viewUrl = design.view_url || design.s3_file_key;
-                    console.log(`[DesignThumbnail] Found viewUrl: ${viewUrl}`);
                     if (viewUrl) {
                         const fullUrl = viewUrl.startsWith('http') ? viewUrl : `${MEDIA_BASE_URL}${viewUrl.startsWith('/') ? '' : '/media/'}${viewUrl}`;
-                        console.log(`[DesignThumbnail] Setting actualUrl to: ${fullUrl}`);
                         setActualUrl(fullUrl);
-                    } else {
-                        console.warn(`[DesignThumbnail] Design ${designId} has no view_url or s3_file_key`);
                     }
                 }
             } catch (err) {
@@ -1833,14 +1837,19 @@ export const DesignThumbnail = ({ modelUrl, designId, designName }: { modelUrl: 
 
     return (
         <div 
-            ref={containerRef}
             style={{
                 width: '64px', height: '64px', borderRadius: '8px',
                 background: '#0a0a0f', overflow: 'hidden', position: 'relative',
-                border: `1px solid ${border_color}`, boxShadow: 'inset 0 0 10px rgba(0,0,0,0.5)'
+                border: `1px solid ${border_color}`, boxShadow: 'inset 0 0 10px rgba(0,0,0,0.5)',
+                cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center'
             }}
+            onMouseEnter={() => setIsHovered(true)}
+            onMouseLeave={() => setIsHovered(false)}
+            title="Hover to view 3D Model"
         >
-            {isInView && (
+            {!isHovered ? (
+                <CubeIcon style={{ width: '24px', height: '24px' }} color="var(--neon-cyan)" />
+            ) : (
                 <ErrorBoundary
                     fallback={(error) => {
                         console.error(`[DesignThumbnail] 💥 Error rendering ${designName}:`, error);
