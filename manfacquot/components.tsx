@@ -74,9 +74,13 @@ export const FileViewerModal = ({ design: initialDesign, onClose }) => {
 
     const fileExtension = design.s3_file_key?.split('.').pop()?.toLowerCase() || 'stl';
     const isSupported = ['stl', 'obj', 'gltf', 'glb', 'step', 'stp', 'iges', 'igs'].includes(fileExtension);
-    const modelUrl = design.view_url?.startsWith('http') 
-        ? design.view_url 
-        : (design.view_url ? `${MEDIA_BASE_URL}${design.view_url}` : null);
+    
+    // Improved model URL resolution with fallback
+    const viewUrl = design.view_url || (['stl', 'obj', 'glb', 'gltf'].includes(fileExtension) ? design.s3_file_key : null);
+    
+    const modelUrl = viewUrl?.startsWith('http') 
+        ? viewUrl 
+        : (viewUrl ? `${MEDIA_BASE_URL}${viewUrl.startsWith('/media/') ? '' : (viewUrl.startsWith('/') ? '' : '/media/')}${viewUrl}` : null);
 
     return (
         <div style={styles.modalBackdrop}>
@@ -1774,14 +1778,16 @@ export const CostBreakdownModal = ({ request, onClose }) => {
 };
 
 // --- 3D Part Thumbnail Component ---
-export const DesignThumbnail = ({ modelUrl, designId, designName }: { modelUrl: string | null, designId: string, designName: string }) => {
-    const [actualUrl, setActualUrl] = useState<string | null>(modelUrl);
-    const [loading, setLoading] = useState(!modelUrl);
+export const DesignThumbnail = ({ modelUrl, thumbnailUrl, designId, designName }: { modelUrl?: string | null, thumbnailUrl?: string | null, designId: string, designName: string }) => {
+    const [actualUrl, setActualUrl] = useState<string | null>(modelUrl || null);
+    const [actualThumbUrl, setActualThumbUrl] = useState<string | null>(thumbnailUrl || null);
+    const [loading, setLoading] = useState(!modelUrl && !thumbnailUrl);
     const [isHovered, setIsHovered] = useState(false);
 
     useEffect(() => {
-        if (modelUrl) {
+        if (modelUrl && thumbnailUrl) {
             setActualUrl(modelUrl);
+            setActualThumbUrl(thumbnailUrl);
             setLoading(false);
             return;
         }
@@ -1792,10 +1798,15 @@ export const DesignThumbnail = ({ modelUrl, designId, designName }: { modelUrl: 
                 console.log(`[DesignThumbnail] Fetching details for ${designId}...`);
                 const design = await api.getDesignById(designId);
                 if (isMounted && design) {
-                    const viewUrl = design.view_url || design.s3_file_key;
+                    const viewUrl = design.view_url || (['stl', 'obj', 'glb', 'gltf'].includes(design.s3_file_key?.split('.').pop()?.toLowerCase()) ? design.s3_file_key : null);
+                    
                     if (viewUrl) {
-                        const fullUrl = viewUrl.startsWith('http') ? viewUrl : `${MEDIA_BASE_URL}${viewUrl.startsWith('/') ? '' : '/media/'}${viewUrl}`;
+                        const fullUrl = viewUrl.startsWith('http') ? viewUrl : `${MEDIA_BASE_URL}${viewUrl.startsWith('/media/') ? '' : (viewUrl.startsWith('/') ? '' : '/media/')}${viewUrl}`;
                         setActualUrl(fullUrl);
+                    }
+                    
+                    if (design.thumbnail_url) {
+                        setActualThumbUrl(design.thumbnail_url.startsWith('http') ? design.thumbnail_url : `${MEDIA_BASE_URL}${design.thumbnail_url}`);
                     }
                 }
             } catch (err) {
@@ -1807,7 +1818,7 @@ export const DesignThumbnail = ({ modelUrl, designId, designName }: { modelUrl: 
         fetchUrl();
 
         return () => { isMounted = false; };
-    }, [modelUrl, designId]);
+    }, [modelUrl, thumbnailUrl, designId]);
 
     if (loading) {
         return (
@@ -1821,19 +1832,7 @@ export const DesignThumbnail = ({ modelUrl, designId, designName }: { modelUrl: 
         );
     }
 
-    if (!actualUrl) {
-        return (
-            <div style={{
-                width: '64px', height: '64px', borderRadius: '8px',
-                background: 'rgba(255,255,255,0.05)', display: 'flex',
-                alignItems: 'center', justifyContent: 'center', border: `1px solid ${border_color}`
-            }} title={`No 3D preview for ${designName}`}>
-                <CubeIcon style={{ width: '24px', height: '24px' }} color="var(--text-secondary)" />
-            </div>
-        );
-    }
-
-    const fileExtension = actualUrl.split('.').pop()?.split('?')[0]?.toLowerCase() || 'stl';
+    const fileExtension = actualUrl?.split('.').pop()?.split('?')[0]?.toLowerCase() || 'stl';
 
     return (
         <div 
@@ -1845,28 +1844,36 @@ export const DesignThumbnail = ({ modelUrl, designId, designName }: { modelUrl: 
             }}
             onMouseEnter={() => setIsHovered(true)}
             onMouseLeave={() => setIsHovered(false)}
-            title="Hover to view 3D Model"
+            title="Hover to rotate 3D Model"
         >
             {!isHovered ? (
-                <CubeIcon style={{ width: '24px', height: '24px' }} color="var(--neon-cyan)" />
+                actualThumbUrl ? (
+                    <img src={actualThumbUrl} alt={designName} style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+                ) : (
+                    <CubeIcon style={{ width: '24px', height: '24px' }} color="var(--neon-cyan)" />
+                )
             ) : (
-                <ErrorBoundary
-                    fallback={(error) => {
-                        console.error(`[DesignThumbnail] 💥 Error rendering ${designName}:`, error);
-                        return <div style={{width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center'}}><CubeIcon style={{ width: '24px', height: '24px' }} color="red" /></div>;
-                    }}
-                >
-                    <Viewer
-                        modelUrl={actualUrl}
-                        fileExtension={fileExtension as any}
-                        view={ViewPreset.ISO}
-                        isViewLocked={true}
-                        hideToolbar={true}
-                        lowQuality={true}
-                        design={{ design_name: designName } as any}
-                        onUserInteraction={() => {}}
-                    />
-                </ErrorBoundary>
+                actualUrl ? (
+                    <ErrorBoundary
+                        fallback={(error) => {
+                            console.error(`[DesignThumbnail] 💥 Error rendering ${designName}:`, error);
+                            return <CubeIcon style={{ width: '24px', height: '24px' }} color="red" />;
+                        }}
+                    >
+                        <Viewer
+                            modelUrl={actualUrl}
+                            fileExtension={fileExtension as any}
+                            view={ViewPreset.ISO}
+                            isViewLocked={true}
+                            hideToolbar={true}
+                            lowQuality={true}
+                            design={{ design_name: designName } as any}
+                            onUserInteraction={() => {}}
+                        />
+                    </ErrorBoundary>
+                ) : (
+                    <CubeIcon style={{ width: '24px', height: '24px' }} color="var(--neon-cyan)" />
+                )
             )}
         </div>
     );
@@ -1917,6 +1924,11 @@ export const QuoteRequestsPage = () => {
                     ? ((quote as any).design_view_url.startsWith('http')
                         ? (quote as any).design_view_url
                         : `https://api.quotanic.com${(quote as any).design_view_url}`)
+                    : null,
+                designThumbnailUrl: (quote as any).design_thumbnail_url
+                    ? ((quote as any).design_thumbnail_url.startsWith('http')
+                        ? (quote as any).design_thumbnail_url
+                        : `https://api.quotanic.com${(quote as any).design_thumbnail_url}`)
                     : null,
                 customer: quote.customer_name || quote.customer_email || 'Unknown',
                 material: quote.design_material || 'N/A',
@@ -2010,7 +2022,12 @@ export const QuoteRequestsPage = () => {
                             <React.Fragment key={req.id}>
                                 <tr>
                                     <td style={styles.tableCell}>
-                                        <DesignThumbnail modelUrl={(req as any).designViewUrl} designId={req.designId} designName={req.designName} />
+                                        <DesignThumbnail 
+                                            modelUrl={(req as any).designViewUrl} 
+                                            thumbnailUrl={(req as any).designThumbnailUrl}
+                                            designId={req.designId} 
+                                            designName={req.designName} 
+                                        />
                                     </td>
                                     <td style={styles.tableCell}>{req.designName}</td>
                                     <td style={styles.tableCell}>{req.customer}</td>
@@ -2286,6 +2303,11 @@ export const InternalQuotationsPage = () => {
                             ? (quote as any).design_view_url
                             : `https://api.quotanic.com${(quote as any).design_view_url}`)
                         : null,
+                    designThumbnailUrl: (quote as any).design_thumbnail_url
+                        ? ((quote as any).design_thumbnail_url.startsWith('http')
+                            ? (quote as any).design_thumbnail_url
+                            : `https://api.quotanic.com${(quote as any).design_thumbnail_url}`)
+                        : null,
                     material: quote.design_material || 'N/A',
                     quantity: quote.design_quantity || 0,
                     dateReceived: quote.created_at,
@@ -2341,7 +2363,12 @@ export const InternalQuotationsPage = () => {
                             <React.Fragment key={req.id}>
                                 <tr>
                                     <td style={styles.tableCell}>
-                                        <DesignThumbnail modelUrl={(req as any).designViewUrl} designId={req.designId} designName={req.designName} />
+                                        <DesignThumbnail 
+                                            modelUrl={(req as any).designViewUrl} 
+                                            thumbnailUrl={(req as any).designThumbnailUrl}
+                                            designId={req.designId} 
+                                            designName={req.designName} 
+                                        />
                                     </td>
                                     <td style={styles.tableCell}>{req.designName}</td>
                                     <td style={styles.tableCell}>{req.material}</td>

@@ -10,6 +10,7 @@ class DesignSerializer(serializers.ModelSerializer):
     customer_email = serializers.EmailField(source='customer.email', read_only=True)
     status_display = serializers.CharField(source='get_status_display', read_only=True)
     view_url = serializers.SerializerMethodField()
+    thumbnail_url = serializers.SerializerMethodField()
 
     class Meta:
         model = Design
@@ -38,14 +39,46 @@ class DesignSerializer(serializers.ModelSerializer):
             'status',         # Writeable for admin/internal updates if needed, otherwise read_only post-creation
             'status_display', # Read-only display
             'view_url',
+            'thumbnail_url',
             'geometric_data', # Typically read-only, populated by backend analysis
             'created_at',
             'updated_at'
         ]
         read_only_fields = [
-            'id', 'customer_email', 'status_display', 'view_url',
+            'id', 'customer_email', 'status_display', 'view_url', 'thumbnail_url',
             'geometric_data', 'created_at', 'updated_at'
         ]
+
+    def get_thumbnail_url(self, obj):
+        """
+        Returns the URL for the static 2D thumbnail (PNG).
+        """
+        if not obj.geometric_data:
+            return None
+            
+        target_key = obj.geometric_data.get('thumbnail_key')
+        if not target_key:
+            return None
+
+        if settings.USE_LOCAL_STORAGE:
+            return f"{settings.MEDIA_URL}{target_key}"
+        else:
+            s3_client = boto3.client(
+                's3',
+                aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
+                aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY,
+                region_name=settings.AWS_S3_REGION_NAME,
+                endpoint_url=settings.AWS_S3_ENDPOINT_URL
+            )
+            try:
+                url = s3_client.generate_presigned_url(
+                    ClientMethod='get_object',
+                    Params={'Bucket': settings.AWS_STORAGE_BUCKET_NAME, 'Key': target_key},
+                    ExpiresIn=3600
+                )
+                return url
+            except Exception:
+                return None
 
     def get_view_url(self, obj):
         """
