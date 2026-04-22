@@ -1824,23 +1824,43 @@ export const DesignThumbnail = ({ modelUrl, thumbnailUrl, designId, designName }
     const handleLoadComplete = async () => {
         if (actualThumbUrl || isCapturing.current) return;
         isCapturing.current = true;
+        console.log(`[DesignThumbnail] 📸 Triggering thumbnail capture for ${designId}...`);
         try {
             const wrapper = document.getElementById(`thumb-wrapper-${designId}`);
-            if (!wrapper) return;
+            if (!wrapper) {
+                console.error(`[DesignThumbnail] Wrapper not found for ${designId}`);
+                return;
+            }
             const canvas = wrapper.querySelector('canvas');
-            if (!canvas) return;
+            if (!canvas) {
+                console.error(`[DesignThumbnail] Canvas not found for ${designId}`);
+                return;
+            }
 
             const dataUrl = canvas.toDataURL('image/png');
+            if (dataUrl.length < 100) {
+                console.warn(`[DesignThumbnail] DataURL seems empty or too short for ${designId}`);
+            }
+            
             const blob = await (await fetch(dataUrl)).blob();
             const fileName = `thumb_${designId}.png`;
 
             const { uploadUrl, s3Key } = await api.getUploadUrl(fileName, 'image/png');
+            console.log(`[DesignThumbnail] Uploading to S3: ${s3Key}`);
             await api.uploadFileToS3(uploadUrl, new File([blob], fileName, { type: 'image/png' }));
             
             await api.updateDesignThumbnail(designId, s3Key);
-            setActualThumbUrl(s3Key.startsWith('http') ? s3Key : `${MEDIA_BASE_URL}${s3Key}`);
+            console.log(`[DesignThumbnail] Backend updated with thumbnail key: ${s3Key}`);
+            
+            // Re-fetch the design to get the proper presigned URL from the backend
+            const updatedDesign = await api.getDesignById(designId);
+            if (updatedDesign && updatedDesign.thumbnail_url) {
+                const finalUrl = updatedDesign.thumbnail_url.startsWith('http') ? updatedDesign.thumbnail_url : `${MEDIA_BASE_URL}${updatedDesign.thumbnail_url.startsWith('/') ? '' : '/'}${updatedDesign.thumbnail_url}`;
+                setActualThumbUrl(finalUrl);
+                console.log(`[DesignThumbnail] ✅ Thumbnail successfully generated and set: ${finalUrl}`);
+            }
         } catch (e) {
-            console.error('Failed to auto-generate thumbnail', e);
+            console.error('[DesignThumbnail] ❌ Failed to auto-generate thumbnail', e);
         } finally {
             isCapturing.current = false;
         }
