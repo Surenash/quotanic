@@ -1832,6 +1832,7 @@ export const DesignThumbnail = ({ modelUrl, thumbnailUrl, designId, designName }
     const [isAutoCapturing, setIsAutoCapturing] = useState(false);
     const isCapturing = useRef(false);
     const captureSlotAcquired = useRef(false);
+    const captureSlotRequested = useRef(false);
 
     useEffect(() => {
         if (modelUrl && thumbnailUrl) {
@@ -1864,11 +1865,23 @@ export const DesignThumbnail = ({ modelUrl, thumbnailUrl, designId, designName }
 
     useEffect(() => {
         // If we have an actualUrl (model is loaded) but no thumbnail, trigger auto-capture
-        if (actualUrl && !actualThumbUrl && !loading && !captureSlotAcquired.current) {
-            captureSlotAcquired.current = true;
+        if (actualUrl && !actualThumbUrl && !loading && !captureSlotRequested.current) {
+            captureSlotRequested.current = true;
+            let isMounted = true;
+
             autoCaptureGate.acquireAutoCapture().then(() => {
-                setIsAutoCapturing(true);
+                if (isMounted) {
+                    captureSlotAcquired.current = true;
+                    setIsAutoCapturing(true);
+                } else {
+                    // Component unmounted while waiting - release the slot we just acquired
+                    autoCaptureGate.releaseAutoCapture();
+                }
             });
+
+            return () => {
+                isMounted = false;
+            };
         }
     }, [actualUrl, actualThumbUrl, loading]);
 
