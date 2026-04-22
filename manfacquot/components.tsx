@@ -32,12 +32,47 @@ export const MEDIA_BASE_URL = 'https://api.quotanic.com';
 export const resolveMediaUrl = (path: string | null | undefined) => {
     if (!path) return null;
     if (path.startsWith('http')) return path;
-    
+
     const cleanPath = path.startsWith('/') ? path.substring(1) : path;
     const isMediaPath = cleanPath.startsWith('media/');
-    
+
     return `${MEDIA_BASE_URL}/${isMediaPath ? '' : 'media/'}${cleanPath}`;
 };
+
+/**
+ * Concurrency gate to limit parallel auto-capture operations.
+ * Prevents WebGL context exhaustion when multiple DesignThumbnail instances
+ * mount hidden Viewer components simultaneously.
+ */
+const autoCaptureGate = (() => {
+    const MAX_CONCURRENT = 2;
+    let runningCount = 0;
+    const queue: Array<() => void> = [];
+
+    const acquireAutoCapture = (): Promise<void> => {
+        return new Promise((resolve) => {
+            if (runningCount < MAX_CONCURRENT) {
+                runningCount++;
+                resolve();
+            } else {
+                queue.push(() => {
+                    runningCount++;
+                    resolve();
+                });
+            }
+        });
+    };
+
+    const releaseAutoCapture = (): void => {
+        runningCount--;
+        if (queue.length > 0) {
+            const next = queue.shift();
+            if (next) next();
+        }
+    };
+
+    return { acquireAutoCapture, releaseAutoCapture };
+})();
 
 import {
     PRODUCTION_VOLUMES, CERTIFICATIONS, MACHINING_PROCESSES, SHEET_METAL_PROCESSES, CASTING_PROCESSES, FORGING_PROCESSES,
@@ -1796,6 +1831,7 @@ export const DesignThumbnail = ({ modelUrl, thumbnailUrl, designId, designName }
     const [isHovered, setIsHovered] = useState(false);
     const [isAutoCapturing, setIsAutoCapturing] = useState(false);
     const isCapturing = useRef(false);
+    const captureSlotAcquired = useRef(false);
 
     useEffect(() => {
         if (modelUrl && thumbnailUrl) {
@@ -1828,10 +1864,23 @@ export const DesignThumbnail = ({ modelUrl, thumbnailUrl, designId, designName }
 
     useEffect(() => {
         // If we have an actualUrl (model is loaded) but no thumbnail, trigger auto-capture
-        if (actualUrl && !actualThumbUrl && !loading) {
-            setIsAutoCapturing(true);
+        if (actualUrl && !actualThumbUrl && !loading && !captureSlotAcquired.current) {
+            captureSlotAcquired.current = true;
+            autoCaptureGate.acquireAutoCapture().then(() => {
+                setIsAutoCapturing(true);
+            });
         }
     }, [actualUrl, actualThumbUrl, loading]);
+
+    useEffect(() => {
+        // Cleanup: release the gate if component unmounts while holding a slot
+        return () => {
+            if (captureSlotAcquired.current) {
+                autoCaptureGate.releaseAutoCapture();
+                captureSlotAcquired.current = false;
+            }
+        };
+    }, []);
 
     const handleLoadComplete = async () => {
         if (actualThumbUrl || isCapturing.current) return;
@@ -1853,11 +1902,11 @@ export const DesignThumbnail = ({ modelUrl, thumbnailUrl, designId, designName }
             console.log(`[DesignThumbnail] Canvas found, capture starting... Size: ${canvas.width}x${canvas.height}`);
             const dataUrl = canvas.toDataURL('image/png');
             console.log(`[DesignThumbnail] DataURL generated, length: ${dataUrl.length}`);
-            
+
             if (dataUrl.length < 1000) {
                 console.warn(`[DesignThumbnail] DataURL seems very short (${dataUrl.length} chars). Thumbnail might be blank.`);
             }
-            
+
             const blob = await (await fetch(dataUrl)).blob();
             const fileName = `thumb_${designId}.png`;
 
@@ -1865,10 +1914,10 @@ export const DesignThumbnail = ({ modelUrl, thumbnailUrl, designId, designName }
             const { uploadUrl, s3Key } = await api.getUploadUrl(fileName, 'image/png');
             console.log(`[DesignThumbnail] Uploading to S3: ${s3Key}`);
             await api.uploadFileToS3(uploadUrl, new File([blob], fileName, { type: 'image/png' }));
-            
+
             console.log(`[DesignThumbnail] Updating backend with key: ${s3Key}`);
             await api.updateDesignThumbnail(designId, s3Key);
-            
+
             // Re-fetch the design to get the proper presigned URL from the backend
             const updatedDesign = await api.getDesignById(designId);
             if (updatedDesign && updatedDesign.thumbnail_url) {
@@ -1881,6 +1930,10 @@ export const DesignThumbnail = ({ modelUrl, thumbnailUrl, designId, designName }
         } finally {
             isCapturing.current = false;
             setIsAutoCapturing(false);
+            if (captureSlotAcquired.current) {
+                autoCaptureGate.releaseAutoCapture();
+                captureSlotAcquired.current = false;
+            }
         }
     };
 
@@ -1918,7 +1971,13 @@ export const DesignThumbnail = ({ modelUrl, thumbnailUrl, designId, designName }
                         fallback={(error) => {
                             console.error(`[DesignThumbnail] 💥 Error auto-capturing ${designName}:`, error);
                             // Defer state update out of the render phase
-                            queueMicrotask(() => setIsAutoCapturing(false));
+                            queueMicrotask(() => {
+                                setIsAutoCapturing(false);
+                                if (captureSlotAcquired.current) {
+                                    autoCaptureGate.releaseAutoCapture();
+                                    captureSlotAcquired.current = false;
+                                }
+                            });
                             return null;
                         }}
                     >
