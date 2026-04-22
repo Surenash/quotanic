@@ -21,12 +21,14 @@ interface SceneProps {
   showGrid: boolean;
   showAxes: boolean;
   resetKey: number;
+  activeFeatureIndex?: number | null;
+  onFeatureClick?: (index: number) => void;
 }
 
 const Scene: React.FC<SceneProps> = ({ 
   modelUrl, fileExtension, view, isViewLocked, onUserInteraction,
   viewportMode, material, lighting, animation, zoomLevel,
-  showGrid, showAxes, resetKey
+  showGrid, showAxes, resetKey, activeFeatureIndex, onFeatureClick
 }) => {
   const { camera, controls, size, gl } = useThree();
   const targetPosition = useRef(new THREE.Vector3(5, 5, 5));
@@ -137,6 +139,8 @@ const Scene: React.FC<SceneProps> = ({
         viewportMode={viewportMode}
         materialOverride={material}
         animation={animation}
+        activeFeatureIndex={activeFeatureIndex}
+        onFeatureClick={onFeatureClick}
       />
       
       <OrbitControls
