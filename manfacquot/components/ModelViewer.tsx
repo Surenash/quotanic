@@ -286,7 +286,7 @@ const ModelViewer: React.FC<ModelViewerProps> = ({ className = '' }) => {
           <input
             ref={fileInputRef}
             type="file"
-            className="hidden"
+            className="sr-only"
             accept={SUPPORTED_FORMATS.join(',')}
             onChange={handleFileInputChange}
             onClick={(e) => e.stopPropagation()}

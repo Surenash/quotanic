@@ -290,7 +290,7 @@ export const UploadPage = ({ isInternal = false }: { isInternal?: boolean }) => 
                             id="primary-cad-input"
                             ref={fileInputRef} 
                             onChange={handleFileChange} 
-                            style={{ display: 'none' }} 
+                            style={{ position: 'absolute', width: '1px', height: '1px', padding: 0, margin: '-1px', overflow: 'hidden', clip: 'rect(0,0,0,0)', whiteSpace: 'nowrap', borderWidth: 0 }}
                             accept=".stl,.step,.iges,.igs,.stp" 
                             onClick={(e) => e.stopPropagation()}
                         />
@@ -445,7 +445,7 @@ export const UploadPage = ({ isInternal = false }: { isInternal?: boolean }) => 
                                     multiple 
                                     ref={supportingFilesInputRef} 
                                     onChange={handleSupportingFilesChange} 
-                                    style={{ display: 'none' }} 
+                                    style={{ position: 'absolute', width: '1px', height: '1px', padding: 0, margin: '-1px', overflow: 'hidden', clip: 'rect(0,0,0,0)', whiteSpace: 'nowrap', borderWidth: 0 }} 
                                     accept=".pdf,.dxf,.step,.stp,.iges,.igs,.zip,.rar,.sldprt,.dwg" 
                                     onClick={(e) => e.stopPropagation()}
                                 />
