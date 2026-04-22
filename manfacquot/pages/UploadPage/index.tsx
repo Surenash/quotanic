@@ -273,9 +273,10 @@ export const UploadPage = ({ isInternal = false }: { isInternal?: boolean }) => 
                     <div style={styles.uploadDropzoneWrapper}>
                         <label style={styles.label}>Primary CAD File (.stl, .step, .iges, .igs, .stp) *</label>
                         
-                        {/* Hidden file input - kept OUTSIDE the clickable div to prevent event bubbling issues */}
+                        {/* Hidden file input */}
                         <input 
                             type="file" 
+                            id="primary-cad-input"
                             ref={fileInputRef} 
                             onChange={handleFileChange} 
                             onClick={(e) => e.stopPropagation()}
@@ -283,13 +284,13 @@ export const UploadPage = ({ isInternal = false }: { isInternal?: boolean }) => 
                             accept=".stl,.step,.iges,.igs,.stp" 
                         />
 
-                        <div 
+                        <label 
+                            htmlFor="primary-cad-input"
                             style={dropzoneStyle} 
                             onDragEnter={e => e.stopPropagation()} 
                             onDragOver={handleDragOver} 
                             onDragLeave={handleDragLeave} 
                             onDrop={handleDrop} 
-                            onClick={() => fileInputRef.current?.click()}
                         >
                             {file ? (
                                 <div style={styles.uploadFileInfo}>
@@ -311,7 +312,7 @@ export const UploadPage = ({ isInternal = false }: { isInternal?: boolean }) => 
                                     <p style={{ color: 'var(--text-secondary)', fontSize: '14px' }}>or click to browse</p>
                                 </>
                             )}
-                        </div>
+                        </label>
                     </div>
 
                     <div style={styles.uploadFormFields}>
@@ -427,17 +428,20 @@ export const UploadPage = ({ isInternal = false }: { isInternal?: boolean }) => 
                                 </p>
                                 <input 
                                     type="file" 
+                                    id="supporting-files-input"
                                     multiple 
                                     ref={supportingFilesInputRef} 
                                     onChange={handleSupportingFilesChange} 
                                     style={{ position: 'absolute', width: 0, height: 0, opacity: 0 }} 
                                     accept=".pdf,.dxf,.step,.stp,.iges,.igs,.zip,.rar,.sldprt,.dwg" 
                                 />
-                                <CtaButton 
-                                    text="Add Files" 
-                                    onClick={() => supportingFilesInputRef.current?.click()} 
-                                    type="button" 
-                                />
+                                <label htmlFor="supporting-files-input">
+                                    <CtaButton 
+                                        text="Add Files" 
+                                        type="button" 
+                                        onClick={() => {}} // Click will be handled by the label
+                                    />
+                                </label>
                                 {supportingFiles.length > 0 && (
                                     <div style={styles.supportingFileList}>
                                         {supportingFiles.map((f, index) => (

@@ -30,7 +30,7 @@ import {
     SPECIAL_CAPABILITIES, ORDER_STATUSES, ALL_CAPABILITIES_GROUPS, ALL_CAPABILITIES_FLAT
 } from '../../utils/constants';
 
-import * as Components from '../../components';
+import * as Components from '../../components.tsx';
 
 export const CustomerDashboard = ({ user }) => {
     const navigate = useNavigate();

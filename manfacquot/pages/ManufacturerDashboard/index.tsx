@@ -30,9 +30,11 @@ import {
     SPECIAL_CAPABILITIES, ORDER_STATUSES, ALL_CAPABILITIES_GROUPS, ALL_CAPABILITIES_FLAT
 } from '../../utils/constants';
 
-import * as Components from '../../components';
+import * as Components from '../../components.tsx';
 
-export const ManufacturerDashboard = ({ user, onViewFiles, navigate }) => {
+export const ManufacturerDashboard = ({ user }) => {
+    const navigate = useNavigate();
+    const { openViewer: onViewFiles } = useFileViewer();
     const [activeView, setActiveView] = useState('overview'); // overview, profile, quotes, orders, internal, settings
     const navItems = [
         { id: 'overview', label: 'Overview', icon: ChartPieIcon },
