@@ -1794,6 +1794,7 @@ export const DesignThumbnail = ({ modelUrl, thumbnailUrl, designId, designName }
     const [actualThumbUrl, setActualThumbUrl] = useState<string | null>(thumbnailUrl || null);
     const [loading, setLoading] = useState(!modelUrl && !thumbnailUrl);
     const [isHovered, setIsHovered] = useState(false);
+    const [isAutoCapturing, setIsAutoCapturing] = useState(false);
     const isCapturing = useRef(false);
 
     useEffect(() => {
@@ -1824,6 +1825,13 @@ export const DesignThumbnail = ({ modelUrl, thumbnailUrl, designId, designName }
 
         return () => { isMounted = false; };
     }, [modelUrl, thumbnailUrl, designId]);
+
+    useEffect(() => {
+        // If we have an actualUrl (model is loaded) but no thumbnail, trigger auto-capture
+        if (actualUrl && !actualThumbUrl && !loading) {
+            setIsAutoCapturing(true);
+        }
+    }, [actualUrl, actualThumbUrl, loading]);
 
     const handleLoadComplete = async () => {
         if (actualThumbUrl || isCapturing.current) return;
@@ -1872,6 +1880,7 @@ export const DesignThumbnail = ({ modelUrl, thumbnailUrl, designId, designName }
             console.error('[DesignThumbnail] ❌ Failed to auto-generate thumbnail', e);
         } finally {
             isCapturing.current = false;
+            setIsAutoCapturing(false);
         }
     };
 
@@ -1902,11 +1911,38 @@ export const DesignThumbnail = ({ modelUrl, thumbnailUrl, designId, designName }
             onMouseLeave={() => setIsHovered(false)}
             title="Hover to rotate 3D Model"
         >
+            {/* Auto-capture hidden Viewer */}
+            {isAutoCapturing && actualUrl && !isHovered && (
+                <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', opacity: 0.01, pointerEvents: 'none', zIndex: 0 }}>
+                    <ErrorBoundary
+                        fallback={(error) => {
+                            console.error(`[DesignThumbnail] 💥 Error auto-capturing ${designName}:`, error);
+                            setIsAutoCapturing(false);
+                            return null;
+                        }}
+                    >
+                        <Viewer
+                            modelUrl={actualUrl}
+                            fileExtension={fileExtension as any}
+                            view={ViewPreset.ISO}
+                            isViewLocked={true}
+                            hideToolbar={true}
+                            lowQuality={true}
+                            design={{ design_name: designName } as any}
+                            onUserInteraction={() => {}}
+                            onLoadComplete={handleLoadComplete}
+                        />
+                    </ErrorBoundary>
+                </div>
+            )}
+
             {!isHovered ? (
                 actualThumbUrl ? (
-                    <img src={actualThumbUrl} alt={designName} style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+                    <img src={actualThumbUrl} alt={designName} style={{ width: '100%', height: '100%', objectFit: 'contain', zIndex: 1, position: 'relative' }} />
                 ) : (
-                    <CubeIcon style={{ width: '24px', height: '24px' }} color="var(--neon-cyan)" />
+                    <div style={{ zIndex: 1, position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', height: '100%' }}>
+                        <CubeIcon style={{ width: '24px', height: '24px' }} color="var(--neon-cyan)" />
+                    </div>
                 )
             ) : (
                 actualUrl ? (
