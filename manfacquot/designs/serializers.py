@@ -3,7 +3,7 @@ import boto3
 from django.conf import settings
 from rest_framework import serializers
 from .models import Design, DesignStatus
-from accounts.models import UserRole # To validate user role if needed
+from accounts.constants import UserRole # To validate user role if needed
 
 class DesignSerializer(serializers.ModelSerializer):
     # customer = serializers.PrimaryKeyRelatedField(read_only=True) # Or SlugRelatedField for username

@@ -4,7 +4,8 @@ from pathlib import Path
 from unittest.mock import patch, MagicMock
 from rest_framework.test import APITestCase
 from django.conf import settings
-from accounts.models import User, UserRole
+from accounts.models import User
+from accounts.constants import UserRole
 from .models import Design, DesignStatus
 from .tasks import analyze_cad_file, PYTHONOCC_AVAILABLE
 

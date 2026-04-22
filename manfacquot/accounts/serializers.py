@@ -1,6 +1,7 @@
 from decimal import Decimal, InvalidOperation # Add this import
 from rest_framework import serializers
-from .models import User, UserRole, Manufacturer # Added Manufacturer import
+from .models import User, Manufacturer # Added Manufacturer import
+from .constants import UserRole
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError as DjangoValidationError # Renamed to avoid clash
 

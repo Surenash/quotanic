@@ -6,7 +6,8 @@ from decimal import Decimal
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'gmqp_project.settings')
 django.setup()
 
-from accounts.models import User, UserRole, Manufacturer
+from accounts.models import User, Manufacturer
+from accounts.constants import UserRole
 
 def create_manufacturer(email, name, capabilities, location="USA"):
     password = os.environ.get('SEED_USER_PASSWORD', 'StrongPass123!@#')

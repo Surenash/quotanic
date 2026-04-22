@@ -7,7 +7,8 @@ from rest_framework.test import APITestCase
 from django.conf import settings
 
 # It's better to import User and UserRole from where they are defined, e.g., settings.AUTH_USER_MODEL or accounts.models
-from accounts.models import User, UserRole
+from accounts.models import User
+from accounts.constants import UserRole
 from .models import Design, DesignStatus
 # Serializers are not strictly needed for API tests if you test request/response data,
 # but can be useful for understanding expected structures or for direct serializer tests.

@@ -1,7 +1,8 @@
 from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APITestCase
-from .models import User, UserRole, Manufacturer # Added Manufacturer here
+from .models import User, Manufacturer # Added Manufacturer here
+from .constants import UserRole
 from django.contrib.auth.hashers import check_password
 # For decoding JWT if needed for deeper inspection, though not strictly necessary for these tests
 # from rest_framework_simplejwt.tokens import AccessToken

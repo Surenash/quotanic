@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from .models import Review
-from accounts.models import User, UserRole # For validation and representation
+from accounts.models import User
+from accounts.constants import UserRole # For validation and representation
 
 class ReviewSerializer(serializers.ModelSerializer):
     customer_display_name = serializers.SerializerMethodField(read_only=True)
