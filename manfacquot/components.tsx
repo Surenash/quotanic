@@ -25,6 +25,20 @@ import {
 export const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || '') + '/api';
 export const MEDIA_BASE_URL = 'https://api.quotanic.com';
 
+/**
+ * Standardizes how MEDIA_BASE_URL and /media/ paths are joined
+ * to prevent double-media paths or missing slashes.
+ */
+export const resolveMediaUrl = (path: string | null | undefined) => {
+    if (!path) return null;
+    if (path.startsWith('http')) return path;
+    
+    const cleanPath = path.startsWith('/') ? path.substring(1) : path;
+    const isMediaPath = cleanPath.startsWith('media/');
+    
+    return `${MEDIA_BASE_URL}/${isMediaPath ? '' : 'media/'}${cleanPath}`;
+};
+
 import {
     PRODUCTION_VOLUMES, CERTIFICATIONS, MACHINING_PROCESSES, SHEET_METAL_PROCESSES, CASTING_PROCESSES, FORGING_PROCESSES,
     INJECTION_MOLDING_PROCESSES, ADDITIVE_PROCESSES, WELDING_JOINING_PROCESSES, MATERIALS_METALS, MATERIALS_PLASTICS,
@@ -77,10 +91,7 @@ export const FileViewerModal = ({ design: initialDesign, onClose }) => {
     
     // Improved model URL resolution with fallback
     const viewUrl = design.view_url || (['stl', 'obj', 'glb', 'gltf'].includes(fileExtension) ? design.s3_file_key : null);
-    
-    const modelUrl = viewUrl?.startsWith('http') 
-        ? viewUrl 
-        : (viewUrl ? `${MEDIA_BASE_URL}${viewUrl.startsWith('/media/') ? '' : (viewUrl.startsWith('/') ? '' : '/media/')}${viewUrl}` : null);
+    const modelUrl = resolveMediaUrl(viewUrl);
 
     return (
         <div style={styles.modalBackdrop}>
@@ -1787,8 +1798,8 @@ export const DesignThumbnail = ({ modelUrl, thumbnailUrl, designId, designName }
 
     useEffect(() => {
         if (modelUrl && thumbnailUrl) {
-            setActualUrl(modelUrl);
-            setActualThumbUrl(thumbnailUrl);
+            setActualUrl(resolveMediaUrl(modelUrl));
+            setActualThumbUrl(resolveMediaUrl(thumbnailUrl));
             setLoading(false);
             return;
         }
@@ -1800,15 +1811,8 @@ export const DesignThumbnail = ({ modelUrl, thumbnailUrl, designId, designName }
                 const design = await api.getDesignById(designId);
                 if (isMounted && design) {
                     const viewUrl = design.view_url || (['stl', 'obj', 'glb', 'gltf'].includes(design.s3_file_key?.split('.').pop()?.toLowerCase()) ? design.s3_file_key : null);
-                    
-                    if (viewUrl) {
-                        const fullUrl = viewUrl.startsWith('http') ? viewUrl : `${MEDIA_BASE_URL}${viewUrl.startsWith('/media/') ? '' : (viewUrl.startsWith('/') ? '' : '/media/')}${viewUrl}`;
-                        setActualUrl(fullUrl);
-                    }
-                    
-                    if (design.thumbnail_url) {
-                        setActualThumbUrl(design.thumbnail_url.startsWith('http') ? design.thumbnail_url : `${MEDIA_BASE_URL}${design.thumbnail_url}`);
-                    }
+                    setActualUrl(resolveMediaUrl(viewUrl));
+                    setActualThumbUrl(resolveMediaUrl(design.thumbnail_url));
                 }
             } catch (err) {
                 console.error(`[DesignThumbnail] Failed to fetch design ${designId}:`, err);
@@ -1837,25 +1841,30 @@ export const DesignThumbnail = ({ modelUrl, thumbnailUrl, designId, designName }
                 return;
             }
 
+            // Enhanced Logging
+            console.log(`[DesignThumbnail] Canvas found, capture starting... Size: ${canvas.width}x${canvas.height}`);
             const dataUrl = canvas.toDataURL('image/png');
-            if (dataUrl.length < 100) {
-                console.warn(`[DesignThumbnail] DataURL seems empty or too short for ${designId}`);
+            console.log(`[DesignThumbnail] DataURL generated, length: ${dataUrl.length}`);
+            
+            if (dataUrl.length < 1000) {
+                console.warn(`[DesignThumbnail] DataURL seems very short (${dataUrl.length} chars). Thumbnail might be blank.`);
             }
             
             const blob = await (await fetch(dataUrl)).blob();
             const fileName = `thumb_${designId}.png`;
 
+            console.log(`[DesignThumbnail] Getting upload URL for ${fileName}...`);
             const { uploadUrl, s3Key } = await api.getUploadUrl(fileName, 'image/png');
             console.log(`[DesignThumbnail] Uploading to S3: ${s3Key}`);
             await api.uploadFileToS3(uploadUrl, new File([blob], fileName, { type: 'image/png' }));
             
+            console.log(`[DesignThumbnail] Updating backend with key: ${s3Key}`);
             await api.updateDesignThumbnail(designId, s3Key);
-            console.log(`[DesignThumbnail] Backend updated with thumbnail key: ${s3Key}`);
             
             // Re-fetch the design to get the proper presigned URL from the backend
             const updatedDesign = await api.getDesignById(designId);
             if (updatedDesign && updatedDesign.thumbnail_url) {
-                const finalUrl = updatedDesign.thumbnail_url.startsWith('http') ? updatedDesign.thumbnail_url : `${MEDIA_BASE_URL}${updatedDesign.thumbnail_url.startsWith('/') ? '' : '/'}${updatedDesign.thumbnail_url}`;
+                const finalUrl = resolveMediaUrl(updatedDesign.thumbnail_url);
                 setActualThumbUrl(finalUrl);
                 console.log(`[DesignThumbnail] ✅ Thumbnail successfully generated and set: ${finalUrl}`);
             }
@@ -1968,16 +1977,8 @@ export const QuoteRequestsPage = () => {
                 id: quote.id,
                 designId: quote.design,
                 designName: quote.design_name || 'Unnamed Part',
-                designViewUrl: (quote as any).design_view_url
-                    ? ((quote as any).design_view_url.startsWith('http')
-                        ? (quote as any).design_view_url
-                        : `https://api.quotanic.com${(quote as any).design_view_url}`)
-                    : null,
-                designThumbnailUrl: (quote as any).design_thumbnail_url
-                    ? ((quote as any).design_thumbnail_url.startsWith('http')
-                        ? (quote as any).design_thumbnail_url
-                        : `https://api.quotanic.com${(quote as any).design_thumbnail_url}`)
-                    : null,
+                designViewUrl: resolveMediaUrl((quote as any).design_view_url),
+                designThumbnailUrl: resolveMediaUrl((quote as any).design_thumbnail_url),
                 customer: quote.customer_name || quote.customer_email || 'Unknown',
                 material: quote.design_material || 'N/A',
                 quantity: quote.design_quantity || 0,

@@ -66,12 +66,11 @@ const Scene: React.FC<SceneProps> = ({
     }
     
     if (onLoadComplete) {
-      // Wait multiple frames to ensure the canvas has fully painted the new isometric geometry.
-      requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-          onLoadComplete();
-        });
-      });
+      // Use a small delay to ensure the 3D geometry has fully painted 
+      // and the camera transition is settled before taking the screenshot.
+      setTimeout(() => {
+        onLoadComplete();
+      }, 200);
     }
   }, [camera, controls, onLoadComplete]);
 
