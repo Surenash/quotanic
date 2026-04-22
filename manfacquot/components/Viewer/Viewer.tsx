@@ -16,6 +16,7 @@ interface ViewerProps {
   hideSidebar?: boolean;
   lowQuality?: boolean;
   children?: React.ReactNode;
+  onLoadComplete?: () => void;
 }
 
 // Sidebar Panel Types
@@ -31,7 +32,8 @@ const Viewer: React.FC<ViewerProps> = ({
   hideToolbar = false,
   hideSidebar = false,
   lowQuality = false,
-  children 
+  children,
+  onLoadComplete 
 }) => {
   // --- STATE ---
   const [activePanel, setActivePanel] = useState<PanelType>(null);
@@ -308,6 +310,7 @@ const Viewer: React.FC<ViewerProps> = ({
                 showGrid={showGrid}
                 showAxes={showAxes}
                 resetKey={resetKey}
+                onLoadComplete={onLoadComplete}
               />
             </Canvas>
           </Suspense>

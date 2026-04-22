@@ -19,6 +19,9 @@ urlpatterns = [
     # DELETE /api/designs/<uuid:id>/ - Delete a specific Design
     path('<uuid:id>/', views.DesignDetailView.as_view(), name='design_detail'),
 
+    # PATCH /api/designs/<uuid:id>/thumbnail/ - Update a specific Design's Thumbnail
+    path('<uuid:id>/thumbnail/', views.DesignThumbnailUpdateView.as_view(), name='design_update_thumbnail'),
+
     # Nested quotes for a design: /api/designs/<uuid:design_id>/quotes/
     path('<uuid:design_id>/quotes/', include(design_specific_quote_urlpatterns_from_quotes_app)), # design_id will be used by QuoteListCreateView
 

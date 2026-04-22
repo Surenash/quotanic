@@ -1783,6 +1783,7 @@ export const DesignThumbnail = ({ modelUrl, thumbnailUrl, designId, designName }
     const [actualThumbUrl, setActualThumbUrl] = useState<string | null>(thumbnailUrl || null);
     const [loading, setLoading] = useState(!modelUrl && !thumbnailUrl);
     const [isHovered, setIsHovered] = useState(false);
+    const isCapturing = useRef(false);
 
     useEffect(() => {
         if (modelUrl && thumbnailUrl) {
@@ -1820,6 +1821,31 @@ export const DesignThumbnail = ({ modelUrl, thumbnailUrl, designId, designName }
         return () => { isMounted = false; };
     }, [modelUrl, thumbnailUrl, designId]);
 
+    const handleLoadComplete = async () => {
+        if (actualThumbUrl || isCapturing.current) return;
+        isCapturing.current = true;
+        try {
+            const wrapper = document.getElementById(`thumb-wrapper-${designId}`);
+            if (!wrapper) return;
+            const canvas = wrapper.querySelector('canvas');
+            if (!canvas) return;
+
+            const dataUrl = canvas.toDataURL('image/png');
+            const blob = await (await fetch(dataUrl)).blob();
+            const fileName = `thumb_${designId}.png`;
+
+            const { uploadUrl, s3Key } = await api.getUploadUrl(fileName, 'image/png');
+            await api.uploadFileToS3(uploadUrl, new File([blob], fileName, { type: 'image/png' }));
+            
+            await api.updateDesignThumbnail(designId, s3Key);
+            setActualThumbUrl(s3Key.startsWith('http') ? s3Key : `${MEDIA_BASE_URL}${s3Key}`);
+        } catch (e) {
+            console.error('Failed to auto-generate thumbnail', e);
+        } finally {
+            isCapturing.current = false;
+        }
+    };
+
     if (loading) {
         return (
             <div style={{
@@ -1836,6 +1862,7 @@ export const DesignThumbnail = ({ modelUrl, thumbnailUrl, designId, designName }
 
     return (
         <div 
+            id={`thumb-wrapper-${designId}`}
             style={{
                 width: '64px', height: '64px', borderRadius: '8px',
                 background: '#0a0a0f', overflow: 'hidden', position: 'relative',
@@ -1869,6 +1896,7 @@ export const DesignThumbnail = ({ modelUrl, thumbnailUrl, designId, designName }
                             lowQuality={true}
                             design={{ design_name: designName } as any}
                             onUserInteraction={() => {}}
+                            onLoadComplete={handleLoadComplete}
                         />
                     </ErrorBoundary>
                 ) : (

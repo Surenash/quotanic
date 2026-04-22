@@ -21,12 +21,13 @@ interface SceneProps {
   showGrid: boolean;
   showAxes: boolean;
   resetKey: number;
+  onLoadComplete?: () => void;
 }
 
 const Scene: React.FC<SceneProps> = ({ 
   modelUrl, fileExtension, view, isViewLocked, onUserInteraction,
   viewportMode, material, lighting, animation, zoomLevel,
-  showGrid, showAxes, resetKey
+  showGrid, showAxes, resetKey, onLoadComplete
 }) => {
   const { camera, controls, size, gl } = useThree();
   const targetPosition = useRef(new THREE.Vector3(5, 5, 5));
@@ -63,7 +64,16 @@ const Scene: React.FC<SceneProps> = ({
       (controls as any).target.set(0, 0, 0);
       (controls as any).update();
     }
-  }, [camera, controls]);
+    
+    if (onLoadComplete) {
+      // Wait multiple frames to ensure the canvas has fully painted the new isometric geometry.
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          onLoadComplete();
+        });
+      });
+    }
+  }, [camera, controls, onLoadComplete]);
 
   // RESET LOGIC
   useEffect(() => {
