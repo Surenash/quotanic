@@ -285,24 +285,23 @@ export const UploadPage = ({ isInternal = false }: { isInternal?: boolean }) => 
                     <div style={styles.uploadDropzoneWrapper}>
                         <label style={styles.label}>Primary CAD File (.stl, .step, .iges, .igs, .stp) *</label>
                         
-                        <div 
-                            style={dropzoneStyle} 
+                        <input 
+                            type="file" 
+                            id="primary-cad-input"
+                            ref={fileInputRef} 
+                            onChange={handleFileChange} 
+                            style={{ display: 'none' }} 
+                            accept=".stl,.step,.iges,.igs,.stp" 
+                        />
+
+                        <label 
+                            htmlFor={!file ? "primary-cad-input" : undefined}
+                            style={{ ...dropzoneStyle, cursor: !file ? 'pointer' : 'default' }} 
                             onDragEnter={e => e.stopPropagation()} 
                             onDragOver={handleDragOver} 
                             onDragLeave={handleDragLeave} 
                             onDrop={handleDrop} 
                         >
-                            {!file && (
-                                <input 
-                                    type="file" 
-                                    id="primary-cad-input"
-                                    ref={fileInputRef} 
-                                    onChange={handleFileChange} 
-                                    style={inputOverlayStyle} 
-                                    accept=".stl,.step,.iges,.igs,.stp" 
-                                />
-                            )}
-
                             {file ? (
                                 <div style={styles.uploadFileInfo}>
                                     <FileIcon />
@@ -312,19 +311,19 @@ export const UploadPage = ({ isInternal = false }: { isInternal?: boolean }) => 
                                     </p>
                                     <CtaButton 
                                         text="Clear" 
-                                        onClick={(e) => { e.stopPropagation(); setFile(null); }} 
+                                        onClick={(e) => { e.preventDefault(); e.stopPropagation(); setFile(null); }} 
                                         type="button" 
                                         className="button-small"
                                     />
                                 </div>
                             ) : (
                                 <>
-                                    <UploadIcon style={{ ...iconStyle, width: '64px', height: '64px', color: 'var(--text-secondary)' }} />
-                                    <p style={{ color: 'var(--text-primary)', fontWeight: 500 }}>Drag & drop file here</p>
-                                    <p style={{ color: 'var(--text-secondary)', fontSize: '14px' }}>or click to browse</p>
+                                    <UploadIcon style={{ ...iconStyle, pointerEvents: 'none', width: '64px', height: '64px', color: 'var(--text-secondary)' }} />
+                                    <p style={{ pointerEvents: 'none', color: 'var(--text-primary)', fontWeight: 500 }}>Drag & drop file here</p>
+                                    <p style={{ pointerEvents: 'none', color: 'var(--text-secondary)', fontSize: '14px' }}>or click to browse</p>
                                 </>
                             )}
-                        </div>
+                        </label>
                     </div>
 
                     <div style={styles.uploadFormFields}>
@@ -438,22 +437,23 @@ export const UploadPage = ({ isInternal = false }: { isInternal?: boolean }) => 
                                 <p style={{ fontSize: '12px', color: 'var(--text-secondary)', margin: '-4px 0 8px 0' }}>
                                     Add technical drawings (PDF, DXF), secondary models, or other relevant files.
                                 </p>
-                                <div style={{ position: 'relative', display: 'inline-block' }}>
-                                    <input 
-                                        type="file" 
-                                        id="supporting-files-input"
-                                        multiple 
-                                        ref={supportingFilesInputRef} 
-                                        onChange={handleSupportingFilesChange} 
-                                        style={inputOverlayStyle} 
-                                        accept=".pdf,.dxf,.step,.stp,.iges,.igs,.zip,.rar,.sldprt,.dwg" 
-                                    />
-                                    <CtaButton 
-                                        text="Add Files" 
-                                        type="button" 
-                                        onClick={() => {}} 
-                                    />
-                                </div>
+                                
+                                <input 
+                                    type="file" 
+                                    id="supporting-files-input"
+                                    multiple 
+                                    ref={supportingFilesInputRef} 
+                                    onChange={handleSupportingFilesChange} 
+                                    style={{ display: 'none' }} 
+                                    accept=".pdf,.dxf,.step,.stp,.iges,.igs,.zip,.rar,.sldprt,.dwg" 
+                                />
+
+                                <label htmlFor="supporting-files-input" style={{ display: 'inline-block' }}>
+                                    <div style={{ ...styles.button, ...styles.buttonSecondary, cursor: 'pointer' }} className="hover-lift">
+                                        Add Files
+                                    </div>
+                                </label>
+
                                 {supportingFiles.length > 0 && (
                                     <div style={styles.supportingFileList}>
                                         {supportingFiles.map((f, index) => (
