@@ -249,8 +249,8 @@ const ModelViewer: React.FC<ModelViewerProps> = ({ className = '' }) => {
     <div className={`relative w-full h-full bg-gray-900 rounded-lg overflow-hidden ${className}`}>
       {!modelUrl ? (
         // File upload area
-        <div
-          className={`w-full h-full flex flex-col items-center justify-center border-2 border-dashed transition-colors cursor-pointer relative ${
+        <label
+          className={`w-full h-full flex flex-col items-center justify-center border-2 border-dashed transition-colors cursor-pointer ${
             isDragging 
               ? 'border-blue-400 bg-blue-50/10' 
               : 'border-gray-600 hover:border-gray-500'
@@ -281,15 +281,14 @@ const ModelViewer: React.FC<ModelViewerProps> = ({ className = '' }) => {
               Supports: {SUPPORTED_FORMATS.join(', ')}
             </p>
           </div>
-          
           <input
             ref={fileInputRef}
             type="file"
-            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+            className="sr-only"
             accept={SUPPORTED_FORMATS.join(',')}
             onChange={handleFileInputChange}
           />
-        </div>
+        </label>
       ) : (
         // 3D Viewer
         <>

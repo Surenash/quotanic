@@ -292,17 +292,20 @@ export const UploadPage = ({ isInternal = false }: { isInternal?: boolean }) => 
                             onDragLeave={handleDragLeave} 
                             onDrop={handleDrop} 
                         >
-                            {!file && (
-                                <input 
-                                    type="file" 
-                                    id="primary-cad-input"
-                                    ref={fileInputRef} 
-                                    onChange={handleFileChange} 
-                                    style={inputOverlayStyle} 
-                                    accept=".stl,.step,.iges,.igs,.stp" 
-                                />
-                            )}
-                            {file ? (
+                            {!file ? (
+                                <label style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', width: '100%', height: '100%', cursor: 'pointer' }}>
+                                    <input 
+                                        type="file" 
+                                        ref={fileInputRef} 
+                                        onChange={handleFileChange} 
+                                        style={{ position: 'absolute', width: '1px', height: '1px', padding: 0, margin: '-1px', overflow: 'hidden', clip: 'rect(0,0,0,0)', whiteSpace: 'nowrap', borderWidth: 0 }}
+                                        accept=".stl,.step,.iges,.igs,.stp" 
+                                    />
+                                    <UploadIcon style={{ ...iconStyle, width: '64px', height: '64px', color: 'var(--text-secondary)' }} />
+                                    <p style={{ color: 'var(--text-primary)', fontWeight: 500 }}>Drag & drop file here</p>
+                                    <p style={{ color: 'var(--text-secondary)', fontSize: '14px' }}>or click to browse</p>
+                                </label>
+                            ) : (
                                 <div style={styles.uploadFileInfo}>
                                     <FileIcon />
                                     <p style={styles.uploadFileName}>{file.name}</p>
@@ -316,12 +319,6 @@ export const UploadPage = ({ isInternal = false }: { isInternal?: boolean }) => 
                                         className="button-small"
                                     />
                                 </div>
-                            ) : (
-                                <>
-                                    <UploadIcon style={{ ...iconStyle, pointerEvents: 'none', width: '64px', height: '64px', color: 'var(--text-secondary)' }} />
-                                    <p style={{ pointerEvents: 'none', color: 'var(--text-primary)', fontWeight: 500 }}>Drag & drop file here</p>
-                                    <p style={{ pointerEvents: 'none', color: 'var(--text-secondary)', fontSize: '14px' }}>or click to browse</p>
-                                </>
                             )}
                         </div>
                     </div>
