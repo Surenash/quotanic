@@ -36,7 +36,6 @@ export const UploadPage = ({ isInternal = false }: { isInternal?: boolean }) => 
     const { isAuthenticated, user, setLoginReasonMessage, setPendingUploadData } = useAuth();
     const navigate = useNavigate();
     const targetManufacturerId = new URLSearchParams(useLocation().search).get("manufacturer");
-    const pendingData = null;
     const [formData, setFormData] = useState({
         designName: '',
         material: '',
@@ -87,10 +86,35 @@ export const UploadPage = ({ isInternal = false }: { isInternal?: boolean }) => 
         });
     };
 
-    const handleDragOver = (e: React.DragEvent) => { e.preventDefault(); e.stopPropagation(); setIsDragging(true); };
-    const handleDragLeave = (e: React.DragEvent) => { e.preventDefault(); e.stopPropagation(); setIsDragging(false); };
-    const handleDrop = (e: React.DragEvent) => { e.preventDefault(); e.stopPropagation(); setIsDragging(false); if (e.dataTransfer.files && e.dataTransfer.files.length > 0) { setFile(e.dataTransfer.files[0]); setError(''); e.dataTransfer.clearData(); } };
-    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => { if (e.target.files && e.target.files.length > 0) { setFile(e.target.files[0]); setError(''); } };
+    const handleDragOver = (e: React.DragEvent) => { 
+        e.preventDefault(); 
+        e.stopPropagation(); 
+        setIsDragging(true); 
+    };
+
+    const handleDragLeave = (e: React.DragEvent) => { 
+        e.preventDefault(); 
+        e.stopPropagation(); 
+        setIsDragging(false); 
+    };
+
+    const handleDrop = (e: React.DragEvent) => { 
+        e.preventDefault(); 
+        e.stopPropagation(); 
+        setIsDragging(false); 
+        if (e.dataTransfer.files && e.dataTransfer.files.length > 0) { 
+            setFile(e.dataTransfer.files[0]); 
+            setError(''); 
+            e.dataTransfer.clearData(); 
+        } 
+    };
+
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => { 
+        if (e.target.files && e.target.files.length > 0) { 
+            setFile(e.target.files[0]); 
+            setError(''); 
+        } 
+    };
 
     const handleSupportingFilesChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files) {
@@ -192,14 +216,6 @@ export const UploadPage = ({ isInternal = false }: { isInternal?: boolean }) => 
                     // Don't block success navigation, but maybe warn
                     alert("Design uploaded, but failed to request quote immediately. Please try again from dashboard.");
                 }
-            } else {
-                // Trigger general generation or let user do it?
-                // For now, keep existing flow (which didn't seem to trigger it automatically),
-                // or maybe we should trigger general if no target?
-                // The requirement was specific to targeted.
-
-                // If the backend requires ANALYSIS_COMPLETE, this subsequent call might fail
-                // if analysis isn't instant. We'll attempt it anyway if that's the desired flow.
             }
 
             // Success! Navigate to dashboard
@@ -230,114 +246,300 @@ export const UploadPage = ({ isInternal = false }: { isInternal?: boolean }) => 
             // Otherwise, proceed to login flow
             setLoginReasonMessage({ file, supportingFiles, ...formData });
         }
-
     };
 
-    const dropzoneStyle = { ...styles.uploadDropzone, ...(isDragging ? styles.uploadDropzoneActive : {}), };
+    const dropzoneStyle = { 
+        ...styles.uploadDropzone, 
+        ...(isDragging ? styles.uploadDropzoneActive : {}), 
+    };
 
-    return (<div style={styles.uploadPageContainer}><div style={styles.dashboardHeader}><h1 style={styles.dashboardTitle}>Get an Instant Quote</h1></div><p style={{ ...styles.loginSubtitle, textAlign: 'left', marginTop: '-16px', marginBottom: '32px' }}>Step 1 of 2: Specify design details and upload your CAD file.</p><form onSubmit={handleSubmit}>{error && <p style={styles.loginError}>{error}</p>}<div style={styles.uploadLayout}><div style={styles.uploadDropzoneWrapper}><label style={styles.label}>Primary CAD File (.stl, .step, .iges, .igs, .stp) *</label><div style={dropzoneStyle} onDragEnter={e => e.stopPropagation()} onDragOver={handleDragOver} onDragLeave={handleDragLeave} onDrop={handleDrop} onClick={() => fileInputRef.current?.click()}><input type="file" ref={fileInputRef} onChange={handleFileChange} style={{ display: 'none' }} accept=".stl,.step,.iges,.igs,.stp" />{file ? (<div style={styles.uploadFileInfo}><FileIcon /><p style={styles.uploadFileName}>{file.name}</p><p style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>{(file.size / 1024).toFixed(2)} KB</p><CtaButton text="Clear" onClick={(e) => { e.stopPropagation(); setFile(null); }} type="button" /></div>) : (<><UploadIcon style={{ ...iconStyle, width: '64px', height: '64px', color: 'var(--text-secondary)' }} /><p style={{ color: 'var(--text-primary)', fontWeight: 500 }}>Drag & drop file here</p><p style={{ color: 'var(--text-secondary)', fontSize: '14px' }}>or click to browse</p></>)}</div></div><div style={styles.uploadFormFields}><div style={styles.formGroup}><label htmlFor="designName" style={styles.label}>Design Name *</label><input type="text" id="designName" name="designName" value={formData.designName} onChange={handleInputChange} style={styles.input} required placeholder="e.g., Main Housing Unit" /></div><div style={styles.formGroup}><label htmlFor="quantity" style={styles.label}>Quantity *</label><input type="text" id="quantity" name="quantity" value={formData.quantity} onChange={handleInputChange} style={styles.input} required list="quantity-options" placeholder="e.g., 25 or select a range" /><datalist id="quantity-options"><option value="1-10 (Prototypes)"></option><option value="11-50 (Small Batch)"></option><option value="51-250 (Low Volume)"></option><option value="251-1000 (Medium Volume)"></option><option value="1000+ (High Volume)"></option></datalist></div><div style={styles.formGroup}><label htmlFor="manufacturingProcess" style={styles.label}>Manufacturing Process *</label><select id="manufacturingProcess" name="manufacturingProcess" value={formData.manufacturingProcess} onChange={handleInputChange} style={styles.input} required><option value="">Select a process...</option>{ALL_CAPABILITIES_GROUPS.map(group => (<optgroup label={group.title} key={group.title}>{group.processes.map(process => <option key={process} value={process}>{process}</option>)}</optgroup>))}</select></div><div style={styles.formGroup}><label htmlFor="material" style={styles.label}>Material *</label><select id="material" name="material" value={formData.material} onChange={handleInputChange} style={styles.input} required><option value="">Select a material...</option><optgroup label="Plastics">{MATERIALS_PLASTICS.map(m => <option key={m} value={m}>{m}</option>)}</optgroup><optgroup label="Metals">{MATERIALS_METALS.map(m => <option key={m} value={m}>{m}</option>)}</optgroup><optgroup label="Composites">{MATERIALS_COMPOSITES.map(m => <option key={m} value={m}>{m}</option>)}</optgroup><optgroup label="Other">{MATERIALS_OTHERS.map(m => <option key={m} value={m}>{m}</option>)}</optgroup></select></div><div style={styles.formGroup}><label htmlFor="surfaceFinish" style={styles.label}>Surface Finish</label><select id="surfaceFinish" name="surfaceFinish" value={formData.surfaceFinish} onChange={handleInputChange} style={styles.input}><option value="None">None</option>{SURFACE_FINISHES.map(f => <option key={f} value={f}>{f}</option>)}</select></div><div style={styles.formGroup}><label htmlFor="tolerances" style={styles.label}>Tolerances (if any)</label><input type="text" id="tolerances" name="tolerances" value={formData.tolerances} onChange={handleInputChange} style={styles.input} placeholder="e.g., +/- 0.05mm on critical features" /></div><CheckboxGroup title="Post-Processing (Optional)" options={POST_PROCESSING_ASSEMBLY} selected={formData.postProcessing} onChange={handlePostProcessingChange} columns={2} />
-
-        <fieldset style={{ ...styles.fieldset, marginTop: '24px', padding: '24px', backgroundColor: 'transparent', border: `1px solid var(--border-color)` }}>
-            <legend style={{ ...styles.legend, padding: '0 8px' }}>Supporting Information (Optional)</legend>
-
-            <div style={styles.formGroup}>
-                <label style={styles.label}>Supporting Documents & Models</label>
-                <p style={{ fontSize: '12px', color: 'var(--text-secondary)', margin: '-4px 0 8px 0' }}>Add technical drawings (PDF, DXF), secondary models, or other relevant files.</p>
-                <input type="file" multiple ref={supportingFilesInputRef} onChange={handleSupportingFilesChange} style={{ display: 'none' }} accept=".pdf,.dxf,.step,.stp,.iges,.igs,.zip,.rar,.sldprt,.dwg" />
-                <CtaButton text="Add Files" onClick={() => supportingFilesInputRef.current?.click()} type="button" />
-                {supportingFiles.length > 0 && (
-                    <div style={styles.supportingFileList}>
-                        {supportingFiles.map((f, index) => (
-                            <div key={`${f.name}-${index}`} style={styles.supportingFileItem}>
-                                <DocumentTextIcon style={{ width: '20px', height: '20px', color: 'var(--text-secondary)', flexShrink: 0, marginRight: '8px' }} />
-                                <span style={styles.supportingFileName} title={f.name}>{f.name}</span>
-                                <button type="button" onClick={() => removeSupportingFile(index)} style={styles.supportingFileRemoveBtn} aria-label={`Remove ${f.name}`}>
-                                    <XMarkIcon style={{ width: '16px', height: '16px' }} />
-                                </button>
-                            </div>
-                        ))}
-                    </div>
-                )}
+    return (
+        <div style={styles.uploadPageContainer}>
+            <div style={styles.dashboardHeader}>
+                <h1 style={styles.dashboardTitle}>
+                    {isInternal ? "Internal Design Analysis" : "Get an Instant Quote"}
+                </h1>
             </div>
+            <p style={{ ...styles.loginSubtitle, textAlign: 'left', marginTop: '-16px', marginBottom: '32px' }}>
+                {isInternal 
+                    ? "Upload a design to generate an internal quotation and FBM analysis." 
+                    : "Step 1 of 2: Specify design details and upload your CAD file."}
+            </p>
 
-            <div style={styles.formGroup}>
-                <label htmlFor="urgency" style={styles.label}>Urgency</label>
-                <select id="urgency" name="urgency" value={formData.urgency} onChange={handleInputChange} style={styles.input}>
-                    <option value="standard">Standard Lead Time</option>
-                    <option value="urgent">Urgent (Premium)</option>
-                </select>
-            </div>
+            <form onSubmit={handleSubmit}>
+                {error && <p style={styles.loginError}>{error}</p>}
+                
+                <div style={styles.uploadLayout}>
+                    <div style={styles.uploadDropzoneWrapper}>
+                        <label style={styles.label}>Primary CAD File (.stl, .step, .iges, .igs, .stp) *</label>
+                        
+                        {/* Hidden file input - kept OUTSIDE the clickable div to prevent event bubbling issues */}
+                        <input 
+                            type="file" 
+                            ref={fileInputRef} 
+                            onChange={handleFileChange} 
+                            onClick={(e) => e.stopPropagation()}
+                            style={{ display: 'none' }} 
+                            accept=".stl,.step,.iges,.igs,.stp" 
+                        />
 
-            <div style={styles.formGroup}>
-                <label htmlFor="packaging" style={styles.label}>Packaging</label>
-                <select id="packaging" name="packaging" value={formData.packaging} onChange={handleInputChange} style={styles.input}>
-                    <option value="standard">Standard Packaging</option>
-                    <option value="custom">Custom / Branded</option>
-                    <option value="export">Export Crate (Fumigated)</option>
-                </select>
-            </div>
-
-            <div style={styles.formGroup}>
-                <label style={styles.label}>Quality Control & Inspection</label>
-                <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
-                    {['Standard Inspection', 'CMM Report', 'Material Certificate', 'Hardness Test'].map(opt => (
-                        <button
-                            key={opt}
-                            type="button"
-                            onClick={() => handleInspectionChange(opt)}
-                            style={{
-                                ...styles.chip,
-                                backgroundColor: formData.inspectionRequirements.includes(opt) ? styles.chipActive.backgroundColor : styles.chip.backgroundColor,
-                                color: formData.inspectionRequirements.includes(opt) ? styles.chipActive.color : styles.chip.color,
-                                border: formData.inspectionRequirements.includes(opt) ? styles.chipActive.border : styles.chip.border
-                            }}
+                        <div 
+                            style={dropzoneStyle} 
+                            onDragEnter={e => e.stopPropagation()} 
+                            onDragOver={handleDragOver} 
+                            onDragLeave={handleDragLeave} 
+                            onDrop={handleDrop} 
+                            onClick={() => fileInputRef.current?.click()}
                         >
-                            {opt}
-                        </button>
-                    ))}
+                            {file ? (
+                                <div style={styles.uploadFileInfo}>
+                                    <FileIcon />
+                                    <p style={styles.uploadFileName}>{file.name}</p>
+                                    <p style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>
+                                        {(file.size / 1024).toFixed(2)} KB
+                                    </p>
+                                    <CtaButton 
+                                        text="Clear" 
+                                        onClick={(e) => { e.stopPropagation(); setFile(null); }} 
+                                        type="button" 
+                                    />
+                                </div>
+                            ) : (
+                                <>
+                                    <UploadIcon style={{ ...iconStyle, width: '64px', height: '64px', color: 'var(--text-secondary)' }} />
+                                    <p style={{ color: 'var(--text-primary)', fontWeight: 500 }}>Drag & drop file here</p>
+                                    <p style={{ color: 'var(--text-secondary)', fontSize: '14px' }}>or click to browse</p>
+                                </>
+                            )}
+                        </div>
+                    </div>
+
+                    <div style={styles.uploadFormFields}>
+                        <div style={styles.formGroup}>
+                            <label htmlFor="designName" style={styles.label}>Design Name *</label>
+                            <input 
+                                type="text" 
+                                id="designName" 
+                                name="designName" 
+                                value={formData.designName} 
+                                onChange={handleInputChange} 
+                                style={styles.input} 
+                                required 
+                                placeholder="e.g., Main Housing Unit" 
+                            />
+                        </div>
+
+                        <div style={styles.formGroup}>
+                            <label htmlFor="quantity" style={styles.label}>Quantity *</label>
+                            <input 
+                                type="text" 
+                                id="quantity" 
+                                name="quantity" 
+                                value={formData.quantity} 
+                                onChange={handleInputChange} 
+                                style={styles.input} 
+                                required 
+                                list="quantity-options" 
+                                placeholder="e.g., 25 or select a range" 
+                            />
+                            <datalist id="quantity-options">
+                                <option value="1-10 (Prototypes)" />
+                                <option value="11-50 (Small Batch)" />
+                                <option value="51-250 (Low Volume)" />
+                                <option value="251-1000 (Medium Volume)" />
+                                <option value="1000+ (High Volume)" />
+                            </datalist>
+                        </div>
+
+                        <div style={styles.formGroup}>
+                            <label htmlFor="manufacturingProcess" style={styles.label}>Manufacturing Process *</label>
+                            <select 
+                                id="manufacturingProcess" 
+                                name="manufacturingProcess" 
+                                value={formData.manufacturingProcess} 
+                                onChange={handleInputChange} 
+                                style={styles.input} 
+                                required
+                            >
+                                <option value="">Select a process...</option>
+                                {ALL_CAPABILITIES_GROUPS.map(group => (
+                                    <optgroup label={group.title} key={group.title}>
+                                        {group.processes.map(process => (
+                                            <option key={process} value={process}>{process}</option>
+                                        ))}
+                                    </optgroup>
+                                ))}
+                            </select>
+                        </div>
+
+                        <div style={styles.formGroup}>
+                            <label htmlFor="material" style={styles.label}>Material *</label>
+                            <select 
+                                id="material" 
+                                name="material" 
+                                value={formData.material} 
+                                onChange={handleInputChange} 
+                                style={styles.input} 
+                                required
+                            >
+                                <option value="">Select a material...</option>
+                                <optgroup label="Plastics">{MATERIALS_PLASTICS.map(m => <option key={m} value={m}>{m}</option>)}</optgroup>
+                                <optgroup label="Metals">{MATERIALS_METALS.map(m => <option key={m} value={m}>{m}</option>)}</optgroup>
+                                <optgroup label="Composites">{MATERIALS_COMPOSITES.map(m => <option key={m} value={m}>{m}</option>)}</optgroup>
+                                <optgroup label="Other">{MATERIALS_OTHERS.map(m => <option key={m} value={m}>{m}</option>)}</optgroup>
+                            </select>
+                        </div>
+
+                        <div style={styles.formGroup}>
+                            <label htmlFor="surfaceFinish" style={styles.label}>Surface Finish</label>
+                            <select 
+                                id="surfaceFinish" 
+                                name="surfaceFinish" 
+                                value={formData.surfaceFinish} 
+                                onChange={handleInputChange} 
+                                style={styles.input}
+                            >
+                                <option value="None">None</option>
+                                {SURFACE_FINISHES.map(f => <option key={f} value={f}>{f}</option>)}
+                            </select>
+                        </div>
+
+                        <div style={styles.formGroup}>
+                            <label htmlFor="tolerances" style={styles.label}>Tolerances (if any)</label>
+                            <input 
+                                type="text" 
+                                id="tolerances" 
+                                name="tolerances" 
+                                value={formData.tolerances} 
+                                onChange={handleInputChange} 
+                                style={styles.input} 
+                                placeholder="e.g., ±0.05mm" 
+                            />
+                        </div>
+
+                        <fieldset style={{ ...styles.fieldset, marginTop: '24px', padding: '24px', backgroundColor: 'transparent', border: `1px solid var(--border-color)` }}>
+                            <legend style={{ ...styles.legend, padding: '0 8px' }}>Supporting Information (Optional)</legend>
+
+                            <div style={styles.formGroup}>
+                                <label style={styles.label}>Supporting Documents & Models</label>
+                                <p style={{ fontSize: '12px', color: 'var(--text-secondary)', margin: '-4px 0 8px 0' }}>
+                                    Add technical drawings (PDF, DXF), secondary models, or other relevant files.
+                                </p>
+                                <input 
+                                    type="file" 
+                                    multiple 
+                                    ref={supportingFilesInputRef} 
+                                    onChange={handleSupportingFilesChange} 
+                                    style={{ display: 'none' }} 
+                                    accept=".pdf,.dxf,.step,.stp,.iges,.igs,.zip,.rar,.sldprt,.dwg" 
+                                />
+                                <CtaButton 
+                                    text="Add Files" 
+                                    onClick={() => supportingFilesInputRef.current?.click()} 
+                                    type="button" 
+                                />
+                                {supportingFiles.length > 0 && (
+                                    <div style={styles.supportingFileList}>
+                                        {supportingFiles.map((f, index) => (
+                                            <div key={`${f.name}-${index}`} style={styles.supportingFileItem}>
+                                                <DocumentTextIcon style={{ width: '20px', height: '20px', color: 'var(--text-secondary)', flexShrink: 0, marginRight: '8px' }} />
+                                                <span style={styles.supportingFileName} title={f.name}>{f.name}</span>
+                                                <button 
+                                                    type="button" 
+                                                    onClick={() => removeSupportingFile(index)} 
+                                                    style={styles.supportingFileRemoveBtn} 
+                                                    aria-label={`Remove ${f.name}`}
+                                                >
+                                                    <XMarkIcon style={{ width: '16px', height: '16px' }} />
+                                                </button>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+
+                            <div style={styles.formGroup}>
+                                <label htmlFor="urgency" style={styles.label}>Urgency</label>
+                                <select id="urgency" name="urgency" value={formData.urgency} onChange={handleInputChange} style={styles.input}>
+                                    <option value="standard">Standard Lead Time</option>
+                                    <option value="urgent">Urgent (Premium)</option>
+                                </select>
+                            </div>
+
+                            <div style={styles.formGroup}>
+                                <label htmlFor="packaging" style={styles.label}>Packaging</label>
+                                <select id="packaging" name="packaging" value={formData.packaging} onChange={handleInputChange} style={styles.input}>
+                                    <option value="standard">Standard Packaging</option>
+                                    <option value="custom">Custom / Branded</option>
+                                    <option value="export">Export Crate (Fumigated)</option>
+                                </select>
+                            </div>
+
+                            <div style={styles.formGroup}>
+                                <label style={styles.label}>Quality Control & Inspection</label>
+                                <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+                                    {['Standard Inspection', 'CMM Report', 'Material Certificate', 'Hardness Test'].map(opt => (
+                                        <button
+                                            key={opt}
+                                            type="button"
+                                            onClick={() => handleInspectionChange(opt)}
+                                            style={{
+                                                ...styles.chip,
+                                                backgroundColor: formData.inspectionRequirements.includes(opt) ? styles.chipActive.backgroundColor : styles.chip.backgroundColor,
+                                                color: formData.inspectionRequirements.includes(opt) ? styles.chipActive.color : styles.chip.color,
+                                                border: formData.inspectionRequirements.includes(opt) ? styles.chipActive.border : styles.chip.border
+                                            }}
+                                        >
+                                            {opt}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+
+                            <div style={{ ...styles.formGroup, marginTop: '16px' }}>
+                                <label style={{ ...styles.label, display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
+                                    <input
+                                        type="checkbox"
+                                        checked={formData.requiresEngineeringReview}
+                                        onChange={(e) => setFormData(prev => ({ ...prev, requiresEngineeringReview: e.target.checked }))}
+                                        style={{ marginRight: '8px', width: '18px', height: '18px', cursor: 'pointer' }}
+                                    />
+                                    Requires Engineering Review
+                                </label>
+                                <p style={{ fontSize: '12px', color: 'var(--text-secondary)', margin: '4px 0 0 26px' }}>
+                                    Check if design has complex geometries, tight tolerances (&lt;±0.05mm), or critical applications
+                                </p>
+                            </div>
+
+                            <div style={{ ...styles.formGroup, marginTop: '20px' }}>
+                                <label htmlFor="additionalInstructions" style={styles.label}>Additional Instructions</label>
+                                <textarea id="additionalInstructions" name="additionalInstructions" value={formData.additionalInstructions} onChange={handleInputChange} style={{ ...styles.input, height: '100px', resize: 'vertical' }} placeholder="Any specific requirements..." />
+                            </div>
+                            <div style={{ ...styles.formGroup, marginTop: '20px' }}>
+                                <label htmlFor="requiredCertifications" style={styles.label}>Required Certifications</label>
+                                <input type="text" id="requiredCertifications" name="requiredCertifications" value={formData.requiredCertifications} onChange={handleInputChange} style={styles.input} placeholder="e.g., ISO 9001, Material Certs" />
+                            </div>
+                            <div style={{ ...styles.formGroup, marginTop: '20px' }}>
+                                <label htmlFor="shippingDestination" style={styles.label}>Shipping Destination</label>
+                                <input type="text" id="shippingDestination" name="shippingDestination" value={formData.shippingDestination} onChange={handleInputChange} style={styles.input} placeholder="e.g., Austin, TX, USA" />
+                            </div>
+                            <div style={{ ...styles.formGroup, marginTop: '20px' }}>
+                                <label htmlFor="targetPrice" style={styles.label}>Target Price per Part</label>
+                                <input type="text" id="targetPrice" name="targetPrice" value={formData.targetPrice} onChange={handleInputChange} style={styles.input} placeholder="e.g., $15.50 (optional)" />
+                            </div>
+                        </fieldset>
+
+                        <div style={{ marginTop: '32px' }}>
+                            <CtaButton
+                                text={loading ? "Processing..." : (isAuthenticated ? (isInternal ? "Run Internal Analysis" : (targetManufacturerId ? "Request Quote" : "Upload Design")) : "Proceed to Login")}
+                                primary
+                                type="submit"
+                                disabled={loading}
+                            />
+                        </div>
+                    </div>
                 </div>
-            </div>
-
-            <div style={{ ...styles.formGroup, marginTop: '16px' }}>
-                <label style={{ ...styles.label, display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
-                    <input
-                        type="checkbox"
-                        checked={formData.requiresEngineeringReview}
-                        onChange={(e) => setFormData(prev => ({ ...prev, requiresEngineeringReview: e.target.checked }))}
-                        style={{ marginRight: '8px', width: '18px', height: '18px', cursor: 'pointer' }}
-                    />
-                    Requires Engineering Review
-                </label>
-                <p style={{ fontSize: '12px', color: 'var(--text-secondary)', margin: '4px 0 0 26px' }}>
-                    Check if design has complex geometries, tight tolerances (&lt;±0.05mm), or critical applications
-                </p>
-            </div>
-
-            <div style={{ ...styles.formGroup, marginTop: '20px' }}>
-                <label htmlFor="additionalInstructions" style={styles.label}>Additional Instructions</label>
-                <textarea id="additionalInstructions" name="additionalInstructions" value={formData.additionalInstructions} onChange={handleInputChange} style={{ ...styles.input, height: '100px', resize: 'vertical' }} placeholder="Any specific requirements..." />
-            </div>
-            <div style={{ ...styles.formGroup, marginTop: '20px' }}>
-                <label htmlFor="requiredCertifications" style={styles.label}>Required Certifications</label>
-                <input type="text" id="requiredCertifications" name="requiredCertifications" value={formData.requiredCertifications} onChange={handleInputChange} style={styles.input} placeholder="e.g., ISO 9001, Material Certs" />
-            </div>
-            <div style={{ ...styles.formGroup, marginTop: '20px' }}>
-                <label htmlFor="shippingDestination" style={styles.label}>Shipping Destination</label>
-                <input type="text" id="shippingDestination" name="shippingDestination" value={formData.shippingDestination} onChange={handleInputChange} style={styles.input} placeholder="e.g., Austin, TX, USA" />
-            </div>
-            <div style={{ ...styles.formGroup, marginTop: '20px' }}>
-                <label htmlFor="targetPrice" style={styles.label}>Target Price per Part</label>
-                <input type="text" id="targetPrice" name="targetPrice" value={formData.targetPrice} onChange={handleInputChange} style={styles.input} placeholder="e.g., $15.50 (optional)" />
-            </div>
-        </fieldset>
-
-        <div style={{ marginTop: '32px' }}>
-            <CtaButton
-                text={loading ? "Processing..." : (isAuthenticated ? (targetManufacturerId ? "Request Quote" : "Upload Design") : "Proceed to Login")}
-                primary
-                type="submit"
-                disabled={loading}
-            />
+            </form>
         </div>
-    </div></div></form></div>);
+    );
 };
