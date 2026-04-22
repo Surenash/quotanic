@@ -32,7 +32,9 @@ import {
 
 import * as Components from '../../components';
 
-export const CustomerDashboard = ({ user, onViewFiles, navigate }) => {
+export const CustomerDashboard = ({ user }) => {
+    const navigate = useNavigate();
+    const { openViewer: onViewFiles } = useFileViewer();
     const [activeView, setActiveView] = useState('overview');
     const navItems = [
         { id: 'overview', label: 'Overview', icon: ChartPieIcon },
@@ -48,7 +50,7 @@ export const CustomerDashboard = ({ user, onViewFiles, navigate }) => {
             case 'profile': return <Components.CustomerProfilePage />;
             case 'overview':
             default:
-                return <Components.CustomerDashboardOverview user={user} />;
+                return <Components.CustomerDashboardOverview user={user} navigate={navigate} onViewFiles={onViewFiles} />;
         }
     };
 

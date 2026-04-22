@@ -279,7 +279,7 @@ export const UploadPage = ({ isInternal = false }: { isInternal?: boolean }) => 
                             ref={fileInputRef} 
                             onChange={handleFileChange} 
                             onClick={(e) => e.stopPropagation()}
-                            style={{ display: 'none' }} 
+                            style={{ position: 'absolute', width: 0, height: 0, opacity: 0 }} 
                             accept=".stl,.step,.iges,.igs,.stp" 
                         />
 
@@ -430,7 +430,7 @@ export const UploadPage = ({ isInternal = false }: { isInternal?: boolean }) => 
                                     multiple 
                                     ref={supportingFilesInputRef} 
                                     onChange={handleSupportingFilesChange} 
-                                    style={{ display: 'none' }} 
+                                    style={{ position: 'absolute', width: 0, height: 0, opacity: 0 }} 
                                     accept=".pdf,.dxf,.step,.stp,.iges,.igs,.zip,.rar,.sldprt,.dwg" 
                                 />
                                 <CtaButton 
