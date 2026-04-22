@@ -248,9 +248,21 @@ export const UploadPage = ({ isInternal = false }: { isInternal?: boolean }) => 
         }
     };
 
-    const dropzoneStyle = { 
+    const dropzoneStyle: React.CSSProperties = { 
         ...styles.uploadDropzone, 
-        ...(isDragging ? styles.uploadDropzoneActive : {}), 
+        ...(isDragging ? styles.uploadDropzoneActive : {}),
+        position: 'relative', // Ensure overlay is positioned correctly
+    };
+
+    const inputOverlayStyle: React.CSSProperties = {
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        width: '100%',
+        height: '100%',
+        opacity: 0,
+        cursor: 'pointer',
+        zIndex: 10,
     };
 
     return (
@@ -273,25 +285,24 @@ export const UploadPage = ({ isInternal = false }: { isInternal?: boolean }) => 
                     <div style={styles.uploadDropzoneWrapper}>
                         <label style={styles.label}>Primary CAD File (.stl, .step, .iges, .igs, .stp) *</label>
                         
-                        {/* Hidden file input */}
-                        <input 
-                            type="file" 
-                            id="primary-cad-input"
-                            ref={fileInputRef} 
-                            onChange={handleFileChange} 
-                            onClick={(e) => e.stopPropagation()}
-                            style={{ position: 'absolute', width: 0, height: 0, opacity: 0 }} 
-                            accept=".stl,.step,.iges,.igs,.stp" 
-                        />
-
-                        <label 
-                            htmlFor="primary-cad-input"
+                        <div 
                             style={dropzoneStyle} 
                             onDragEnter={e => e.stopPropagation()} 
                             onDragOver={handleDragOver} 
                             onDragLeave={handleDragLeave} 
                             onDrop={handleDrop} 
                         >
+                            {!file && (
+                                <input 
+                                    type="file" 
+                                    id="primary-cad-input"
+                                    ref={fileInputRef} 
+                                    onChange={handleFileChange} 
+                                    style={inputOverlayStyle} 
+                                    accept=".stl,.step,.iges,.igs,.stp" 
+                                />
+                            )}
+
                             {file ? (
                                 <div style={styles.uploadFileInfo}>
                                     <FileIcon />
@@ -303,6 +314,7 @@ export const UploadPage = ({ isInternal = false }: { isInternal?: boolean }) => 
                                         text="Clear" 
                                         onClick={(e) => { e.stopPropagation(); setFile(null); }} 
                                         type="button" 
+                                        className="button-small"
                                     />
                                 </div>
                             ) : (
@@ -312,7 +324,7 @@ export const UploadPage = ({ isInternal = false }: { isInternal?: boolean }) => 
                                     <p style={{ color: 'var(--text-secondary)', fontSize: '14px' }}>or click to browse</p>
                                 </>
                             )}
-                        </label>
+                        </div>
                     </div>
 
                     <div style={styles.uploadFormFields}>
@@ -426,22 +438,22 @@ export const UploadPage = ({ isInternal = false }: { isInternal?: boolean }) => 
                                 <p style={{ fontSize: '12px', color: 'var(--text-secondary)', margin: '-4px 0 8px 0' }}>
                                     Add technical drawings (PDF, DXF), secondary models, or other relevant files.
                                 </p>
-                                <input 
-                                    type="file" 
-                                    id="supporting-files-input"
-                                    multiple 
-                                    ref={supportingFilesInputRef} 
-                                    onChange={handleSupportingFilesChange} 
-                                    style={{ position: 'absolute', width: 0, height: 0, opacity: 0 }} 
-                                    accept=".pdf,.dxf,.step,.stp,.iges,.igs,.zip,.rar,.sldprt,.dwg" 
-                                />
-                                <label htmlFor="supporting-files-input">
+                                <div style={{ position: 'relative', display: 'inline-block' }}>
+                                    <input 
+                                        type="file" 
+                                        id="supporting-files-input"
+                                        multiple 
+                                        ref={supportingFilesInputRef} 
+                                        onChange={handleSupportingFilesChange} 
+                                        style={inputOverlayStyle} 
+                                        accept=".pdf,.dxf,.step,.stp,.iges,.igs,.zip,.rar,.sldprt,.dwg" 
+                                    />
                                     <CtaButton 
                                         text="Add Files" 
                                         type="button" 
-                                        onClick={() => {}} // Click will be handled by the label
+                                        onClick={() => {}} 
                                     />
-                                </label>
+                                </div>
                                 {supportingFiles.length > 0 && (
                                     <div style={styles.supportingFileList}>
                                         {supportingFiles.map((f, index) => (
