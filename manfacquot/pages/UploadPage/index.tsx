@@ -285,24 +285,23 @@ export const UploadPage = ({ isInternal = false }: { isInternal?: boolean }) => 
                     <div style={styles.uploadDropzoneWrapper}>
                         <label style={styles.label}>Primary CAD File (.stl, .step, .iges, .igs, .stp) *</label>
                         
-                        <input 
-                            type="file" 
-                            id="primary-cad-input"
-                            ref={fileInputRef} 
-                            onChange={handleFileChange} 
-                            style={{ position: 'absolute', width: '1px', height: '1px', padding: 0, margin: '-1px', overflow: 'hidden', clip: 'rect(0,0,0,0)', whiteSpace: 'nowrap', borderWidth: 0 }}
-                            accept=".stl,.step,.iges,.igs,.stp" 
-                            onClick={(e) => e.stopPropagation()}
-                        />
-
                         <div 
                             style={{ ...dropzoneStyle, cursor: !file ? 'pointer' : 'default' }} 
                             onDragEnter={e => e.stopPropagation()} 
                             onDragOver={handleDragOver} 
                             onDragLeave={handleDragLeave} 
                             onDrop={handleDrop} 
-                            onClick={() => { if (!file && fileInputRef.current) fileInputRef.current.click() }}
                         >
+                            {!file && (
+                                <input 
+                                    type="file" 
+                                    id="primary-cad-input"
+                                    ref={fileInputRef} 
+                                    onChange={handleFileChange} 
+                                    style={inputOverlayStyle} 
+                                    accept=".stl,.step,.iges,.igs,.stp" 
+                                />
+                            )}
                             {file ? (
                                 <div style={styles.uploadFileInfo}>
                                     <FileIcon />
