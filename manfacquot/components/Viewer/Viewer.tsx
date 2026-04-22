@@ -290,7 +290,7 @@ const Viewer: React.FC<ViewerProps> = ({
               camera={{ fov: 50 }}
               shadows={!lowQuality}
               gl={{ 
-                  preserveDrawingBuffer: !lowQuality, 
+                  preserveDrawingBuffer: onLoadComplete ? true : !lowQuality, 
                   antialias: !lowQuality,
                   powerPreference: lowQuality ? 'low-power' : 'high-performance'
               }}
