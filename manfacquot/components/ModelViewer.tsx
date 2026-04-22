@@ -289,6 +289,7 @@ const ModelViewer: React.FC<ModelViewerProps> = ({ className = '' }) => {
             className="hidden"
             accept={SUPPORTED_FORMATS.join(',')}
             onChange={handleFileInputChange}
+            onClick={(e) => e.stopPropagation()}
           />
         </div>
       ) : (
