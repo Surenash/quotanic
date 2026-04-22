@@ -1917,7 +1917,8 @@ export const DesignThumbnail = ({ modelUrl, thumbnailUrl, designId, designName }
                     <ErrorBoundary
                         fallback={(error) => {
                             console.error(`[DesignThumbnail] 💥 Error auto-capturing ${designName}:`, error);
-                            setIsAutoCapturing(false);
+                            // Defer state update out of the render phase
+                            queueMicrotask(() => setIsAutoCapturing(false));
                             return null;
                         }}
                     >
