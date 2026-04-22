@@ -49,6 +49,7 @@ import CheckboxGroup from './components/CheckboxGroup';
 import ManufacturerSettingsPage from './components/ManufacturerSettings';
 import Viewer, { ErrorBoundary } from './components/Viewer';
 import { ViewPreset } from './types/types';
+import SmartViewPage from './pages/SmartViewPage';
 
 import './index.css';
 
@@ -3507,6 +3508,7 @@ const ManufacturerDashboard = ({ user, onViewFiles, onNavigate }) => {
         { id: 'internal', label: 'Internal Quotations', icon: DocumentTextIcon },
         { id: 'orders', label: 'Active Orders', icon: CubeIcon },
         { id: 'settings', label: 'Settings', icon: CogIcon },
+        { id: 'smart-view', label: 'Smart View Workspace', icon: ChartPieIcon }, // Re-using ChartPieIcon for now, replace if needed
         { id: 'profile', label: 'Profile Management', icon: UserCircleIcon },
     ];
 
@@ -3517,6 +3519,7 @@ const ManufacturerDashboard = ({ user, onViewFiles, onNavigate }) => {
             case 'quotes': return <QuoteRequestsPage onViewFiles={onViewFiles} />;
             case 'internal': return <InternalQuotationsPage onViewFiles={onViewFiles} onNavigate={onNavigate} />;
             case 'orders': return <ActiveOrdersPage onViewFiles={onViewFiles} />;
+            case 'smart-view': onNavigate('smart-view'); return null; // We navigate out to the dedicated page
             case 'overview':
             default:
                 return <DashboardOverview user={user} onViewFiles={onViewFiles} onSetActiveView={setActiveView} />;
@@ -4850,6 +4853,8 @@ const App = () => {
         if (path === '/privacy') return 'privacy';
         if (path === '/terms') return 'terms';
         if (path === '/upload') return 'upload';
+        if (path.startsWith('/smart-view/')) return 'smart-view';
+        if (path === '/smart-view') return 'smart-view';
         if (path.startsWith('/manufacturer/')) return 'manufacturer-profile';
         return 'landing';
     };
@@ -4857,6 +4862,9 @@ const App = () => {
     const getParamsFromPath = (path: string) => {
         if (path.startsWith('/manufacturer/')) {
             return path.split('/manufacturer/')[1];
+        }
+        if (path.startsWith('/smart-view/')) {
+            return path.split('/smart-view/')[1];
         }
         return null;
     };
@@ -4880,6 +4888,7 @@ const App = () => {
             case 'privacy': return '/privacy';
             case 'terms': return '/terms';
             case 'upload': return '/upload';
+            case 'smart-view': return params ? `/smart-view/${params}` : '/smart-view';
             case 'manufacturer-profile': return `/manufacturer/${params}`;
             default: return '/';
         }
@@ -5071,6 +5080,12 @@ const App = () => {
             case 'upload': return <UploadPage onProceedToLogin={handleProceedToLogin} onNavigate={handleNavigate} isAuthenticated={isAuthenticated} user={user} targetManufacturerId={pageParams} />;
             case 'internal-upload': return <UploadPage onProceedToLogin={handleProceedToLogin} onNavigate={handleNavigate} isAuthenticated={isAuthenticated} user={user} isInternal={true} />;
             case 'view-quotes': return <DesignQuotationsPage designId={pageParams?.designId} onNavigate={handleNavigate} onViewFiles={handleViewFiles} />;
+            case 'smart-view':
+                if (!isAuthenticated) {
+                    handleNavigate('login');
+                    return null;
+                }
+                return <SmartViewPage designId={pageParams} onNavigate={handleNavigate} />;
             case 'dashboard':
                 if (!isAuthenticated) {
                     handleNavigate('login');

@@ -10,9 +10,11 @@ interface ModelComponentProps {
   url: string;
   viewportMode: 'solid' | 'wireframe';
   materialOverride: { color: string, isOverride: boolean };
+  activeFeatureIndex?: number | null;
+  onFeatureClick?: (index: number) => void;
 }
 
-const applyMaterialSettings = (obj: any, mode: string, override: any) => {
+const applyMaterialSettings = (obj: any, mode: string, override: any, activeFeatureIndex?: number | null) => {
   obj.traverse((child: any) => {
     if (child.isMesh) {
       child.castShadow = true;
@@ -21,6 +23,12 @@ const applyMaterialSettings = (obj: any, mode: string, override: any) => {
         child.material.wireframe = mode === 'wireframe';
         if (override.isOverride) {
           child.material.color.set(override.color);
+        } else if (activeFeatureIndex !== undefined && activeFeatureIndex !== null) {
+          // Highlight in yellow if a feature is selected
+          child.material.color.set('#facc15');
+        } else {
+           // Ensure it resets when no feature is selected
+           child.material.color.set('#3b82f6');
         }
       }
     }
@@ -28,7 +36,7 @@ const applyMaterialSettings = (obj: any, mode: string, override: any) => {
 };
 
 // STL Loader Component
-const STLModel: React.FC<ModelComponentProps> = ({ url, viewportMode, materialOverride }) => {
+const STLModel: React.FC<ModelComponentProps> = ({ url, viewportMode, materialOverride, activeFeatureIndex, onFeatureClick }) => {
   const geometry = useLoader(STLLoader, url);
   const materialRef = useRef<THREE.MeshStandardMaterial>(null);
 
@@ -37,6 +45,8 @@ const STLModel: React.FC<ModelComponentProps> = ({ url, viewportMode, materialOv
       materialRef.current.wireframe = viewportMode === 'wireframe';
       if (materialOverride.isOverride) {
         materialRef.current.color.set(materialOverride.color);
+      } else if (activeFeatureIndex !== undefined && activeFeatureIndex !== null) {
+        materialRef.current.color.set('#facc15'); // Yellow highlight
       } else {
         materialRef.current.color.set('#3b82f6');
       }
@@ -44,24 +54,49 @@ const STLModel: React.FC<ModelComponentProps> = ({ url, viewportMode, materialOv
   });
 
   return (
-    <mesh geometry={geometry} castShadow receiveShadow>
+    <mesh
+        geometry={geometry}
+        castShadow
+        receiveShadow
+        onClick={(e) => { e.stopPropagation(); if (onFeatureClick) onFeatureClick(0); }}
+        onPointerOver={() => { document.body.style.cursor = 'pointer'; }}
+        onPointerOut={() => { document.body.style.cursor = 'auto'; }}
+    >
       <meshStandardMaterial ref={materialRef} color="#3b82f6" metalness={0.6} roughness={0.4} />
     </mesh>
   );
 };
 
 // OBJ Loader Component
-const OBJModel: React.FC<ModelComponentProps> = ({ url, viewportMode, materialOverride }) => {
+const OBJModel: React.FC<ModelComponentProps> = ({ url, viewportMode, materialOverride, activeFeatureIndex, onFeatureClick }) => {
   const model = useLoader(OBJLoader, url);
-  useFrame(() => applyMaterialSettings(model, viewportMode, materialOverride));
-  return <primitive object={model} />;
+
+  useFrame(() => {
+    applyMaterialSettings(model, viewportMode, materialOverride, activeFeatureIndex);
+  });
+
+  return <primitive
+      object={model}
+      onClick={(e: any) => { e.stopPropagation(); if (onFeatureClick) onFeatureClick(0); }}
+      onPointerOver={() => { document.body.style.cursor = 'pointer'; }}
+      onPointerOut={() => { document.body.style.cursor = 'auto'; }}
+  />;
 };
 
 // GLTF/GLB Loader Component
-const GLTFModel: React.FC<ModelComponentProps> = ({ url, viewportMode, materialOverride }) => {
+const GLTFModel: React.FC<ModelComponentProps> = ({ url, viewportMode, materialOverride, activeFeatureIndex, onFeatureClick }) => {
   const { scene } = useGLTF(url);
-  useFrame(() => applyMaterialSettings(scene, viewportMode, materialOverride));
-  return <primitive object={scene} />;
+
+  useFrame(() => {
+    applyMaterialSettings(scene, viewportMode, materialOverride, activeFeatureIndex);
+  });
+
+  return <primitive
+      object={scene}
+      onClick={(e: any) => { e.stopPropagation(); if (onFeatureClick) onFeatureClick(0); }}
+      onPointerOver={() => { document.body.style.cursor = 'pointer'; }}
+      onPointerOut={() => { document.body.style.cursor = 'auto'; }}
+  />;
 };
 
 interface ModelProps {
@@ -71,9 +106,11 @@ interface ModelProps {
   viewportMode: 'solid' | 'wireframe';
   materialOverride: { color: string, isOverride: boolean };
   animation: any;
+  activeFeatureIndex?: number | null;
+  onFeatureClick?: (index: number) => void;
 }
 
-const Model: React.FC<ModelProps> = ({ modelUrl, fileExtension, onLoad, viewportMode, materialOverride, animation }) => {
+const Model: React.FC<ModelProps> = ({ modelUrl, fileExtension, onLoad, viewportMode, materialOverride, animation, activeFeatureIndex, onFeatureClick }) => {
   const groupRef = useRef<THREE.Group>(null);
 
   useFrame((state) => {
@@ -119,7 +156,7 @@ const Model: React.FC<ModelProps> = ({ modelUrl, fileExtension, onLoad, viewport
   });
 
   const renderLoader = () => {
-    const props = { url: modelUrl, viewportMode, materialOverride };
+    const props = { url: modelUrl, viewportMode, materialOverride, activeFeatureIndex, onFeatureClick };
     switch (fileExtension) {
       case 'stl': return <STLModel {...props} />;
       case 'obj': return <OBJModel {...props} />;
