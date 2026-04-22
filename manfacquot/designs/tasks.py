@@ -551,15 +551,15 @@ def generate_snapshot(file_path, output_path):
 
 
 def generate_glb_from_step(file_path):
-    \"\"\"
+    """
     Converts a STEP/IGES file to a renderable STL format for 3D viewing.
     Uses StlAPI_Writer which is more stable in this environment than GLTF export.
-    \"\"\"
+    """
     if not PYTHONOCC_AVAILABLE:
-        logger.error(\"pythonocc-core not available for 3D conversion.\")
+        logger.error("pythonocc-core not available for 3D conversion.")
         return None
 
-    logger.info(f\"3D Conversion: Starting for {file_path}...\")
+    logger.info(f"3D Conversion: Starting for {file_path}...")
     
     try:
         # 1. Load the shape
@@ -573,7 +573,7 @@ def generate_glb_from_step(file_path):
             shape = read_iges_file(file_path)
         
         if not shape or shape.IsNull():
-            logger.error(\"Failed to load shape for 3D conversion.\")
+            logger.error("Failed to load shape for 3D conversion.")
             return None
 
         # 2. Tessellate (Required for export)
@@ -590,15 +590,15 @@ def generate_glb_from_step(file_path):
             writer.Write(shape, output_path)
             
             if os.path.exists(output_path):
-                logger.info(f\"3D Conversion: Successfully saved view STL to {output_path}\")
+                logger.info(f"3D Conversion: Successfully saved view STL to {output_path}")
                 return output_path
         except Exception as stl_err:
-            logger.error(f\"3D Conversion: STL export failed: {stl_err}\")
+            logger.error(f"3D Conversion: STL export failed: {stl_err}")
 
         return None
 
     except Exception as e:
-        logger.error(f\"3D Conversion: Unexpected error: {e}\", exc_info=True)
+        logger.error(f"3D Conversion: Unexpected error: {e}", exc_info=True)
         return None
 
 
@@ -693,13 +693,13 @@ def analyze_cad_file(self, design_id):
                                 if not settings.USE_LOCAL_STORAGE:
                                     try:
                                         s3_client.upload_file(view_file_path, settings.AWS_STORAGE_BUCKET_NAME, view_file_key)
-                                        logger.info(f\"Successfully uploaded view file to S3: {view_file_key}\")
+                                        logger.info(f"Successfully uploaded view file to S3: {view_file_key}")
                                     except Exception as s3_err:
-                                        logger.error(f\"Failed to upload view file to S3: {s3_err}\")
+                                        logger.error(f"Failed to upload view file to S3: {s3_err}")
 
-                                logger.info(f\"Successfully generated view file: {view_file_key}\")
+                                logger.info(f"Successfully generated view file: {view_file_key}")
                         except Exception as view_err:
-                            logger.warning(f\"View file generation failed (non-critical): {view_err}\")
+                            logger.warning(f"View file generation failed (non-critical): {view_err}")
 
                     else:
                         error_message = f"Unsupported file type: {file_extension}."
