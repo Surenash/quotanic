@@ -292,15 +292,16 @@ export const UploadPage = ({ isInternal = false }: { isInternal?: boolean }) => 
                             onChange={handleFileChange} 
                             style={{ display: 'none' }} 
                             accept=".stl,.step,.iges,.igs,.stp" 
+                            onClick={(e) => e.stopPropagation()}
                         />
 
-                        <label 
-                            htmlFor={!file ? "primary-cad-input" : undefined}
+                        <div 
                             style={{ ...dropzoneStyle, cursor: !file ? 'pointer' : 'default' }} 
                             onDragEnter={e => e.stopPropagation()} 
                             onDragOver={handleDragOver} 
                             onDragLeave={handleDragLeave} 
                             onDrop={handleDrop} 
+                            onClick={() => { if (!file && fileInputRef.current) fileInputRef.current.click() }}
                         >
                             {file ? (
                                 <div style={styles.uploadFileInfo}>
@@ -323,7 +324,7 @@ export const UploadPage = ({ isInternal = false }: { isInternal?: boolean }) => 
                                     <p style={{ pointerEvents: 'none', color: 'var(--text-secondary)', fontSize: '14px' }}>or click to browse</p>
                                 </>
                             )}
-                        </label>
+                        </div>
                     </div>
 
                     <div style={styles.uploadFormFields}>
@@ -446,13 +447,16 @@ export const UploadPage = ({ isInternal = false }: { isInternal?: boolean }) => 
                                     onChange={handleSupportingFilesChange} 
                                     style={{ display: 'none' }} 
                                     accept=".pdf,.dxf,.step,.stp,.iges,.igs,.zip,.rar,.sldprt,.dwg" 
+                                    onClick={(e) => e.stopPropagation()}
                                 />
 
-                                <label htmlFor="supporting-files-input" style={{ display: 'inline-block' }}>
-                                    <div style={{ ...styles.button, ...styles.buttonSecondary, cursor: 'pointer' }} className="hover-lift">
-                                        Add Files
-                                    </div>
-                                </label>
+                                <div 
+                                    style={{ ...styles.button, ...styles.buttonSecondary, cursor: 'pointer', display: 'inline-block' }} 
+                                    className="hover-lift"
+                                    onClick={() => supportingFilesInputRef.current?.click()}
+                                >
+                                    Add Files
+                                </div>
 
                                 {supportingFiles.length > 0 && (
                                     <div style={styles.supportingFileList}>
