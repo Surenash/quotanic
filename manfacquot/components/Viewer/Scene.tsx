@@ -1,4 +1,3 @@
-
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { useFrame, useThree } from '@react-three/fiber';
 import { OrbitControls, Grid, Environment } from '@react-three/drei';
@@ -23,12 +22,13 @@ interface SceneProps {
   resetKey: number;
   activeFeatureIndex?: number | null;
   onFeatureClick?: (index: number) => void;
+  onLoadComplete?: () => void;
 }
 
 const Scene: React.FC<SceneProps> = ({ 
   modelUrl, fileExtension, view, isViewLocked, onUserInteraction,
   viewportMode, material, lighting, animation, zoomLevel,
-  showGrid, showAxes, resetKey, activeFeatureIndex, onFeatureClick
+  showGrid, showAxes, resetKey, activeFeatureIndex, onFeatureClick, onLoadComplete
 }) => {
   const { camera, controls, size, gl } = useThree();
   const targetPosition = useRef(new THREE.Vector3(5, 5, 5));
@@ -65,7 +65,15 @@ const Scene: React.FC<SceneProps> = ({
       (controls as any).target.set(0, 0, 0);
       (controls as any).update();
     }
-  }, [camera, controls]);
+    
+    if (onLoadComplete) {
+      // Use a small delay to ensure the 3D geometry has fully painted 
+      // and the camera transition is settled before taking the screenshot.
+      setTimeout(() => {
+        onLoadComplete();
+      }, 200);
+    }
+  }, [camera, controls, onLoadComplete]);
 
   // RESET LOGIC
   useEffect(() => {

@@ -476,16 +476,90 @@ def perform_fbm_analysis(file_path, file_extension):
 
 
 
+def generate_snapshot(file_path, output_path):
+    """
+    Generates a static isometric PNG snapshot of a 3D file (STL/STEP/IGES).
+    Uses pythonocc-core for offscreen rendering.
+    """
+    if not PYTHONOCC_AVAILABLE:
+        logger.error("pythonocc-core not available for snapshot generation.")
+        return False
+
+    try:
+        from OCC.Core.V3d import V3d_Viewer
+        from OCC.Core.Aspect import Aspect_DisplayConnection
+        from OCC.Core.OpenGl import OpenGl_GraphicDriver
+        from OCC.Core.BRepMesh import BRepMesh_IncrementalMesh
+        from OCC.Core.Quantity import Quantity_Color, Quantity_TOC_RGB
+        
+        # 1. Load the shape
+        file_ext = os.path.splitext(file_path)[1].lower()
+        shape = None
+        if file_ext == '.stl':
+            from OCC.Core.StlAPI import StlAPI_Reader
+            reader = StlAPI_Reader()
+            shape = TopoDS_Shape()
+            reader.Read(shape, file_path)
+        elif file_ext in ['.step', '.stp']:
+            shape = read_step_file(file_path)
+        elif file_ext in ['.iges', '.igs']:
+            shape = read_iges_file(file_path)
+            
+        if not shape or shape.IsNull():
+            return False
+
+        # 2. Setup Viewer & Offscreen View
+        display_conn = Aspect_DisplayConnection()
+        driver = OpenGl_GraphicDriver(display_conn)
+        viewer = V3d_Viewer(driver)
+        view = viewer.CreateView()
+        
+        # Enable offscreen rendering (required for headless servers)
+        # Note: Depending on the OCC build, this may require Xvfb on Linux
+        
+        # 3. Create AIS Context and Display Shape
+        from OCC.Core.AIS import AIS_InteractiveContext, AIS_Shape
+        context = AIS_InteractiveContext(viewer)
+        ais_shape = AIS_Shape(shape)
+        
+        # Set a nice color (Neon Cyan-ish)
+        color = Quantity_Color(0.0, 0.9, 0.9, Quantity_TOC_RGB)
+        ais_shape.SetColor(color)
+        context.Display(ais_shape, True)
+        
+        # 4. Position Camera (Isometric)
+        view.SetProj(1, -1, 1) # Standard Isometric
+        view.FitAll()
+        view.ZFitAll()
+        
+        # 5. Set Background (Deep Space Black)
+        view.SetBgGradientColors(
+            Quantity_Color(0.04, 0.04, 0.06, Quantity_TOC_RGB),
+            Quantity_Color(0.02, 0.02, 0.04, Quantity_TOC_RGB),
+            2, True
+        )
+        
+        # 6. Dump to File
+        # We use a reasonably high resolution for the thumbnail
+        view.Dump(output_path)
+        
+        return os.path.exists(output_path)
+
+    except Exception as e:
+        logger.error(f"Snapshot Generation Failed: {e}", exc_info=True)
+        return False
+
+
 def generate_glb_from_step(file_path):
-    \"\"\"
+    """
     Converts a STEP/IGES file to a renderable STL format for 3D viewing.
     Uses StlAPI_Writer which is more stable in this environment than GLTF export.
-    \"\"\"
+    """
     if not PYTHONOCC_AVAILABLE:
-        logger.error(\"pythonocc-core not available for 3D conversion.\")
+        logger.error("pythonocc-core not available for 3D conversion.")
         return None
 
-    logger.info(f\"3D Conversion: Starting for {file_path}...\")
+    logger.info(f"3D Conversion: Starting for {file_path}...")
     
     try:
         # 1. Load the shape
@@ -499,7 +573,7 @@ def generate_glb_from_step(file_path):
             shape = read_iges_file(file_path)
         
         if not shape or shape.IsNull():
-            logger.error(\"Failed to load shape for 3D conversion.\")
+            logger.error("Failed to load shape for 3D conversion.")
             return None
 
         # 2. Tessellate (Required for export)
@@ -516,15 +590,15 @@ def generate_glb_from_step(file_path):
             writer.Write(shape, output_path)
             
             if os.path.exists(output_path):
-                logger.info(f\"3D Conversion: Successfully saved view STL to {output_path}\")
+                logger.info(f"3D Conversion: Successfully saved view STL to {output_path}")
                 return output_path
         except Exception as stl_err:
-            logger.error(f\"3D Conversion: STL export failed: {stl_err}\")
+            logger.error(f"3D Conversion: STL export failed: {stl_err}")
 
         return None
 
     except Exception as e:
-        logger.error(f\"3D Conversion: Unexpected error: {e}\", exc_info=True)
+        logger.error(f"3D Conversion: Unexpected error: {e}", exc_info=True)
         return None
 
 
@@ -619,16 +693,28 @@ def analyze_cad_file(self, design_id):
                                 if not settings.USE_LOCAL_STORAGE:
                                     try:
                                         s3_client.upload_file(view_file_path, settings.AWS_STORAGE_BUCKET_NAME, view_file_key)
-                                        logger.info(f\"Successfully uploaded view file to S3: {view_file_key}\")
+                                        logger.info(f"Successfully uploaded view file to S3: {view_file_key}")
                                     except Exception as s3_err:
-                                        logger.error(f\"Failed to upload view file to S3: {s3_err}\")
+                                        logger.error(f"Failed to upload view file to S3: {s3_err}")
 
-                                logger.info(f\"Successfully generated view file: {view_file_key}\")
+                                logger.info(f"Successfully generated view file: {view_file_key}")
                         except Exception as view_err:
-                            logger.warning(f\"View file generation failed (non-critical): {view_err}\")
+                            logger.warning(f"View file generation failed (non-critical): {view_err}")
 
                     else:
                         error_message = f"Unsupported file type: {file_extension}."
+
+                    # --- Generate Snapshot (Isometric Image) ---
+                    try:
+                        thumb_path = local_file_path.rsplit('.', 1)[0] + '_thumb.png'
+                        if generate_snapshot(local_file_path, thumb_path):
+                            thumb_key = design.s3_file_key.rsplit('.', 1)[0] + '_thumb.png'
+                            geometric_data['thumbnail_key'] = thumb_key
+                            if not settings.USE_LOCAL_STORAGE:
+                                s3_client.upload_file(thumb_path, settings.AWS_STORAGE_BUCKET_NAME, thumb_key)
+                            logger.info(f"Successfully generated thumbnail: {thumb_key}")
+                    except Exception as thumb_err:
+                        logger.warning(f"Thumbnail generation failed (non-critical): {thumb_err}")
 
                     if analysis_successful:
                         design.geometric_data = geometric_data

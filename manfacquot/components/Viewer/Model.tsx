@@ -37,7 +37,9 @@ const applyMaterialSettings = (obj: any, mode: string, override: any, activeFeat
 
 // STL Loader Component
 const STLModel: React.FC<ModelComponentProps> = ({ url, viewportMode, materialOverride, activeFeatureIndex, onFeatureClick }) => {
-  const geometry = useLoader(STLLoader, url);
+  const geometry = useLoader(STLLoader, url, (loader) => {
+    loader.setCrossOrigin('anonymous');
+  });
   const materialRef = useRef<THREE.MeshStandardMaterial>(null);
 
   useFrame(() => {
@@ -69,7 +71,9 @@ const STLModel: React.FC<ModelComponentProps> = ({ url, viewportMode, materialOv
 
 // OBJ Loader Component
 const OBJModel: React.FC<ModelComponentProps> = ({ url, viewportMode, materialOverride, activeFeatureIndex, onFeatureClick }) => {
-  const model = useLoader(OBJLoader, url);
+  const model = useLoader(OBJLoader, url, (loader) => {
+    loader.setCrossOrigin('anonymous');
+  });
 
   useFrame(() => {
     applyMaterialSettings(model, viewportMode, materialOverride, activeFeatureIndex);
@@ -85,7 +89,9 @@ const OBJModel: React.FC<ModelComponentProps> = ({ url, viewportMode, materialOv
 
 // GLTF/GLB Loader Component
 const GLTFModel: React.FC<ModelComponentProps> = ({ url, viewportMode, materialOverride, activeFeatureIndex, onFeatureClick }) => {
-  const { scene } = useGLTF(url);
+  const { scene } = useGLTF(url, undefined, undefined, (loader: any) => {
+    loader.setCrossOrigin('anonymous');
+  });
 
   useFrame(() => {
     applyMaterialSettings(scene, viewportMode, materialOverride, activeFeatureIndex);

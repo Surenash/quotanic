@@ -94,6 +94,13 @@ export const api = {
         return this.request('/designs/', { method: 'POST', body: designData });
     },
 
+    updateDesignThumbnail(designId: string, thumbnailUrl: string) {
+        return this.request(`/designs/${designId}/thumbnail/`, {
+            method: 'PATCH',
+            body: { thumbnail_url: thumbnailUrl }
+        });
+    },
+
     updateManufacturerProfile(profileData: object) {
         return this.request('/manufacturers/profile/', { method: 'PUT', body: profileData });
     },

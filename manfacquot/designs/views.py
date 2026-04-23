@@ -3,6 +3,7 @@ import uuid
 import boto3 # Ensure boto3 is installed
 from botocore.exceptions import ClientError
 from django.conf import settings
+from django.shortcuts import get_object_or_404
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
@@ -217,9 +218,42 @@ class DesignDetailView(generics.RetrieveUpdateDestroyAPIView):
     # For now, DesignSerializer has many read_only fields, limiting what can be updated.
     # Deletion is allowed by IsOwnerOrAdmin.
 
+class DesignThumbnailUpdateView(APIView):
+    """
+    PATCH /api/designs/{id}/thumbnail/
+    Updates the thumbnail URL of a specific design.
+    """
+    permission_classes = [IsAuthenticated, IsOwnerOrAdmin]
+
+    def patch(self, request, id, *args, **kwargs):
+        design = get_object_or_404(Design, id=id)
+
+        # Check permissions using IsOwnerOrAdmin manual logic if needed, 
+        # or rely on get_object_or_404 returning 404 if unfiltered.
+        # Check permissions using the same logic as DesignDetailView
+        if not (request.user.is_staff or design.customer == request.user):
+            return Response(
+                {"error": "You do not have permission to update this design."},
+                status=status.HTTP_403_FORBIDDEN
+            )
+
+        thumbnail_url = request.data.get('thumbnail_url')
+        if not thumbnail_url:
+            return Response(
+                {"error": "thumbnail_url is required."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        if design.geometric_data is None:
+            design.geometric_data = {}
+
+        design.geometric_data['thumbnail_key'] = thumbnail_url
+        design.save(update_fields=['geometric_data', 'updated_at'])
+
+        return Response({"message": "Thumbnail updated successfully.", "thumbnail_key": thumbnail_url}, status=status.HTTP_200_OK)
+
 
 # --- Automated Quote Generation ---
-from django.shortcuts import get_object_or_404
 from django.db import transaction
 from accounts.models import Manufacturer # Import Manufacturer model
 from quotes.models import Quote # Import Quote model
