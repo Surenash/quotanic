@@ -161,7 +161,7 @@ export const api = {
     },
 
     declineQuoteRequest(quoteId: string) {
-        return this.updateQuoteStatus(quoteId, 'declined');
+        return this.updateQuoteStatus(quoteId, 'rejected');
     },
 
     deleteQuote(id: string) {
