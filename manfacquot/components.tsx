@@ -3343,41 +3343,6 @@ export const CustomerDesignsPage = () => {
             try {
                 await api.deleteCustomerDesign(design.id);
                 setNotification({ show: true, message: `Design "${design.design_name}" deleted successfully.`, type: 'success' });
-                setDesigns(prev => prev.filter(d => d.id !== design.id));
-            } catch (err) {
-                setNotification({ show: true, message: `Error deleting design: ${err.message}`, type: 'error' });
-            }
-        }
-    };
-
-    const getStatusStyle = (status) => {
-        const baseStyle = { ...styles.statusBadge };
-        switch (status) {
-            case 'Analysis Complete': return { ...baseStyle, color: '#34D399', backgroundColor: 'rgba(52, 211, 153, 0.1)', border: '1px solid rgba(52, 211, 153, 0.3)' };
-            case 'Quoting': return { ...baseStyle, color: '#60A5FA', backgroundColor: 'rgba(96, 165, 250, 0.1)', border: '1px solid rgba(96, 165, 250, 0.3)' };
-            case 'Ordered': return { ...baseStyle, color: '#86EFAC', backgroundColor: 'rgba(134, 239, 172, 0.1)', border: '1px solid rgba(134, 239, 172, 0.3)' };
-            case 'Analysis Failed': return { ...baseStyle, color: 'var(--status-error)', backgroundColor: 'rgba(var(--status-error-rgb), 0.1)', border: '1px solid rgba(var(--status-error-rgb), 0.3)' };
-            default: return { ...baseStyle, color: 'var(--text-secondary)', backgroundColor: 'rgba(var(--text-secondary), 0.1)', border: '1px solid rgba(var(--text-secondary), 0.2)' };
-        }
-    };
-
-    const { items: sortedDesigns, requestSort, sortConfig } = useSortableData(designs);
-
-    const handleDuplicate = async (design) => {
-        try {
-            // Logic for duplicating design placeholder
-            alert(`Duplicating design "${design.design_name}"...`);
-            // In a real app: await api.duplicateDesign(design.id); fetchDesigns();
-        } catch (err) {
-            setNotification({ show: true, message: `Error duplicating design: ${err.message}`, type: 'error' });
-        }
-    };
-
-    const handleDelete = async (design) => {
-        if (window.confirm(`Are you sure you want to delete the design "${design.design_name}"?`)) {
-            try {
-                await api.deleteCustomerDesign(design.id);
-                setNotification({ show: true, message: `Design "${design.design_name}" deleted successfully.`, type: 'success' });
                 setDesigns(prev => prev.filter(d => (d as any).id !== design.id));
             } catch (err) {
                 setNotification({ show: true, message: `Error deleting design: ${err.message}`, type: 'error' });
