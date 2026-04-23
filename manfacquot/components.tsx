@@ -2054,6 +2054,8 @@ export const QuoteRequestsPage = () => {
         }
     };
 
+    const { items: sortedRequests, requestSort, sortConfig } = useSortableData(requests);
+
     if (loading) return <div>Loading requests...</div>;
     if (error) return <p style={styles.loginError}>{error}</p>;
 
@@ -2078,22 +2080,32 @@ export const QuoteRequestsPage = () => {
             </div>
 
             {notification.show && <Notification message={notification.message} type={notification.type} onDismiss={() => setNotification({ show: false, message: '', type: 'success' })} />}
-            <div style={styles.tableContainer}>
+            <div className="table-responsive-container">
                 <table style={styles.table}>
                     <thead>
                         <tr>
                             <th style={styles.tableHeader}>Part</th>
-                            <th style={styles.tableHeader}>Part Name</th>
-                            <th style={styles.tableHeader}>Customer</th>
-                            <th style={styles.tableHeader}>Material</th>
-                            <th style={styles.tableHeader}>Qty</th>
-                            <th style={styles.tableHeader}>Date Received</th>
+                            <th style={styles.tableHeader} className="sortable-header" onClick={() => requestSort('designName')}>
+                                Part Name <SortIcon sortConfig={sortConfig} columnKey="designName" />
+                            </th>
+                            <th style={styles.tableHeader} className="sortable-header" onClick={() => requestSort('customer')}>
+                                Customer <SortIcon sortConfig={sortConfig} columnKey="customer" />
+                            </th>
+                            <th style={styles.tableHeader} className="sortable-header" onClick={() => requestSort('material')}>
+                                Material <SortIcon sortConfig={sortConfig} columnKey="material" />
+                            </th>
+                            <th style={styles.tableHeader} className="sortable-header" onClick={() => requestSort('quantity')}>
+                                Qty <SortIcon sortConfig={sortConfig} columnKey="quantity" />
+                            </th>
+                            <th style={styles.tableHeader} className="sortable-header" onClick={() => requestSort('dateReceived')}>
+                                Date Received <SortIcon sortConfig={sortConfig} columnKey="dateReceived" />
+                            </th>
                             <th style={styles.tableHeader}>Status</th>
                             <th style={styles.tableHeader}>Actions</th>
                         </tr>
                     </thead>
                     <tbody>
-                        {requests.map(req => (
+                        {sortedRequests.map(req => (
                             <React.Fragment key={req.id}>
                                 <tr>
                                     <td style={styles.tableCell}>
@@ -2284,6 +2296,12 @@ export const ActiveOrdersPage = () => {
         }
     };
 
+    const { items: sortedOrders, requestSort, sortConfig } = useSortableData(orders);
+
+    const handleDownloadInvoice = (id) => {
+        alert(`Generating invoice for Order #${String(id).substring(0, 8)}...`);
+    };
+
     if (loading) return <div>Loading orders...</div>;
     if (error) return <p style={styles.loginError}>{error}</p>;
 
@@ -2292,22 +2310,30 @@ export const ActiveOrdersPage = () => {
             <h2 style={styles.dashboardPageTitle}>Active Orders</h2>
             <p style={styles.dashboardPageSubtitle}>Manage orders that are in production or have been recently completed.</p>
             {notification.show && <Notification message={notification.message} type={notification.type} onDismiss={() => setNotification({ show: false, message: '', type: 'success' })} />}
-            <div style={styles.tableContainer}>
+            <div className="table-responsive-container">
                 <table style={styles.table}>
                     <thead>
                         <tr>
                             <th style={styles.tableHeader}>Part</th>
-                            <th style={styles.tableHeader}>Order ID</th>
-                            <th style={styles.tableHeader}>Part Name</th>
-                            <th style={styles.tableHeader}>Customer</th>
-                            <th style={styles.tableHeader}>Date</th>
+                            <th style={styles.tableHeader} className="sortable-header" onClick={() => requestSort('id')}>
+                                Order ID <SortIcon sortConfig={sortConfig} columnKey="id" />
+                            </th>
+                            <th style={styles.tableHeader} className="sortable-header" onClick={() => requestSort('designName')}>
+                                Part Name <SortIcon sortConfig={sortConfig} columnKey="designName" />
+                            </th>
+                            <th style={styles.tableHeader} className="sortable-header" onClick={() => requestSort('customer')}>
+                                Customer <SortIcon sortConfig={sortConfig} columnKey="customer" />
+                            </th>
+                            <th style={styles.tableHeader} className="sortable-header" onClick={() => requestSort('created_at')}>
+                                Date <SortIcon sortConfig={sortConfig} columnKey="created_at" />
+                            </th>
                             <th style={styles.tableHeader}>Status</th>
                             <th style={styles.tableHeader}>Tracking</th>
                             <th style={styles.tableHeader}>Actions</th>
                         </tr>
                     </thead>
                     <tbody>
-                        {orders.length > 0 ? orders.map((order: any) => (
+                        {sortedOrders.length > 0 ? sortedOrders.map((order: any) => (
                             <tr key={order.id}>
                                 <td style={styles.tableCell}>
                                     <DesignThumbnail 
@@ -2327,11 +2353,14 @@ export const ActiveOrdersPage = () => {
                                     <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
                                         <CtaButton text="Manage" primary onClick={() => handleOpenModal(order)} className="button-small" />
                                         <CtaButton text="View Files" onClick={() => onViewFiles(order.designId)} className="button-small" />
+                                        <CtaButton text="Invoice" onClick={() => handleDownloadInvoice(order.id)} className="button-small">
+                                            <DownloadIcon style={{ width: '14px', height: '14px' }} />
+                                        </CtaButton>
                                     </div>
                                 </td>
                             </tr>
                         )) : (
-                            <tr><td colSpan={7} style={{ ...styles.tableCell, textAlign: 'center' }}>No active orders found.</td></tr>
+                            <tr><td colSpan={8} style={{ ...styles.tableCell, textAlign: 'center' }}>No active orders found.</td></tr>
                         )}
                     </tbody>
                 </table>
@@ -2408,6 +2437,20 @@ export const InternalQuotationsPage = () => {
         setBreakdownModalInfo({ isOpen: false, request: null });
     };
 
+    const { items: sortedRequests, requestSort, sortConfig } = useSortableData(requests);
+
+    const handleDelete = async (id: string) => {
+        if (window.confirm("Are you sure you want to delete this internal quotation?")) {
+            try {
+                await api.deleteQuote(id);
+                setRequests(prev => prev.filter((r: any) => r.id !== id));
+                setNotification({ show: true, message: 'Internal quotation deleted successfully.', type: 'success' });
+            } catch (err) {
+                setNotification({ show: true, message: 'Failed to delete internal quotation.', type: 'error' });
+            }
+        }
+    };
+
     if (loading) return <div>Loading records...</div>;
     if (error) return <p style={styles.loginError}>{error}</p>;
 
@@ -2420,6 +2463,8 @@ export const InternalQuotationsPage = () => {
                 </div>
                 <CtaButton text="Upload New Design" primary onClick={() => navigate('/upload-internal')} />
             </div>
+
+            {notification.show && <Notification message={notification.message} type={notification.type} onDismiss={() => setNotification({ show: false, message: '', type: 'success' })} />}
 
             <div style={{ marginBottom: '24px', display: 'flex', gap: '12px' }}>
                 <CtaButton
@@ -2434,21 +2479,31 @@ export const InternalQuotationsPage = () => {
                 />
             </div>
 
-            <div style={styles.tableContainer}>
+            <div className="table-responsive-container">
                 <table style={styles.table}>
                     <thead>
                         <tr>
                             <th style={styles.tableHeader}>Part</th>
-                            <th style={styles.tableHeader}>Part Name</th>
-                            <th style={styles.tableHeader}>Material</th>
-                            <th style={styles.tableHeader}>Qty</th>
-                            <th style={styles.tableHeader}>Date Uploaded</th>
-                            <th style={styles.tableHeader}>Cost Estimate</th>
+                            <th style={styles.tableHeader} className="sortable-header" onClick={() => requestSort('designName')}>
+                                Part Name <SortIcon sortConfig={sortConfig} columnKey="designName" />
+                            </th>
+                            <th style={styles.tableHeader} className="sortable-header" onClick={() => requestSort('material')}>
+                                Material <SortIcon sortConfig={sortConfig} columnKey="material" />
+                            </th>
+                            <th style={styles.tableHeader} className="sortable-header" onClick={() => requestSort('quantity')}>
+                                Qty <SortIcon sortConfig={sortConfig} columnKey="quantity" />
+                            </th>
+                            <th style={styles.tableHeader} className="sortable-header" onClick={() => requestSort('dateReceived')}>
+                                Date Uploaded <SortIcon sortConfig={sortConfig} columnKey="dateReceived" />
+                            </th>
+                            <th style={styles.tableHeader} className="sortable-header" onClick={() => requestSort('price')}>
+                                Cost Estimate <SortIcon sortConfig={sortConfig} columnKey="price" />
+                            </th>
                             <th style={styles.tableHeader}>Actions</th>
                         </tr>
                     </thead>
                     <tbody>
-                        {requests.length > 0 ? requests.map((req: any) => (
+                        {sortedRequests.length > 0 ? sortedRequests.map((req: any) => (
                             <React.Fragment key={req.id}>
                                 <tr>
                                     <td style={styles.tableCell}>
@@ -2472,6 +2527,7 @@ export const InternalQuotationsPage = () => {
                                                 className="button-small"
                                             />
                                             <CtaButton text="View Files" onClick={() => onViewFiles(req.designId)} className="button-small" />
+                                            <CtaButton text="Delete" onClick={() => handleDelete(req.id)} className="button-small-danger" />
                                         </div>
                                     </td>
                                 </tr>
@@ -3305,6 +3361,30 @@ export const CustomerDesignsPage = () => {
         }
     };
 
+    const { items: sortedDesigns, requestSort, sortConfig } = useSortableData(designs);
+
+    const handleDuplicate = async (design) => {
+        try {
+            // Logic for duplicating design placeholder
+            alert(`Duplicating design "${design.design_name}"...`);
+            // In a real app: await api.duplicateDesign(design.id); fetchDesigns();
+        } catch (err) {
+            setNotification({ show: true, message: `Error duplicating design: ${err.message}`, type: 'error' });
+        }
+    };
+
+    const handleDelete = async (design) => {
+        if (window.confirm(`Are you sure you want to delete the design "${design.design_name}"?`)) {
+            try {
+                await api.deleteCustomerDesign(design.id);
+                setNotification({ show: true, message: `Design "${design.design_name}" deleted successfully.`, type: 'success' });
+                setDesigns(prev => prev.filter(d => (d as any).id !== design.id));
+            } catch (err) {
+                setNotification({ show: true, message: `Error deleting design: ${err.message}`, type: 'error' });
+            }
+        }
+    };
+
     if (loading) return <div>Loading designs...</div>;
     if (error) return <p style={styles.loginError}>{error}</p>;
 
@@ -3313,21 +3393,29 @@ export const CustomerDesignsPage = () => {
             <h2 style={styles.dashboardPageTitle}>My Designs</h2>
             <p style={styles.dashboardPageSubtitle}>Manage your uploaded designs and check their quoting status.</p>
             {notification.show && <Notification message={notification.message} type={notification.type} onDismiss={() => setNotification({ show: false, message: '', type: 'success' })} />}
-            <div style={styles.tableContainer}>
+            <div className="table-responsive-container">
                 <table style={styles.table}>
                     <thead>
                         <tr>
                             <th style={styles.tableHeader}>Part</th>
-                            <th style={styles.tableHeader}>Design Name</th>
-                            <th style={styles.tableHeader}>Material</th>
-                            <th style={styles.tableHeader}>Quantity</th>
-                            <th style={styles.tableHeader}>Date Uploaded</th>
+                            <th style={styles.tableHeader} className="sortable-header" onClick={() => requestSort('design_name')}>
+                                Design Name <SortIcon sortConfig={sortConfig} columnKey="design_name" />
+                            </th>
+                            <th style={styles.tableHeader} className="sortable-header" onClick={() => requestSort('material')}>
+                                Material <SortIcon sortConfig={sortConfig} columnKey="material" />
+                            </th>
+                            <th style={styles.tableHeader} className="sortable-header" onClick={() => requestSort('quantity')}>
+                                Quantity <SortIcon sortConfig={sortConfig} columnKey="quantity" />
+                            </th>
+                            <th style={styles.tableHeader} className="sortable-header" onClick={() => requestSort('created_at')}>
+                                Date Uploaded <SortIcon sortConfig={sortConfig} columnKey="created_at" />
+                            </th>
                             <th style={styles.tableHeader}>Status</th>
                             <th style={styles.tableHeader}>Actions</th>
                         </tr>
                     </thead>
                     <tbody>
-                        {designs.length > 0 ? designs.map(design => (
+                        {sortedDesigns.length > 0 ? sortedDesigns.map((design: any) => (
                             <tr key={design.id}>
                                 <td style={styles.tableCell}>
                                     <DesignThumbnail 
@@ -3353,12 +3441,13 @@ export const CustomerDesignsPage = () => {
                                             />
                                         )}
                                         <CtaButton text="View Files" onClick={() => onViewFiles(design.id)} className="button-small" />
+                                        <CtaButton text="Copy" onClick={() => handleDuplicate(design)} className="button-small" />
                                         <CtaButton text="Delete" onClick={() => handleDelete(design)} className="button-small-danger" />
                                     </div>
                                 </td>
                             </tr>
                         )) : (
-                            <tr><td colSpan={6} style={{ ...styles.tableCell, textAlign: 'center' }}>You haven't uploaded any designs yet.</td></tr>
+                            <tr><td colSpan={7} style={{ ...styles.tableCell, textAlign: 'center' }}>You haven't uploaded any designs yet.</td></tr>
                         )}
                     </tbody>
                 </table>
@@ -3401,6 +3490,8 @@ export const CustomerOrdersPage = () => {
         }
     };
 
+    const { items: sortedOrders, requestSort, sortConfig } = useSortableData(orders);
+
     if (loading) return <div>Loading orders...</div>;
     if (error) return <p style={styles.loginError}>{error}</p>;
 
@@ -3408,22 +3499,30 @@ export const CustomerOrdersPage = () => {
         <div>
             <h2 style={styles.dashboardPageTitle}>My Orders</h2>
             <p style={styles.dashboardPageSubtitle}>Track your active and completed orders.</p>
-            <div style={styles.tableContainer}>
+            <div className="table-responsive-container">
                 <table style={styles.table}>
                     <thead>
                         <tr>
                             <th style={styles.tableHeader}>Part</th>
-                            <th style={styles.tableHeader}>Order ID</th>
-                            <th style={styles.tableHeader}>Design Name</th>
-                            <th style={styles.tableHeader}>Manufacturer</th>
-                            <th style={styles.tableHeader}>Price</th>
+                            <th style={styles.tableHeader} className="sortable-header" onClick={() => requestSort('id')}>
+                                Order ID <SortIcon sortConfig={sortConfig} columnKey="id" />
+                            </th>
+                            <th style={styles.tableHeader} className="sortable-header" onClick={() => requestSort('design_name')}>
+                                Part Name <SortIcon sortConfig={sortConfig} columnKey="design_name" />
+                            </th>
+                            <th style={styles.tableHeader} className="sortable-header" onClick={() => requestSort('manufacturer')}>
+                                Manufacturer <SortIcon sortConfig={sortConfig} columnKey="manufacturer" />
+                            </th>
+                            <th style={styles.tableHeader} className="sortable-header" onClick={() => requestSort('price')}>
+                                Price <SortIcon sortConfig={sortConfig} columnKey="price" />
+                            </th>
                             <th style={styles.tableHeader}>Status</th>
                             <th style={styles.tableHeader}>Tracking</th>
-                            <th style={styles.tableHeader}>Files</th>
+                            <th style={styles.tableHeader}>Actions</th>
                         </tr>
                     </thead>
                     <tbody>
-                        {orders.length > 0 ? orders.map((order: any) => (
+                        {sortedOrders.length > 0 ? sortedOrders.map((order: any) => (
                             <tr key={order.id}>
                                 <td style={styles.tableCell}>
                                     <DesignThumbnail 
@@ -3441,16 +3540,22 @@ export const CustomerOrdersPage = () => {
                                 <td style={{ ...styles.tableCell, fontFamily: 'monospace' }}>
                                     {order.tracking_number || order.trackingNumber ? (
                                         <a href={`https://www.google.com/search?q=${order.tracking_number || order.trackingNumber}`} target="_blank" rel="noopener noreferrer" style={styles.loginLink}>
-                                            {order.tracking_number || order.trackingNumber} ({order.shipping_carrier || order.shippingCarrier})
+                                            {order.tracking_number || order.trackingNumber}
                                         </a>
                                     ) : 'N/A'}
                                 </td>
                                 <td style={styles.tableCell}>
-                                    <CtaButton text="View Files" onClick={() => onViewFiles(order.designId)} className="button-small" />
+                                    <div style={{ display: 'flex', gap: '8px' }}>
+                                        <CtaButton text="Quote" onClick={() => alert('Viewing Quotation PDF...')} className="button-small" />
+                                        <CtaButton text="Files" onClick={() => onViewFiles(order.designId)} className="button-small" />
+                                        <CtaButton text="Receipt" onClick={() => alert('Downloading Receipt...')} className="button-small">
+                                            <DownloadIcon style={{ width: '14px', height: '14px' }} />
+                                        </CtaButton>
+                                    </div>
                                 </td>
                             </tr>
                         )) : (
-                            <tr><td colSpan={7} style={{ ...styles.tableCell, textAlign: 'center' }}>You have no orders.</td></tr>
+                            <tr><td colSpan={8} style={{ ...styles.tableCell, textAlign: 'center' }}>You have no orders.</td></tr>
                         )}
                     </tbody>
                 </table>
@@ -3639,3 +3744,101 @@ export const CurrencyRatesWarning = () => {
         </div>
     );
 };
+/**
+ * Reusable hook for sorting table data
+ */
+export const useSortableData = (items, config = null) => {
+    const [sortConfig, setSortConfig] = useState(config);
+
+    const sortedItems = React.useMemo(() => {
+        let sortableItems = [...items];
+        if (sortConfig !== null) {
+            sortableItems.sort((a, b) => {
+                const aValue = a[sortConfig.key];
+                const bValue = b[sortConfig.key];
+                
+                // Handle different types (dates, numbers, strings)
+                if (aValue instanceof Date && bValue instanceof Date) {
+                    return sortConfig.direction === 'ascending' ? aValue.getTime() - bValue.getTime() : bValue.getTime() - aValue.getTime();
+                }
+                
+                if (typeof aValue === 'number' && typeof bValue === 'number') {
+                    return sortConfig.direction === 'ascending' ? aValue - bValue : bValue - aValue;
+                }
+                
+                const aString = String(aValue || '').toLowerCase();
+                const bString = String(bValue || '').toLowerCase();
+                
+                if (aString < bString) {
+                    return sortConfig.direction === 'ascending' ? -1 : 1;
+                }
+                if (aString > bString) {
+                    return sortConfig.direction === 'ascending' ? 1 : -1;
+                }
+                return 0;
+            });
+        }
+        return sortableItems;
+    }, [items, sortConfig]);
+
+    const requestSort = (key) => {
+        let direction = 'ascending';
+        if (sortConfig && sortConfig.key === key && sortConfig.direction === 'ascending') {
+            direction = 'descending';
+        }
+        setSortConfig({ key, direction });
+    };
+
+    return { items: sortedItems, requestSort, sortConfig };
+};
+
+/**
+ * Reusable Sort Icon component
+ */
+export const SortIcon = ({ sortConfig, columnKey }) => {
+    if (!sortConfig || sortConfig.key !== columnKey) {
+        return <span style={{ marginLeft: '8px', opacity: 0.3 }}>↕</span>;
+    }
+    return (
+        <span style={{ marginLeft: '8px', color: neon_cyan }}>
+            {sortConfig.direction === 'ascending' ? '↑' : '↓'}
+        </span>
+    );
+};
+
+// --- Add global table overflow style ---
+if (typeof document !== 'undefined') {
+    const style = document.createElement('style');
+    style.innerHTML = `
+        .table-responsive-container {
+            width: 100%;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            margin-bottom: 1rem;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+        }
+        .table-responsive-container::-webkit-scrollbar {
+            height: 6px;
+        }
+        .table-responsive-container::-webkit-scrollbar-track {
+            background: rgba(255,255,255,0.02);
+        }
+        .table-responsive-container::-webkit-scrollbar-thumb {
+            background: rgba(10, 240, 240, 0.2);
+            border-radius: 10px;
+        }
+        .table-responsive-container::-webkit-scrollbar-thumb:hover {
+            background: var(--neon-cyan);
+        }
+        .sortable-header {
+            cursor: pointer;
+            user-select: none;
+            transition: background 0.2s;
+        }
+        .sortable-header:hover {
+            background: rgba(255,255,255,0.05) !important;
+        }
+    `;
+    document.head.appendChild(style);
+}
