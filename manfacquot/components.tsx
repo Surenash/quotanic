@@ -2054,7 +2054,7 @@ export const QuoteRequestsPage = () => {
         }
     };
 
-    const { items: sortedRequests, requestSort, sortConfig } = useSortableData(requests);
+    const { items: sortedRequests, requestSort, sortConfig } = useSortableData(requests, null, ['Pending', 'Quoted', 'Declined']);
 
     if (loading) return <div>Loading requests...</div>;
     if (error) return <p style={styles.loginError}>{error}</p>;
@@ -2100,7 +2100,9 @@ export const QuoteRequestsPage = () => {
                             <th style={styles.tableHeader} className="sortable-header" onClick={() => requestSort('dateReceived')}>
                                 Date Received <SortIcon sortConfig={sortConfig} columnKey="dateReceived" />
                             </th>
-                            <th style={styles.tableHeader}>Status</th>
+                            <th style={styles.tableHeader} className="sortable-header" onClick={() => requestSort('status')}>
+                                Status <SortIcon sortConfig={sortConfig} columnKey="status" />
+                            </th>
                             <th style={styles.tableHeader}>Actions</th>
                         </tr>
                     </thead>
@@ -2133,7 +2135,7 @@ export const QuoteRequestsPage = () => {
                                             {req.status === 'Pending' ? (
                                                 <>
                                                     <CtaButton text="Quote" primary onClick={() => handleOpenModal(req)} className="button-small" />
-                                                    <CtaButton text="Decline" onClick={() => handleDecline(req)} className="button-small-danger" />
+                                                    <CtaButton text="Decline" onClick={() => handleDecline(req.id)} className="button-small-danger" />
                                                 </>
                                             ) : (
                                                 <span style={{ color: 'var(--text-secondary)', fontSize: '14px' }}>Completed</span>
@@ -3713,7 +3715,7 @@ export const CurrencyRatesWarning = () => {
 /**
  * Reusable hook for sorting table data
  */
-export const useSortableData = (items, config = null) => {
+export const useSortableData = (items, config = null, statusOrder = []) => {
     const [sortConfig, setSortConfig] = useState(config);
 
     const sortedItems = React.useMemo(() => {
@@ -3723,6 +3725,15 @@ export const useSortableData = (items, config = null) => {
                 const aValue = a[sortConfig.key];
                 const bValue = b[sortConfig.key];
                 
+                // Handle custom status ordering
+                if (sortConfig.key === 'status' && statusOrder.length > 0) {
+                    const indexA = statusOrder.indexOf(aValue);
+                    const indexB = statusOrder.indexOf(bValue);
+                    if (indexA !== -1 && indexB !== -1) {
+                        return sortConfig.direction === 'ascending' ? indexA - indexB : indexB - indexA;
+                    }
+                }
+
                 // Handle different types (dates, numbers, strings)
                 if (aValue instanceof Date && bValue instanceof Date) {
                     return sortConfig.direction === 'ascending' ? aValue.getTime() - bValue.getTime() : bValue.getTime() - aValue.getTime();
