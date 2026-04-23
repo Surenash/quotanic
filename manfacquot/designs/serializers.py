@@ -243,8 +243,8 @@ class DesignCreateSerializer(serializers.ModelSerializer):
 
 class FBMFeatureSerializer(serializers.Serializer):
     """Serializer for FBM detected features"""
-    feature_id = serializers.IntegerField()
-    feature_type = serializers.CharField()
+    feature_id = serializers.IntegerField(required=False)
+    feature_type = serializers.CharField(required=False)
     diameter = serializers.FloatField(allow_null=True, required=False)
     depth = serializers.FloatField(allow_null=True, required=False)
     width = serializers.FloatField(allow_null=True, required=False)
@@ -255,41 +255,41 @@ class FBMFeatureSerializer(serializers.Serializer):
     accessibility = serializers.CharField(allow_null=True, required=False)
     surface_finish_required = serializers.CharField(allow_null=True, required=False)
     tolerance = serializers.CharField(allow_null=True, required=False)
-    confidence_score = serializers.FloatField(required=False)
-    complexity_rating = serializers.IntegerField(required=False)
-    manufacturing_notes = serializers.ListField(child=serializers.CharField(), required=False)
-    alternative_strategies = serializers.ListField(child=serializers.CharField(), required=False)
-    risk_factors = serializers.ListField(child=serializers.CharField(), required=False)
+    confidence_score = serializers.FloatField(required=False, allow_null=True)
+    complexity_rating = serializers.IntegerField(required=False, allow_null=True)
+    manufacturing_notes = serializers.ListField(child=serializers.CharField(), required=False, allow_null=True)
+    alternative_strategies = serializers.ListField(child=serializers.CharField(), required=False, allow_null=True)
+    risk_factors = serializers.ListField(child=serializers.CharField(), required=False, allow_null=True)
     pattern_id = serializers.IntegerField(allow_null=True, required=False)
     # Thread-specific
-    thread_pitch = serializers.FloatField(required=False)
-    thread_type = serializers.CharField(required=False)
+    thread_pitch = serializers.FloatField(required=False, allow_null=True)
+    thread_type = serializers.CharField(required=False, allow_null=True)
     # Counterbore/countersink
-    shoulder_diameter = serializers.FloatField(required=False)
-    shoulder_depth = serializers.FloatField(required=False)
-    sink_angle = serializers.FloatField(required=False)
+    shoulder_diameter = serializers.FloatField(required=False, allow_null=True)
+    shoulder_depth = serializers.FloatField(required=False, allow_null=True)
+    sink_angle = serializers.FloatField(required=False, allow_null=True)
     # Boss/protrusion
-    height = serializers.FloatField(required=False)
+    height = serializers.FloatField(required=False, allow_null=True)
 
 
 class FBMOperationSerializer(serializers.Serializer):
     """Serializer for FBM machining operations"""
-    operation_id = serializers.IntegerField()
-    operation_name = serializers.CharField()
-    strategy = serializers.CharField()
-    tool_type = serializers.CharField()
-    tool_diameter = serializers.FloatField()
-    cutting_speed = serializers.FloatField()
-    feed_rate = serializers.FloatField()
-    spindle_speed = serializers.IntegerField()
-    depth_of_cut = serializers.FloatField()
-    stepover = serializers.FloatField()
-    number_of_passes = serializers.IntegerField()
-    estimated_time = serializers.FloatField()  # in minutes
-    setup_required = serializers.IntegerField()
-    priority = serializers.IntegerField()
-    coolant = serializers.CharField(required=False)
-    notes = serializers.CharField(required=False, allow_blank=True)
+    operation_id = serializers.IntegerField(required=False)
+    operation_name = serializers.CharField(required=False)
+    strategy = serializers.CharField(required=False, allow_null=True)
+    tool_type = serializers.CharField(required=False, allow_null=True)
+    tool_diameter = serializers.FloatField(required=False, allow_null=True)
+    cutting_speed = serializers.FloatField(required=False, allow_null=True)
+    feed_rate = serializers.FloatField(required=False, allow_null=True)
+    spindle_speed = serializers.IntegerField(required=False, allow_null=True)
+    depth_of_cut = serializers.FloatField(required=False, allow_null=True)
+    stepover = serializers.FloatField(required=False, allow_null=True)
+    number_of_passes = serializers.IntegerField(required=False, allow_null=True)
+    estimated_time = serializers.FloatField(required=False, allow_null=True)  # in minutes
+    setup_required = serializers.IntegerField(required=False, allow_null=True)
+    priority = serializers.IntegerField(required=False, allow_null=True)
+    coolant = serializers.CharField(required=False, allow_null=True)
+    notes = serializers.CharField(required=False, allow_blank=True, allow_null=True)
 
 
 class FBMPatternSerializer(serializers.Serializer):
