@@ -5,6 +5,7 @@ import { styles } from '../../types/theme';
 import CtaButton from '../../components/CtaButton';
 import Viewer from '../../components/Viewer';
 import { resolveMediaUrl } from '../../components';
+import { ViewPreset } from '../../types/types';
 
 // Icons
 import {
@@ -42,6 +43,12 @@ const SmartViewPage = ({ designId, onNavigate }: { designId: string, onNavigate:
 
     useEffect(() => {
         const fetchAllData = async () => {
+            // Reset per-design state before fetching new data
+            setFbmAnalysis(null);
+            setQuotes(null);
+            setError(null);
+            setActiveFeatureIndex(null);
+
             setLoading(true);
             try {
                 // Fetch design details
@@ -314,9 +321,9 @@ const SmartViewPage = ({ designId, onNavigate }: { designId: string, onNavigate:
                             <div style={{ animation: 'fadeIn 0.2s' }}>
                                 <h3 style={{ fontSize: '10px', textTransform: 'uppercase', color: '#ef4444', marginBottom: '16px', letterSpacing: '1px', fontWeight: 800 }}>Manufacturing Warnings</h3>
                                 {dfmWarnings.length > 0 ? dfmWarnings.map((f: any, i: number) => (
-                                    <div 
-                                        key={i} 
-                                        onClick={() => handleFeatureIndex(features.indexOf(f))}
+                                    <div
+                                        key={i}
+                                        onClick={() => handleFeatureClick(features.indexOf(f))}
                                         style={{ padding: '12px', backgroundColor: 'rgba(239, 68, 68, 0.05)', borderLeft: '3px solid #ef4444', marginBottom: '12px', borderRadius: '0 4px 4px 0', cursor: 'pointer' }}
                                     >
                                         <div style={{ display: 'flex', gap: '10px', alignItems: 'flex-start' }}>
@@ -350,7 +357,7 @@ const SmartViewPage = ({ designId, onNavigate }: { designId: string, onNavigate:
                             <Viewer
                                 modelUrl={modelUrl}
                                 fileExtension={fileExt}
-                                view="iso"
+                                view={ViewPreset.ISO}
                                 isViewLocked={false}
                                 hideToolbar={false}
                                 hideSidebar={true}
