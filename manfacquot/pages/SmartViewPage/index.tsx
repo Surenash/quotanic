@@ -568,11 +568,11 @@ const SmartViewPage = ({ designId, onNavigate }: { designId: string, onNavigate:
                                 <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                                     <InsightRow label="Material" value={design?.material} bold />
                                     <InsightRow label="Process" value={design?.manufacturing_process || 'CNC Machining'} bold />
-                                    <InsightRow label="Sub-Process" value={processRec.primary_process || '3-Axis Milling'} />
                                     <InsightRow label="Surface Finish" value={design?.surface_finish || 'As Machined'} bold />
-                                    <InsightRow label="Batch Quantity" value={`${design?.quantity} Units`} />
-                                    <InsightRow label="Dimensions (mm)" value={design?.bbox_mm ? `${design.bbox_mm[0].toFixed(1)} x ${design.bbox_mm[1].toFixed(1)} x ${design.bbox_mm[2].toFixed(1)}` : (summary?.bbox_mm ? `${summary.bbox_mm[0]}x${summary.bbox_mm[1]}x${summary.bbox_mm[2]}` : 'N/A')} />
-                                    <InsightRow label="Volume" value={fbmAnalysis?.volume_cm3 ? `${fbmAnalysis.volume_cm3.toFixed(2)} cm³` : (design?.volume_cm3 ? `${design.volume_cm3} cm³` : 'N/A')} />
+                                    <InsightRow label="Tolerances" value={design?.tolerances || 'Standard'} />
+                                    <InsightRow label="Batch Quantity" value={design?.additional_instructions?.startsWith('[Qty:') ? design.additional_instructions.split(']')[0].replace('[Qty: ', '') : `${design?.quantity} Units`} />
+                                    <InsightRow label="Dimensions (mm)" value={design?.bbox_mm ? `${design.bbox_mm[0].toFixed(1)} x ${design.bbox_mm[1].toFixed(1)} x ${design.bbox_mm[2].toFixed(1)}` : (summary?.bbox_mm ? `${summary.bbox_mm[0]}x${summary.bbox_mm[1]}x${summary.bbox_mm[2]}` : (design?.geometric_data?.bbox_mm ? `${design.geometric_data.bbox_mm[0]}x${design.geometric_data.bbox_mm[1]}x${design.geometric_data.bbox_mm[2]}` : 'N/A'))} />
+                                    <InsightRow label="Volume" value={fbmAnalysis?.volume_cm3 ? `${fbmAnalysis.volume_cm3.toFixed(2)} cm³` : (design?.volume_cm3 ? `${design.volume_cm3} cm³` : (design?.geometric_data?.volume_cm3 ? `${design.geometric_data.volume_cm3} cm³` : 'N/A'))} />
                                 </div>
                             </div>
                         )}
