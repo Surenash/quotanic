@@ -289,10 +289,54 @@ const SmartViewPage = ({ designId, onNavigate }: { designId: string, onNavigate:
                                                                 <LucideFile size={12} color={activeDesignId === quote.design ? '#3b82f6' : '#475569'} />
                                                                 Part File
                                                             </div>
-                                                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '4px 8px', opacity: 0.5, fontSize: '11px', color: '#64748b' }}>
-                                                                <LucideFileText size={12} />
-                                                                Drawing (PDF)
-                                                            </div>
+                                                            
+                                                            {/* Drawings Folder */}
+                                                            {quote.supporting_files?.some((f: string) => f.toLowerCase().match(/\.(pdf|dwg|dxf)$/)) && (
+                                                                <>
+                                                                    <div onClick={() => toggleFolder(`req-drawings-${quote.id}`)} style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', padding: '4px 8px', fontSize: '11px', color: '#94a3b8' }}>
+                                                                        {expandedFolders[`req-drawings-${quote.id}`] ? <LucideChevronDown size={12} /> : <LucideChevronRight size={12} />}
+                                                                        <LucideFolder size={12} color="#3b82f6" />
+                                                                        Drawings
+                                                                    </div>
+                                                                    {expandedFolders[`req-drawings-${quote.id}`] && (
+                                                                        <div style={{ paddingLeft: '16px' }}>
+                                                                            {quote.supporting_files.filter((f: string) => f.toLowerCase().match(/\.(pdf|dwg|dxf)$/)).map((fileUrl: string, idx: number) => {
+                                                                                const fileName = fileUrl.split('/').pop()?.split('_').slice(1).join('_') || 'Drawing';
+                                                                                return (
+                                                                                    <div key={idx} onClick={() => window.open(resolveMediaUrl(fileUrl), '_blank')} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '4px 8px', cursor: 'pointer', fontSize: '11px', color: '#64748b' }}>
+                                                                                        <LucideFileText size={12} color="#ef4444" />
+                                                                                        {fileName}
+                                                                                    </div>
+                                                                                );
+                                                                            })}
+                                                                        </div>
+                                                                    )}
+                                                                </>
+                                                            )}
+
+                                                            {/* Documents Folder */}
+                                                            {quote.supporting_files?.some((f: string) => !f.toLowerCase().match(/\.(pdf|dwg|dxf)$/)) && (
+                                                                <>
+                                                                    <div onClick={() => toggleFolder(`req-docs-${quote.id}`)} style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', padding: '4px 8px', fontSize: '11px', color: '#94a3b8' }}>
+                                                                        {expandedFolders[`req-docs-${quote.id}`] ? <LucideChevronDown size={12} /> : <LucideChevronRight size={12} />}
+                                                                        <LucideFolder size={12} color="#3b82f6" />
+                                                                        Documents
+                                                                    </div>
+                                                                    {expandedFolders[`req-docs-${quote.id}`] && (
+                                                                        <div style={{ paddingLeft: '16px' }}>
+                                                                            {quote.supporting_files.filter((f: string) => !f.toLowerCase().match(/\.(pdf|dwg|dxf)$/)).map((fileUrl: string, idx: number) => {
+                                                                                const fileName = fileUrl.split('/').pop()?.split('_').slice(1).join('_') || 'Doc';
+                                                                                return (
+                                                                                    <div key={idx} onClick={() => window.open(resolveMediaUrl(fileUrl), '_blank')} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '4px 8px', cursor: 'pointer', fontSize: '11px', color: '#64748b' }}>
+                                                                                        <LucideFile size={12} />
+                                                                                        {fileName}
+                                                                                    </div>
+                                                                                );
+                                                                            })}
+                                                                        </div>
+                                                                    )}
+                                                                </>
+                                                            )}
                                                         </div>
                                                     )}
                                                 </div>
@@ -323,10 +367,54 @@ const SmartViewPage = ({ designId, onNavigate }: { designId: string, onNavigate:
                                                                 <LucideFile size={12} color={activeDesignId === d.id ? '#3b82f6' : '#475569'} />
                                                                 Part File
                                                             </div>
-                                                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '4px 8px', opacity: 0.5, fontSize: '11px', color: '#64748b' }}>
-                                                                <LucideFileText size={12} />
-                                                                Drawing (PDF)
-                                                            </div>
+
+                                                            {/* Drawings Folder */}
+                                                            {d.supporting_files?.some((f: string) => f.toLowerCase().match(/\.(pdf|dwg|dxf)$/)) && (
+                                                                <>
+                                                                    <div onClick={() => toggleFolder(`int-drawings-${d.id}`)} style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', padding: '4px 8px', fontSize: '11px', color: '#94a3b8' }}>
+                                                                        {expandedFolders[`int-drawings-${d.id}`] ? <LucideChevronDown size={12} /> : <LucideChevronRight size={12} />}
+                                                                        <LucideFolder size={12} color="#3b82f6" />
+                                                                        Drawings
+                                                                    </div>
+                                                                    {expandedFolders[`int-drawings-${d.id}`] && (
+                                                                        <div style={{ paddingLeft: '16px' }}>
+                                                                            {d.supporting_files.filter((f: string) => f.toLowerCase().match(/\.(pdf|dwg|dxf)$/)).map((fileUrl: string, idx: number) => {
+                                                                                const fileName = fileUrl.split('/').pop()?.split('_').slice(1).join('_') || 'Drawing';
+                                                                                return (
+                                                                                    <div key={idx} onClick={() => window.open(resolveMediaUrl(fileUrl), '_blank')} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '4px 8px', cursor: 'pointer', fontSize: '11px', color: '#64748b' }}>
+                                                                                        <LucideFileText size={12} color="#ef4444" />
+                                                                                        {fileName}
+                                                                                    </div>
+                                                                                );
+                                                                            })}
+                                                                        </div>
+                                                                    )}
+                                                                </>
+                                                            )}
+
+                                                            {/* Documents Folder */}
+                                                            {d.supporting_files?.some((f: string) => !f.toLowerCase().match(/\.(pdf|dwg|dxf)$/)) && (
+                                                                <>
+                                                                    <div onClick={() => toggleFolder(`int-docs-${d.id}`)} style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', padding: '4px 8px', fontSize: '11px', color: '#94a3b8' }}>
+                                                                        {expandedFolders[`int-docs-${d.id}`] ? <LucideChevronDown size={12} /> : <LucideChevronRight size={12} />}
+                                                                        <LucideFolder size={12} color="#3b82f6" />
+                                                                        Documents
+                                                                    </div>
+                                                                    {expandedFolders[`int-docs-${d.id}`] && (
+                                                                        <div style={{ paddingLeft: '16px' }}>
+                                                                            {d.supporting_files.filter((f: string) => !f.toLowerCase().match(/\.(pdf|dwg|dxf)$/)).map((fileUrl: string, idx: number) => {
+                                                                                const fileName = fileUrl.split('/').pop()?.split('_').slice(1).join('_') || 'Doc';
+                                                                                return (
+                                                                                    <div key={idx} onClick={() => window.open(resolveMediaUrl(fileUrl), '_blank')} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '4px 8px', cursor: 'pointer', fontSize: '11px', color: '#64748b' }}>
+                                                                                        <LucideFile size={12} />
+                                                                                        {fileName}
+                                                                                    </div>
+                                                                                );
+                                                                            })}
+                                                                        </div>
+                                                                    )}
+                                                                </>
+                                                            )}
                                                         </div>
                                                     )}
                                                 </div>
@@ -483,7 +571,8 @@ const SmartViewPage = ({ designId, onNavigate }: { designId: string, onNavigate:
                                     <InsightRow label="Sub-Process" value={processRec.primary_process || '3-Axis Milling'} />
                                     <InsightRow label="Surface Finish" value={design?.surface_finish || 'As Machined'} bold />
                                     <InsightRow label="Batch Quantity" value={`${design?.quantity} Units`} />
-                                    <InsightRow label="Machine Allocation" value="CNC-MILL-5AX-02" />
+                                    <InsightRow label="Dimensions (mm)" value={design?.bbox_mm ? `${design.bbox_mm[0].toFixed(1)} x ${design.bbox_mm[1].toFixed(1)} x ${design.bbox_mm[2].toFixed(1)}` : (summary?.bbox_mm ? `${summary.bbox_mm[0]}x${summary.bbox_mm[1]}x${summary.bbox_mm[2]}` : 'N/A')} />
+                                    <InsightRow label="Volume" value={fbmAnalysis?.volume_cm3 ? `${fbmAnalysis.volume_cm3.toFixed(2)} cm³` : (design?.volume_cm3 ? `${design.volume_cm3} cm³` : 'N/A')} />
                                 </div>
                             </div>
                         )}
@@ -492,20 +581,23 @@ const SmartViewPage = ({ designId, onNavigate }: { designId: string, onNavigate:
                             <div style={{ animation: 'fadeIn 0.2s' }}>
                                 <h3 style={sectionTitleStyle}>Tooling Analysis</h3>
                                 <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                                    <div style={toolCardStyle}>
-                                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                                            <span style={{ color: 'white', fontSize: '12px', fontWeight: 700 }}>Flat End Mill Ø10.0</span>
-                                            <span style={{ color: '#3b82f6', fontSize: '10px' }}>CARBIDE</span>
+                                    {operations.length > 0 ? operations.slice(0, 5).map((op: any, idx: number) => (
+                                        <div key={idx} style={toolCardStyle}>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+                                                <span style={{ color: 'white', fontSize: '12px', fontWeight: 700 }}>{op.tool_type} Ø{op.tool_diameter?.toFixed(1)}</span>
+                                                <span style={{ color: '#3b82f6', fontSize: '10px' }}>{op.operation_name?.toUpperCase()}</span>
+                                            </div>
+                                            <div style={{ fontSize: '11px', color: '#94a3b8' }}>{op.strategy || 'Standard machining path.'}</div>
+                                            <div style={{ marginTop: '8px', display: 'flex', gap: '12px' }}>
+                                                <div style={{ fontSize: '10px', color: '#64748b' }}>S: <span style={{ color: '#e2e8f0' }}>{op.spindle_speed} RPM</span></div>
+                                                <div style={{ fontSize: '10px', color: '#64748b' }}>F: <span style={{ color: '#e2e8f0' }}>{op.feed_rate} mm/min</span></div>
+                                            </div>
                                         </div>
-                                        <div style={{ fontSize: '11px', color: '#94a3b8' }}>Used for roughing and clearing pockets.</div>
-                                    </div>
-                                    <div style={toolCardStyle}>
-                                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                                            <span style={{ color: 'white', fontSize: '12px', fontWeight: 700 }}>Ball Nose Ø6.0</span>
-                                            <span style={{ color: '#3b82f6', fontSize: '10px' }}>COATED</span>
+                                    )) : (
+                                        <div style={{ padding: '20px', textAlign: 'center', color: '#475569', fontSize: '12px', border: '1px dashed #2d2d3a', borderRadius: '8px' }}>
+                                            No tooling data generated for this geometry.
                                         </div>
-                                        <div style={{ fontSize: '11px', color: '#94a3b8' }}>Used for 3D surface finishing.</div>
-                                    </div>
+                                    )}
                                 </div>
                             </div>
                         )}
@@ -580,17 +672,28 @@ const SmartViewPage = ({ designId, onNavigate }: { designId: string, onNavigate:
                             <div style={{ animation: 'fadeIn 0.2s' }}>
                                 <h3 style={sectionTitleStyle}>FBM Geometric Intelligence</h3>
                                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '20px' }}>
-                                    <StatBox label="Features" value={features.length} />
-                                    <StatBox label="Patterns" value={patterns.length} />
+                                    <StatBox label="Features" value={features.length > 0 ? features.length : (intelligence?.feature_breakdown?.total_features || 0)} />
+                                    <StatBox label="Patterns" value={patterns.length || 0} />
                                 </div>
+                                
+                                {intelligence?.feature_breakdown?.features_by_type && (
+                                    <div style={{ marginBottom: '20px' }}>
+                                        <div style={{ fontSize: '10px', color: '#64748b', textTransform: 'uppercase', marginBottom: '10px' }}>Feature Breakdown</div>
+                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                                            {Object.entries(intelligence.feature_breakdown.features_by_type).map(([type, count]: [string, any]) => (
+                                                <div key={type} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', padding: '4px 8px', backgroundColor: 'rgba(255,255,255,0.02)', borderRadius: '4px' }}>
+                                                    <span style={{ color: '#94a3b8' }}>{type}</span>
+                                                    <span style={{ color: 'white', fontWeight: 600 }}>{count}</span>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+
                                 <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                                     <div style={{ backgroundColor: 'rgba(255,255,255,0.03)', padding: '12px', borderRadius: '8px' }}>
                                         <div style={{ fontSize: '10px', color: '#64748b' }}>COMPLEXITY SCORE</div>
-                                        <div style={{ fontSize: '18px', fontWeight: 800, color: 'white', marginTop: '4px' }}>{(fbmAnalysis?.complexity_score || 0.3).toFixed(2)} / 1.0</div>
-                                    </div>
-                                    <div style={{ backgroundColor: 'rgba(255,255,255,0.03)', padding: '12px', borderRadius: '8px' }}>
-                                        <div style={{ fontSize: '10px', color: '#64748b' }}>VOLUME</div>
-                                        <div style={{ fontSize: '16px', fontWeight: 800, color: 'white', marginTop: '4px' }}>{fbmAnalysis?.volume_cm3?.toFixed(2) || 'N/A'} cm³</div>
+                                        <div style={{ fontSize: '18px', fontWeight: 800, color: 'white', marginTop: '4px' }}>{(fbmAnalysis?.complexity_score || intelligence?.complexity_rating || 0.3).toFixed(2)} / 1.0</div>
                                     </div>
                                 </div>
                             </div>
@@ -599,21 +702,30 @@ const SmartViewPage = ({ designId, onNavigate }: { designId: string, onNavigate:
                         {activeTabRight === 'dfm' && (
                             <div style={{ animation: 'fadeIn 0.2s' }}>
                                 <h3 style={sectionTitleStyle}>Manufacturing Constraints</h3>
-                                {dfmWarnings.length > 0 ? (
-                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                                        {dfmWarnings.slice(0, 5).map((w: any, idx: number) => (
-                                            <div key={idx} style={{ padding: '10px', backgroundColor: 'rgba(239, 68, 68, 0.05)', borderLeft: '2px solid #ef4444', borderRadius: '4px' }}>
-                                                <div style={{ fontSize: '11px', fontWeight: 700, color: 'white' }}>{w.feature_type}</div>
-                                                <div style={{ fontSize: '10px', color: '#94a3b8', marginTop: '2px' }}>Constraint: {w.accessibility === 'Multi-axis' ? 'Requires 4/5-axis machine.' : 'Deep pocket detection.'}</div>
-                                            </div>
-                                        ))}
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                                    <div style={{ backgroundColor: 'rgba(255,255,255,0.03)', padding: '12px', borderRadius: '8px' }}>
+                                        <div style={{ fontSize: '10px', color: '#64748b' }}>ACCESSIBILITY SCORE</div>
+                                        <div style={{ fontSize: '18px', fontWeight: 800, color: '#3b82f6', marginTop: '4px' }}>{((intelligence?.machinability_assessment?.accessibility_score || 0.85) * 100).toFixed(0)}%</div>
                                     </div>
-                                ) : (
-                                    <div style={{ textAlign: 'center', padding: '20px' }}>
-                                        <LucideCheckCircle size={24} color="#34d399" />
-                                        <div style={{ fontSize: '11px', color: '#94a3b8', marginTop: '8px' }}>Highly manufacturable.</div>
-                                    </div>
-                                )}
+                                    
+                                    {(intelligence?.manufacturing_risks?.length > 0 || intelligence?.dfm_analysis?.warnings?.length > 0) ? (
+                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                                            <div style={{ fontSize: '10px', color: '#64748b', textTransform: 'uppercase' }}>Detected Risks</div>
+                                            {(intelligence.manufacturing_risks || []).concat(intelligence.dfm_analysis?.warnings || []).slice(0, 8).map((risk: string, idx: number) => (
+                                                <div key={idx} style={{ padding: '10px', backgroundColor: 'rgba(239, 68, 68, 0.05)', borderLeft: '2px solid #ef4444', borderRadius: '4px', display: 'flex', gap: '8px', alignItems: 'center' }}>
+                                                    <LucideAlertTriangle size={12} color="#ef4444" />
+                                                    <div style={{ fontSize: '10px', color: '#e2e8f0' }}>{risk}</div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    ) : (
+                                        <div style={{ textAlign: 'center', padding: '30px 20px', backgroundColor: 'rgba(52, 211, 153, 0.05)', borderRadius: '8px', border: '1px solid rgba(52, 211, 153, 0.1)' }}>
+                                            <LucideCheckCircle size={24} color="#34d399" style={{ marginBottom: '10px' }} />
+                                            <div style={{ fontSize: '12px', color: 'white', fontWeight: 600 }}>HIGH MACHINABILITY</div>
+                                            <div style={{ fontSize: '10px', color: '#94a3b8', marginTop: '4px' }}>No major DFM constraints detected.</div>
+                                        </div>
+                                    )}
+                                </div>
                             </div>
                         )}
                     </div>
