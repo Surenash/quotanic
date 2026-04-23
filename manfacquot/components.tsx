@@ -1937,6 +1937,7 @@ export const DesignThumbnail = ({ modelUrl, thumbnailUrl, designId, designName }
 };
 export const QuoteRequestsPage = () => {
     const { openViewer: onViewFiles } = useFileViewer();
+    const navigate = useNavigate();
     const [requests, setRequests] = useState([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
