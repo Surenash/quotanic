@@ -20,7 +20,7 @@ import {
     CheckCircle as LucideCheckCircle,
     Info as LucideInfo,
     Box as LucideBox,
-    Tool as LucideTool,
+    Wrench as LucideWrench,
     Maximize as LucideMaximize,
     ChevronRight as LucideChevronRight,
     ChevronDown as LucideChevronDown,
@@ -222,7 +222,7 @@ const SmartViewPage = ({ designId, onNavigate }: { designId: string, onNavigate:
                                             {operations.length > 0 ? operations.map((op: any, index: number) => (
                                                 <div key={index} style={{ padding: '8px 0', borderBottom: '1px solid #161821' }}>
                                                     <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11px', color: '#e2e8f0', marginBottom: '4px' }}>
-                                                        <LucideTool size={12} color="#a855f7" /> 
+                                                        <LucideWrench size={12} color="#a855f7" /> 
                                                         <span style={{ fontWeight: 600 }}>{op.operation_name}</span>
                                                     </div>
                                                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', fontSize: '10px', color: '#94a3b8' }}>
