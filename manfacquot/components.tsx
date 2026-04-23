@@ -1857,10 +1857,15 @@ export const DesignThumbnail = ({ modelUrl, thumbnailUrl, designId, designName }
             const uploadRes = await api.getUploadUrl(fileName, 'image/png');
             const targetUploadUrl = uploadRes.uploadUrl || uploadRes.upload_url;
             const targetS3Key = uploadRes.s3Key || uploadRes.s3_file_key;
-            
+
+            if (!targetUploadUrl || !targetS3Key) {
+                console.error('[DesignThumbnail] Invalid upload response: missing uploadUrl or s3Key', uploadRes);
+                throw new Error('Failed to get valid upload URL from server');
+            }
+
             console.log(`[DesignThumbnail] Uploading to S3/Local: ${targetS3Key}`);
             await api.uploadFileToS3(targetUploadUrl, new File([blob], fileName, { type: 'image/png' }));
-            
+
             console.log(`[DesignThumbnail] Updating backend with key: ${targetS3Key}`);
             await api.updateDesignThumbnail(designId, targetS3Key);
             
