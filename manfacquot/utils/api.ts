@@ -1,6 +1,21 @@
 // API Client extracted from index.tsx
 
 const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || '') + '/api'; // Uses env var in production
+const MEDIA_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
+
+/**
+ * Robust helper to resolve media URLs from the backend, 
+ * to prevent double-media paths or missing slashes.
+ */
+export const resolveMediaUrl = (path: string | null | undefined) => {
+    if (!path) return null;
+    if (path.startsWith('http')) return path;
+    
+    const cleanPath = path.startsWith('/') ? path.substring(1) : path;
+    const isMediaPath = cleanPath.startsWith('media/');
+    
+    return `${MEDIA_BASE_URL}/${isMediaPath ? '' : 'media/'}${cleanPath}`;
+};
 
 export const getTokens = () => ({
     access: localStorage.getItem('accessToken'),

@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams, useLocation, Link, Navigate, Outlet } from 'react-router-dom';
 import { useAuth } from './contexts/AuthContext';
 import { useFileViewer } from './contexts/FileViewerContext';
-import { api, setTokens, getTokens, clearTokens } from './utils/api';
+import { api, setTokens, getTokens, clearTokens, resolveMediaUrl } from './utils/api';
 import { useCurrency, CurrencyProvider } from './utils/currency';
 import { styles, bg_deep_space, text_primary, text_secondary, border_color, border_color_strong, neon_cyan, neon_magenta, neon_orange } from './types/theme';
 import CtaButton from './components/CtaButton';
@@ -29,15 +29,7 @@ export const MEDIA_BASE_URL = 'https://api.quotanic.com';
  * Standardizes how MEDIA_BASE_URL and /media/ paths are joined
  * to prevent double-media paths or missing slashes.
  */
-export const resolveMediaUrl = (path: string | null | undefined) => {
-    if (!path) return null;
-    if (path.startsWith('http')) return path;
-    
-    const cleanPath = path.startsWith('/') ? path.substring(1) : path;
-    const isMediaPath = cleanPath.startsWith('media/');
-    
-    return `${MEDIA_BASE_URL}/${isMediaPath ? '' : 'media/'}${cleanPath}`;
-};
+
 
 import {
     PRODUCTION_VOLUMES, CERTIFICATIONS, MACHINING_PROCESSES, SHEET_METAL_PROCESSES, CASTING_PROCESSES, FORGING_PROCESSES,
