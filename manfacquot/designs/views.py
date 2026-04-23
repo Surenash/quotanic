@@ -262,12 +262,18 @@ class DesignThumbnailUpdateView(APIView):
     def patch(self, request, id, *args, **kwargs):
         design = get_object_or_404(Design, id=id)
 
-        # Check permissions using IsOwnerOrAdmin manual logic if needed, 
-        # or rely on get_object_or_404 returning 404 if unfiltered.
-        # Check permissions using the same logic as DesignDetailView
-        if not (request.user.is_staff or design.customer == request.user):
+        # Allow if user is staff, the owner (customer), or a manufacturer associated with a quote for this design
+        has_permission = request.user.is_staff or design.customer == request.user
+        
+        if not has_permission:
+            # Check if this user is a manufacturer who has a quote for this design
+            from quotes.models import Quote
+            if Quote.objects.filter(design=design, manufacturer__user=request.user).exists():
+                has_permission = True
+
+        if not has_permission:
             return Response(
-                {"error": "You do not have permission to update this design."},
+                {"error": "You do not have permission to update this design thumbnail."},
                 status=status.HTTP_403_FORBIDDEN
             )
 
