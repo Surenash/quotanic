@@ -1,11 +1,11 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { api } from '../../utils/api';
 import { useCurrency } from '../../utils/currency';
 import { styles } from '../../types/theme';
 import CtaButton from '../../components/CtaButton';
 import Viewer from '../../components/Viewer';
 import { resolveMediaUrl } from '../../components';
-import { ViewPreset } from '../../types/types';
+import { ViewPreset, SupportedExtensions } from '../../types/types';
 
 // Icons
 import {
@@ -58,6 +58,8 @@ const SmartViewPage = ({ designId, onNavigate }: { designId: string, onNavigate:
     const { formatPrice } = useCurrency();
 
     // --- DATA FETCHING ---
+    const latestRequestRef = useRef(0);
+
     const fetchExplorerData = useCallback(async () => {
         try {
             const [internal, requests] = await Promise.all([
@@ -72,6 +74,9 @@ const SmartViewPage = ({ designId, onNavigate }: { designId: string, onNavigate:
     }, []);
 
     const fetchDesignData = useCallback(async (id: string) => {
+        latestRequestRef.current += 1;
+        const currentRequest = latestRequestRef.current;
+
         setLoading(true);
         setActiveDesignId(id);
         setActiveFeatureIndex(null);
@@ -81,14 +86,21 @@ const SmartViewPage = ({ designId, onNavigate }: { designId: string, onNavigate:
                 api.getFBMAnalysis(id).catch(() => null),
                 api.getDesignQuotes(id).catch(() => [])
             ]);
-            setDesign(designData);
-            setFbmAnalysis(fbmData);
-            setQuotes(quoteData);
+
+            // Only update state if this is still the latest request
+            if (currentRequest === latestRequestRef.current) {
+                setDesign(designData);
+                setFbmAnalysis(fbmData);
+                setQuotes(quoteData);
+                setError('');
+                setLoading(false);
+            }
         } catch (err) {
             console.error("Failed to fetch design details:", err);
-            setError('Failed to load manufacturing analysis data.');
-        } finally {
-            setLoading(false);
+            if (currentRequest === latestRequestRef.current) {
+                setError('Failed to load manufacturing analysis data.');
+                setLoading(false);
+            }
         }
     }, []);
 
@@ -115,6 +127,10 @@ const SmartViewPage = ({ designId, onNavigate }: { designId: string, onNavigate:
     const toggleFolder = (path: string, e?: React.MouseEvent) => {
         if (e) e.stopPropagation();
         setExpandedFolders(prev => ({ ...prev, [path]: !prev[path] }));
+    };
+
+    const toggleSetup = (index: number) => {
+        setExpandedSetups(prev => ({ ...prev, [index]: !prev[index] }));
     };
 
     const handleFeatureClick = (index: number) => {
@@ -145,7 +161,14 @@ const SmartViewPage = ({ designId, onNavigate }: { designId: string, onNavigate:
     }
 
     const modelUrl = resolveMediaUrl(design?.view_url || design?.s3_file_key);
-    const fileExt = modelUrl ? modelUrl.split('.').pop()?.split('?')[0].toLowerCase() as any : 'step';
+    const fileExt: SupportedExtensions = (() => {
+        if (!modelUrl) return 'stl';
+        const ext = modelUrl.split('.').pop()?.split(/[?#]/)[0]?.toLowerCase();
+        if (ext === 'stl' || ext === 'obj' || ext === 'gltf' || ext === 'glb') {
+            return ext;
+        }
+        return 'stl';
+    })();
 
     return (
         <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', backgroundColor: '#0a0a0f', color: '#e2e8f0', overflow: 'hidden', fontFamily: 'Inter, system-ui, sans-serif' }}>
@@ -167,7 +190,7 @@ const SmartViewPage = ({ designId, onNavigate }: { designId: string, onNavigate:
                     {design && (
                         <div style={{ textAlign: 'right' }}>
                             <div style={{ fontSize: '10px', color: '#64748b' }}>STATUS</div>
-                            <div style={{ color: '#34d399', fontSize: '12px', fontWeight: 700 }}>{design.status.replace('_', ' ').toUpperCase()}</div>
+                            <div style={{ color: '#34d399', fontSize: '12px', fontWeight: 700 }}>{(design.status?.replace('_', ' ') || 'UNKNOWN').toUpperCase()}</div>
                         </div>
                     )}
                     <div style={{ width: '1px', height: '24px', backgroundColor: '#2d2d3a' }}></div>
@@ -231,7 +254,7 @@ const SmartViewPage = ({ designId, onNavigate }: { designId: string, onNavigate:
                                             <div key={i} onClick={() => handleFeatureClick(i)} style={{ padding: '8px 10px', fontSize: '11px', borderRadius: '4px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'space-between', backgroundColor: activeFeatureIndex === i ? 'rgba(59, 130, 246, 0.1)' : 'transparent', border: activeFeatureIndex === i ? '1px solid rgba(59, 130, 246, 0.3)' : '1px solid transparent', color: activeFeatureIndex === i ? 'white' : '#94a3b8', transition: '0.1s' }}>
                                                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                                                     <div style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: f.complexity_score > DFM_THRESHOLD ? '#ef4444' : '#3b82f6' }} />
-                                                    {f.feature_type} #{i + 1}
+                                                    {(typeof f.feature_type === 'string' ? f.feature_type : 'Feature')} #{i + 1}
                                                 </div>
                                                 {f.complexity_score > DFM_THRESHOLD && <LucideAlertTriangle size={10} color="#f59e0b" />}
                                             </div>
@@ -381,7 +404,7 @@ const SmartViewPage = ({ designId, onNavigate }: { designId: string, onNavigate:
                         <div style={{ padding: '0 12px', borderBottom: '1px solid #2d2d3a', display: 'flex', gap: '2px', overflowX: 'auto', backgroundColor: '#161821' }} className="no-scrollbar">
                             {features.map((feature: any, index: number) => (
                                 <button key={index} onClick={() => handleFeatureClick(index)} style={{ padding: '10px 16px', backgroundColor: activeFeatureIndex === index ? '#0d0f17' : 'transparent', border: 'none', borderBottom: activeFeatureIndex === index ? '2px solid #3b82f6' : '2px solid transparent', color: activeFeatureIndex === index ? 'white' : '#64748b', fontSize: '11px', fontWeight: activeFeatureIndex === index ? 700 : 500, cursor: 'pointer', whiteSpace: 'nowrap', transition: '0.2s' }}>
-                                    {feature.feature_type.split(' ')[0]} #{index + 1}
+                                    {(typeof feature.feature_type === 'string' && feature.feature_type.includes(' ') ? feature.feature_type.split(' ')[0] : (feature.feature_type || 'Feature'))} #{index + 1}
                                 </button>
                             ))}
                             {features.length === 0 && <span style={{ fontSize: '11px', color: '#475569', padding: '10px' }}>No features analyzed.</span>}
@@ -396,15 +419,15 @@ const SmartViewPage = ({ designId, onNavigate }: { designId: string, onNavigate:
                                             <div style={{ flex: 1.5 }}>
                                                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px' }}>
                                                     <LucideCpu size={18} color="#3b82f6" />
-                                                    <h4 style={{ color: 'white', margin: 0, fontSize: '18px', fontWeight: 700 }}>{f.feature_type} Intelligence</h4>
+                                                    <h4 style={{ color: 'white', margin: 0, fontSize: '18px', fontWeight: 700 }}>{(typeof f.feature_type === 'string' ? f.feature_type : 'Feature')} Intelligence</h4>
                                                 </div>
                                                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px' }}>
-                                                    <DetailMetric label="AREA" value={f.area ? `${f.area.toFixed(2)} mm²` : 'N/A'} />
-                                                    <DetailMetric label="DIMENSION" value={f.diameter ? `Ø${f.diameter.toFixed(2)}mm` : f.width ? `${f.width.toFixed(1)}x${f.length.toFixed(1)}` : 'N/A'} />
-                                                    <DetailMetric label="COMPLEXITY" value={f.complexity_rating || '3'} color={f.complexity_rating > 3 ? '#ef4444' : '#34d399'} />
+                                                    <DetailMetric label="AREA" value={Number.isFinite(f.area) ? `${f.area.toFixed(2)} mm²` : 'N/A'} />
+                                                    <DetailMetric label="DIMENSION" value={Number.isFinite(f.diameter) ? `Ø${f.diameter.toFixed(2)}mm` : (Number.isFinite(f.width) && Number.isFinite(f.length)) ? `${f.width.toFixed(1)}x${f.length.toFixed(1)}` : 'N/A'} />
+                                                    <DetailMetric label="COMPLEXITY" value={typeof f.complexity_rating === 'number' ? String(f.complexity_rating) : '3'} color={(typeof f.complexity_rating === 'number' && f.complexity_rating > 3) ? '#ef4444' : '#34d399'} />
                                                     <DetailMetric label="ACCESSIBILITY" value={f.accessibility || 'Top'} />
-                                                    <DetailMetric label="CONFIDENCE" value={`${(f.confidence_score * 100).toFixed(0)}%`} />
-                                                    <DetailMetric label="ID" value={`F-${f.feature_id}`} />
+                                                    <DetailMetric label="CONFIDENCE" value={Number.isFinite(f.confidence_score) ? `${(f.confidence_score * 100).toFixed(0)}%` : 'N/A'} />
+                                                    <DetailMetric label="ID" value={`F-${f.feature_id || 'N/A'}`} />
                                                 </div>
                                             </div>
                                             <div style={{ flex: 1, borderLeft: '1px solid #2d2d3a', paddingLeft: '40px' }}>
@@ -412,7 +435,7 @@ const SmartViewPage = ({ designId, onNavigate }: { designId: string, onNavigate:
                                                 <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                                                     <div style={{ backgroundColor: 'rgba(255,255,255,0.03)', padding: '12px', borderRadius: '6px' }}>
                                                         <div style={{ fontSize: '9px', color: '#64748b', textTransform: 'uppercase' }}>Assigned Strategy</div>
-                                                        <div style={{ fontSize: '13px', color: 'white', fontWeight: 600, marginTop: '4px' }}>{f.feature_type.includes('Surface') ? '3D Profile Milling' : 'Drilling Cycle'}</div>
+                                                        <div style={{ fontSize: '13px', color: 'white', fontWeight: 600, marginTop: '4px' }}>{(typeof f.feature_type === 'string' && f.feature_type.includes('Surface')) ? '3D Profile Milling' : 'Drilling Cycle'}</div>
                                                     </div>
                                                     <div style={{ backgroundColor: 'rgba(255,255,255,0.03)', padding: '12px', borderRadius: '6px' }}>
                                                         <div style={{ fontSize: '9px', color: '#64748b', textTransform: 'uppercase' }}>Surface Finish</div>
@@ -487,25 +510,71 @@ const SmartViewPage = ({ designId, onNavigate }: { designId: string, onNavigate:
                             </div>
                         )}
 
-                        {activeTabRight === 'cost' && (
-                            <div style={{ animation: 'fadeIn 0.2s' }}>
-                                <h3 style={sectionTitleStyle}>Cost Breakdown</h3>
-                                {quotes?.[0] ? (
-                                    <div style={{ backgroundColor: '#161821', border: '1px solid #3b82f6', borderRadius: '12px', padding: '16px', marginBottom: '20px' }}>
-                                        <div style={{ fontSize: '10px', color: '#94a3b8', textTransform: 'uppercase', marginBottom: '4px' }}>Unit Price</div>
-                                        <div style={{ fontSize: '28px', fontWeight: 800, color: 'white' }}>{formatPrice(quotes[0].price_usd)}</div>
+                        {activeTabRight === 'cost' && (() => {
+                            const parseBreakdown = (notes: string) => {
+                                try {
+                                    const jsonStart = notes.indexOf('{');
+                                    if (jsonStart === -1) return null;
+                                    const jsonStr = notes.substring(jsonStart);
+                                    const data = JSON.parse(jsonStr.replace(/'/g, '"'));
+                                    return data;
+                                } catch (e) {
+                                    return null;
+                                }
+                            };
+
+                            const breakdown = quotes?.[0]?.notes ? parseBreakdown(quotes[0].notes) : null;
+
+                            const getMaterialCost = () => {
+                                if (breakdown?.material_cost_per_unit !== undefined) {
+                                    const val = typeof breakdown.material_cost_per_unit === 'number'
+                                        ? breakdown.material_cost_per_unit
+                                        : parseFloat(String(breakdown.material_cost_per_unit).replace(/[^0-9.]/g, ''));
+                                    return Number.isFinite(val) ? formatPrice(val) : 'N/A';
+                                }
+                                return 'N/A';
+                            };
+
+                            const getLaborCost = () => {
+                                if (breakdown?.labor_cost_per_unit !== undefined) {
+                                    const val = typeof breakdown.labor_cost_per_unit === 'number'
+                                        ? breakdown.labor_cost_per_unit
+                                        : parseFloat(String(breakdown.labor_cost_per_unit).split(' ')[0]?.replace(/[^0-9.]/g, '') || '0');
+                                    return Number.isFinite(val) ? formatPrice(val) : 'N/A';
+                                }
+                                return 'N/A';
+                            };
+
+                            const getFinishingCost = () => {
+                                if (breakdown?.finishing_cost_per_unit !== undefined) {
+                                    const val = typeof breakdown.finishing_cost_per_unit === 'number'
+                                        ? breakdown.finishing_cost_per_unit
+                                        : parseFloat(String(breakdown.finishing_cost_per_unit).replace(/[^0-9.]/g, ''));
+                                    return Number.isFinite(val) ? formatPrice(val) : 'N/A';
+                                }
+                                return 'N/A';
+                            };
+
+                            return (
+                                <div style={{ animation: 'fadeIn 0.2s' }}>
+                                    <h3 style={sectionTitleStyle}>Cost Breakdown</h3>
+                                    {quotes?.[0] ? (
+                                        <div style={{ backgroundColor: '#161821', border: '1px solid #3b82f6', borderRadius: '12px', padding: '16px', marginBottom: '20px' }}>
+                                            <div style={{ fontSize: '10px', color: '#94a3b8', textTransform: 'uppercase', marginBottom: '4px' }}>Unit Price</div>
+                                            <div style={{ fontSize: '28px', fontWeight: 800, color: 'white' }}>{formatPrice(quotes[0].price_usd)}</div>
+                                        </div>
+                                    ) : (
+                                        <div style={{ padding: '16px', textAlign: 'center', border: '1px dashed #2d2d3a', borderRadius: '8px', color: '#64748b', fontSize: '12px', marginBottom: '20px' }}>Quotation pending.</div>
+                                    )}
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                                        <InsightRow label="Material Cost" value={getMaterialCost()} />
+                                        <InsightRow label="Machining Cost" value={getLaborCost()} />
+                                        <InsightRow label="Finishing Cost" value={getFinishingCost()} />
+                                        <InsightRow label="Inspection/QA" value="N/A" />
                                     </div>
-                                ) : (
-                                    <div style={{ padding: '16px', textAlign: 'center', border: '1px dashed #2d2d3a', borderRadius: '8px', color: '#64748b', fontSize: '12px', marginBottom: '20px' }}>Quotation pending.</div>
-                                )}
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-                                    <InsightRow label="Material Cost" value={formatPrice((quotes?.[0]?.price_usd || 0) * 0.25)} />
-                                    <InsightRow label="Machining Cost" value={formatPrice((quotes?.[0]?.price_usd || 0) * 0.55)} />
-                                    <InsightRow label="Setup/Programming" value={formatPrice((quotes?.[0]?.price_usd || 0) * 0.1)} />
-                                    <InsightRow label="Inspection/QA" value={formatPrice((quotes?.[0]?.price_usd || 0) * 0.1)} />
                                 </div>
-                            </div>
-                        )}
+                            );
+                        })()}
 
                         {activeTabRight === 'analysis' && (
                             <div style={{ animation: 'fadeIn 0.2s' }}>
@@ -554,7 +623,7 @@ const SmartViewPage = ({ designId, onNavigate }: { designId: string, onNavigate:
             <style>{`
                 .custom-scrollbar::-webkit-scrollbar { width: 4px; height: 4px; }
                 .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
-                .custom-scrollbar::-webkit-scrollbar-thumb { background: #2d2d3a; borderRadius: 10px; }
+                .custom-scrollbar::-webkit-scrollbar-thumb { background: #2d2d3a; border-radius: 10px; }
                 .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #3b82f6; }
                 .no-scrollbar::-webkit-scrollbar { display: none; }
                 @keyframes spin { to { transform: rotate(360deg); } }

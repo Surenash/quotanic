@@ -82,17 +82,28 @@ export const api = {
     },
 
     async uploadFileToS3(url: string, file: File) {
+        const isRelativePath = url.startsWith('/');
         let fetchUrl = url;
-        if (url.startsWith('/')) {
+        if (isRelativePath) {
             // If the URL is a relative API path (e.g., from USE_LOCAL_STORAGE), prepend the correct domain.
             const domain = API_BASE_URL.replace(/\/api$/, '');
             fetchUrl = `${domain}${url}`;
         }
-        
+
+        const headers: Record<string, string> = { 'Content-Type': file.type };
+
+        // Add auth header for relative paths (protected endpoints)
+        if (isRelativePath) {
+            const { access } = getTokens();
+            if (access) {
+                headers['Authorization'] = `Bearer ${access}`;
+            }
+        }
+
         const response = await fetch(fetchUrl, {
             method: 'PUT',
             body: file,
-            headers: { 'Content-Type': file.type }
+            headers
         });
         if (!response.ok) { throw new Error(`Failed to upload file to S3: ${response.status}`); }
     },

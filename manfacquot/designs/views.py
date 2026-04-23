@@ -111,18 +111,38 @@ class LocalUploadView(APIView):
     def put(self, request, *args, **kwargs):
         if not settings.USE_LOCAL_STORAGE:
             return Response({"error": "Local storage is disabled."}, status=status.HTTP_400_BAD_REQUEST)
-            
+
         target_key = request.GET.get('key')
         if not target_key:
             return Response({"error": "key query parameter is required."}, status=status.HTTP_400_BAD_REQUEST)
 
         from pathlib import Path
-        file_path = Path(settings.MEDIA_ROOT) / target_key
+
+        # Normalize and validate the key
+        normalized_key = target_key.lstrip('/')
+        if not normalized_key or Path(normalized_key).is_absolute():
+            return Response({"error": "Invalid key: must be a relative path."}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Ensure the key begins with the user's prefix
+        user_prefix = f"{request.user.id}/"
+        if not normalized_key.startswith(user_prefix):
+            return Response({"error": f"Invalid key: must start with user prefix {user_prefix}."}, status=status.HTTP_403_FORBIDDEN)
+
+        # Build and validate file path
+        media_root = Path(settings.MEDIA_ROOT).resolve()
+        file_path = (media_root / normalized_key).resolve()
+
+        # Ensure the resolved path is within MEDIA_ROOT
+        try:
+            file_path.relative_to(media_root)
+        except ValueError:
+            return Response({"error": "Invalid key: path traversal detected."}, status=status.HTTP_403_FORBIDDEN)
+
         file_path.parent.mkdir(parents=True, exist_ok=True)
-        
+
         with open(file_path, 'wb') as f:
             f.write(request.data)
-            
+
         return Response({"message": "File uploaded successfully"}, status=status.HTTP_200_OK)
 
 # --- Design CRUD Views ---
@@ -264,11 +284,11 @@ class DesignThumbnailUpdateView(APIView):
 
         # Allow if user is staff, the owner (customer), or a manufacturer associated with a quote for this design
         has_permission = request.user.is_staff or design.customer == request.user
-        
+
         if not has_permission:
             # Check if this user is a manufacturer who has a quote for this design
             from quotes.models import Quote
-            if Quote.objects.filter(design=design, manufacturer__user=request.user).exists():
+            if Quote.objects.filter(design=design, manufacturer=request.user).exists():
                 has_permission = True
 
         if not has_permission:
@@ -752,6 +772,5 @@ class FBMManufacturingIntelligenceView(APIView):
                 "cost_saving_opportunities": len(intelligence.get('cost_opportunities', []))
             }
         }, status=status.HTTP_200_OK)
-
 
 
