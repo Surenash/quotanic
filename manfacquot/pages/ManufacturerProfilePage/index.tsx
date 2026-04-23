@@ -53,6 +53,7 @@ export const ManufacturerProfilePage = () => {
 
     const capabilityGroups = getCapabilitiesByGroup();
     const materials = manufacturer.capabilities.filter(c => [...MATERIALS_METALS, ...MATERIALS_PLASTICS, ...MATERIALS_COMPOSITES, ...MATERIALS_OTHERS].includes(c));
+    const certifications = manufacturer.certifications || [];
 
     const profileHeaderStyle: React.CSSProperties = {
         ...styles.profileHeader,
