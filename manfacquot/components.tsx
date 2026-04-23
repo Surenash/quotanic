@@ -1905,14 +1905,25 @@ export const DesignThumbnail = ({ modelUrl, thumbnailUrl, designId, designName }
             onMouseLeave={() => setIsHovered(false)}
             title="Hover to rotate 3D Model"
         >
-            {!isHovered ? (
-                actualThumbUrl ? (
-                    <img src={actualThumbUrl} alt={designName} style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
-                ) : (
-                    <CubeIcon style={{ width: '24px', height: '24px' }} color="var(--neon-cyan)" />
-                )
-            ) : (
-                actualUrl ? (
+            {/* 1. Show Image if we have it and not hovered */}
+            {actualThumbUrl && !isHovered && (
+                <img src={actualThumbUrl} alt={designName} style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+            )}
+            
+            {/* 2. Show CubeIcon if we don't have image and not hovered, OR if hovered but no 3D model */}
+            {((!actualThumbUrl && !isHovered) || (isHovered && !actualUrl)) && (
+                <CubeIcon style={{ width: '24px', height: '24px', zIndex: 1 }} color="var(--neon-cyan)" />
+            )}
+
+            {/* 3. Render the Viewer if hovered (visible) OR if we need to generate thumbnail (invisible) */}
+            {(isHovered || (!actualThumbUrl && actualUrl)) && actualUrl && (
+                <div style={{ 
+                    width: '100%', height: '100%', 
+                    opacity: isHovered ? 1 : 0, 
+                    position: isHovered ? 'relative' : 'absolute', 
+                    pointerEvents: isHovered ? 'auto' : 'none', 
+                    display: 'flex', alignItems: 'center', justifyContent: 'center' 
+                }}>
                     <ErrorBoundary
                         fallback={(error) => {
                             console.error(`[DesignThumbnail] 💥 Error rendering ${designName}:`, error);
@@ -1931,9 +1942,7 @@ export const DesignThumbnail = ({ modelUrl, thumbnailUrl, designId, designName }
                             onLoadComplete={handleLoadComplete}
                         />
                     </ErrorBoundary>
-                ) : (
-                    <CubeIcon style={{ width: '24px', height: '24px' }} color="var(--neon-cyan)" />
-                )
+                </div>
             )}
         </div>
     );
@@ -2367,16 +2376,8 @@ export const InternalQuotationsPage = () => {
                     id: quote.id,
                     designId: quote.design,
                     designName: quote.design_name || 'Unnamed Part',
-                    designViewUrl: (quote as any).design_view_url
-                        ? ((quote as any).design_view_url.startsWith('http')
-                            ? (quote as any).design_view_url
-                            : `https://api.quotanic.com${(quote as any).design_view_url}`)
-                        : null,
-                    designThumbnailUrl: (quote as any).design_thumbnail_url
-                        ? ((quote as any).design_thumbnail_url.startsWith('http')
-                            ? (quote as any).design_thumbnail_url
-                            : `https://api.quotanic.com${(quote as any).design_thumbnail_url}`)
-                        : null,
+                    designViewUrl: resolveMediaUrl((quote as any).design_view_url),
+                    designThumbnailUrl: resolveMediaUrl((quote as any).design_thumbnail_url),
                     material: quote.design_material || 'N/A',
                     quantity: quote.design_quantity || 0,
                     dateReceived: quote.created_at,
