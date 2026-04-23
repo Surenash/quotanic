@@ -2026,7 +2026,7 @@ export const QuoteRequestsPage = () => {
         // Using confirm for simplicity. A custom modal would be better for UX.
         if (window.confirm(`Are you sure you want to decline the quote for "${request.designName}"?`)) {
             try {
-                await api.declineQuoteRequest(request.designId);
+                await api.declineQuoteRequest(request.id);
                 setNotification({ show: true, message: `Request for ${request.designName} declined.`, type: 'success' });
                 const updatedRequests = requests.map(r => r.id === request.id ? { ...r, status: 'Declined' } : r);
                 setRequests(updatedRequests);
@@ -2135,7 +2135,7 @@ export const QuoteRequestsPage = () => {
                                             {req.status === 'Pending' ? (
                                                 <>
                                                     <CtaButton text="Quote" primary onClick={() => handleOpenModal(req)} className="button-small" />
-                                                    <CtaButton text="Decline" onClick={() => handleDecline(req.id)} className="button-small-danger" />
+                                                    <CtaButton text="Decline" onClick={() => handleDecline(req)} className="button-small-danger" />
                                                 </>
                                             ) : (
                                                 <span style={{ color: 'var(--text-secondary)', fontSize: '14px' }}>Completed</span>
