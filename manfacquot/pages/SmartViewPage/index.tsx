@@ -122,8 +122,8 @@ const SmartViewPage = ({ designId, onNavigate }: { designId: string, onNavigate:
     const intelligence = fbmAnalysis?.manufacturing_intelligence || {};
     const processRec = intelligence?.manufacturing_process_recommendation || {};
     
-    const DFM_THRESHOLD = 0.7;
-    const dfmWarnings = features.filter((f: any) => f.complexity_score > DFM_THRESHOLD || f.complexity_rating >= 3);
+    const DFM_THRESHOLD = 0.85;
+    const dfmWarnings = features.filter((f: any) => f.complexity_score > DFM_THRESHOLD && f.complexity_rating >= 4);
 
     // --- HANDLERS ---
     const toggleFolder = (path: string, e?: React.MouseEvent) => {
@@ -255,10 +255,10 @@ const SmartViewPage = ({ designId, onNavigate }: { designId: string, onNavigate:
                                         {features.map((f: any, i: number) => (
                                             <div key={i} onClick={() => handleFeatureClick(i)} style={{ padding: '8px 10px', fontSize: '11px', borderRadius: '4px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'space-between', backgroundColor: activeFeatureIndex === i ? 'rgba(59, 130, 246, 0.1)' : 'transparent', border: activeFeatureIndex === i ? '1px solid rgba(59, 130, 246, 0.3)' : '1px solid transparent', color: activeFeatureIndex === i ? 'white' : '#94a3b8', transition: '0.1s' }}>
                                                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                                    <div style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: f.complexity_score > DFM_THRESHOLD ? '#ef4444' : '#3b82f6' }} />
+                                                    <div style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: (f.complexity_score > DFM_THRESHOLD && f.complexity_rating >= 4) ? '#ef4444' : '#3b82f6' }} />
                                                     {(typeof f.feature_type === 'string' ? f.feature_type : 'Feature')} #{i + 1}
                                                 </div>
-                                                {f.complexity_score > DFM_THRESHOLD && <LucideAlertTriangle size={10} color="#f59e0b" />}
+                                                {(f.complexity_score > DFM_THRESHOLD && f.complexity_rating >= 4) && <LucideAlertTriangle size={10} color="#f59e0b" />}
                                             </div>
                                         ))}
                                         {features.length === 0 && <div style={{ color: '#475569', fontSize: '11px', padding: '10px' }}>No features extracted.</div>}
