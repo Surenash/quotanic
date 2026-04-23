@@ -206,12 +206,14 @@ export const UploadPage = ({ isInternal = false }: { isInternal?: boolean }) => 
                 surface_finish: formData.surfaceFinish,
                 tolerances: formData.tolerances,
                 post_processing: formData.postProcessing,
-                additional_instructions: formData.additionalInstructions,
+                additional_instructions: formData.quantity.includes('-') 
+                    ? `[Qty: ${formData.quantity}] ${formData.additionalInstructions}`
+                    : formData.additionalInstructions,
                 required_certifications: formData.requiredCertifications,
                 shipping_destination: formData.shippingDestination,
                 target_price: formData.targetPrice,
                 urgency: formData.urgency,
-                packaging: formData.packaging,
+                packaging_requirements: formData.packaging,
                 inspection_requirements: formData.inspectionRequirements,
                 requires_engineering_review: formData.requiresEngineeringReview,
                 is_internal: isInternal
