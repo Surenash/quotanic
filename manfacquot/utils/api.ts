@@ -160,10 +160,12 @@ export const api = {
         return this.request(`/designs/${designId}/quotes/`, { method: 'POST', body: quoteData });
     },
 
-    declineQuoteRequest(designId: string) {
-        // Mock decline - in real app would interact with backend
-        console.log(`MOCK API: Declining quote request for design ${designId}`);
-        return new Promise(resolve => setTimeout(() => resolve({ success: true, designId }), 300));
+    declineQuoteRequest(quoteId: string) {
+        return this.updateQuoteStatus(quoteId, 'declined');
+    },
+
+    deleteQuote(id: string) {
+        return this.request(`/quotes/${id}/`, { method: 'DELETE' });
     },
 
     getActiveOrders() {
