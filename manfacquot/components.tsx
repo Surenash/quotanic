@@ -2304,6 +2304,7 @@ export const ActiveOrdersPage = () => {
                 <table style={styles.table}>
                     <thead>
                         <tr>
+                            <th style={styles.tableHeader}>Part</th>
                             <th style={styles.tableHeader}>Order ID</th>
                             <th style={styles.tableHeader}>Part Name</th>
                             <th style={styles.tableHeader}>Customer</th>
@@ -2316,12 +2317,20 @@ export const ActiveOrdersPage = () => {
                     <tbody>
                         {orders.length > 0 ? orders.map((order: any) => (
                             <tr key={order.id}>
+                                <td style={styles.tableCell}>
+                                    <DesignThumbnail 
+                                        modelUrl={resolveMediaUrl(order.design_info?.design_view_url)} 
+                                        thumbnailUrl={resolveMediaUrl(order.design_info?.design_thumbnail_url)}
+                                        designId={order.design_info?.id} 
+                                        designName={order.design_info?.design_name} 
+                                    />
+                                </td>
                                 <td style={styles.tableCell}>{order.id}</td>
-                                <td style={styles.tableCell}>{order.designName}</td>
-                                <td style={styles.tableCell}>{order.customer}</td>
-                                <td style={styles.tableCell}>{new Date(order.dateCreated).toLocaleDateString()}</td>
-                                <td style={styles.tableCell}><span style={getStatusStyle(order.status)}>{order.status}</span></td>
-                                <td style={{ ...styles.tableCell, fontFamily: 'monospace' }}>{order.trackingNumber || 'N/A'}</td>
+                                <td style={styles.tableCell}>{order.design_info?.design_name || order.designName}</td>
+                                <td style={styles.tableCell}>{order.customer_info?.company_name || order.customer}</td>
+                                <td style={styles.tableCell}>{new Date(order.created_at || order.dateCreated).toLocaleDateString()}</td>
+                                <td style={styles.tableCell}><span style={getStatusStyle(order.status)}>{order.status_display || order.status}</span></td>
+                                <td style={{ ...styles.tableCell, fontFamily: 'monospace' }}>{order.tracking_number || order.trackingNumber || 'N/A'}</td>
                                 <td style={styles.tableCell}>
                                     <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
                                         <CtaButton text="Manage" primary onClick={() => handleOpenModal(order)} className="button-small" />
@@ -3316,6 +3325,7 @@ export const CustomerDesignsPage = () => {
                 <table style={styles.table}>
                     <thead>
                         <tr>
+                            <th style={styles.tableHeader}>Part</th>
                             <th style={styles.tableHeader}>Design Name</th>
                             <th style={styles.tableHeader}>Material</th>
                             <th style={styles.tableHeader}>Quantity</th>
@@ -3327,6 +3337,14 @@ export const CustomerDesignsPage = () => {
                     <tbody>
                         {designs.length > 0 ? designs.map(design => (
                             <tr key={design.id}>
+                                <td style={styles.tableCell}>
+                                    <DesignThumbnail 
+                                        modelUrl={resolveMediaUrl(design.design_view_url)} 
+                                        thumbnailUrl={resolveMediaUrl(design.design_thumbnail_url)}
+                                        designId={design.id} 
+                                        designName={design.design_name} 
+                                    />
+                                </td>
                                 <td style={styles.tableCell}>{design.design_name}</td>
                                 <td style={styles.tableCell}>{design.material}</td>
                                 <td style={styles.tableCell}>{design.quantity}</td>
@@ -3402,6 +3420,7 @@ export const CustomerOrdersPage = () => {
                 <table style={styles.table}>
                     <thead>
                         <tr>
+                            <th style={styles.tableHeader}>Part</th>
                             <th style={styles.tableHeader}>Order ID</th>
                             <th style={styles.tableHeader}>Design Name</th>
                             <th style={styles.tableHeader}>Manufacturer</th>
@@ -3412,17 +3431,25 @@ export const CustomerOrdersPage = () => {
                         </tr>
                     </thead>
                     <tbody>
-                        {orders.length > 0 ? orders.map(order => (
+                        {orders.length > 0 ? orders.map((order: any) => (
                             <tr key={order.id}>
+                                <td style={styles.tableCell}>
+                                    <DesignThumbnail 
+                                        modelUrl={resolveMediaUrl(order.design_info?.design_view_url)} 
+                                        thumbnailUrl={resolveMediaUrl(order.design_info?.design_thumbnail_url)}
+                                        designId={order.design_info?.id} 
+                                        designName={order.design_info?.design_name} 
+                                    />
+                                </td>
                                 <td style={{ ...styles.tableCell, fontFamily: 'monospace' }}>{order.id}</td>
-                                <td style={styles.tableCell}>{order.designName}</td>
-                                <td style={styles.tableCell}>{order.manufacturer}</td>
-                                <td style={styles.tableCell}>{formatPrice(order.price)}</td>
-                                <td style={styles.tableCell}><span style={getStatusStyle(order.status)}>{order.status}</span></td>
+                                <td style={styles.tableCell}>{order.design_info?.design_name || order.designName}</td>
+                                <td style={styles.tableCell}>{order.manufacturer_info?.company_name || order.manufacturer}</td>
+                                <td style={styles.tableCell}>{formatPrice(order.order_total_price_usd || order.price)}</td>
+                                <td style={styles.tableCell}><span style={getStatusStyle(order.status)}>{order.status_display || order.status}</span></td>
                                 <td style={{ ...styles.tableCell, fontFamily: 'monospace' }}>
-                                    {order.trackingNumber ? (
-                                        <a href={`https://www.google.com/search?q=${order.trackingNumber}`} target="_blank" rel="noopener noreferrer" style={styles.loginLink}>
-                                            {order.trackingNumber} ({order.shippingCarrier})
+                                    {order.tracking_number || order.trackingNumber ? (
+                                        <a href={`https://www.google.com/search?q=${order.tracking_number || order.trackingNumber}`} target="_blank" rel="noopener noreferrer" style={styles.loginLink}>
+                                            {order.tracking_number || order.trackingNumber} ({order.shipping_carrier || order.shippingCarrier})
                                         </a>
                                     ) : 'N/A'}
                                 </td>

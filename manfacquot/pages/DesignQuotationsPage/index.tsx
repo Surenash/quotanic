@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams, useLocation, Link, Navigate, Outlet } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { useFileViewer } from '../../contexts/FileViewerContext';
-import { api, setTokens, getTokens, clearTokens } from '../../utils/api';
+import { api, setTokens, getTokens, clearTokens, resolveMediaUrl } from '../../utils/api';
 import { useCurrency } from '../../utils/currency';
 import { styles, bg_deep_space, text_primary, text_secondary, border_color, border_color_strong, neon_cyan, neon_magenta, neon_orange } from '../../types/theme';
 import CtaButton from '../../components/CtaButton';
@@ -138,29 +138,39 @@ export const DesignQuotationsPage = ({ designId, navigate, onViewFiles }: { desi
             </button>
 
             {/* Design Summary */}
-            <div style={{ ...styles.featureCard, marginBottom: '32px' }}>
-                <h2 style={styles.dashboardPageTitle}>Quotations for: {design?.design_name || 'Design'}</h2>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px', marginTop: '16px' }}>
-                    <div>
-                        <p style={{ fontSize: '14px', color: 'var(--text-secondary)', marginBottom: '4px' }}>Material</p>
-                        <p style={{ fontSize: '16px', fontWeight: '600' }}>{design?.material}</p>
-                    </div>
-                    <div>
-                        <p style={{ fontSize: '14px', color: 'var(--text-secondary)', marginBottom: '4px' }}>Quantity</p>
-                        <p style={{ fontSize: '16px', fontWeight: '600' }}>{design?.quantity} units</p>
-                    </div>
-                    <div>
-                        <p style={{ fontSize: '14px', color: 'var(--text-secondary)', marginBottom: '4px' }}>Quotes Received</p>
-                        <p style={{ fontSize: '16px', fontWeight: '600' }}>{quotes.length}</p>
-                    </div>
-                    <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'flex-end' }}>
-                        <CtaButton
-                            text="View 3D Design"
-                            onClick={() => onViewFiles(designId)}
-                            className="button-small"
-                        >
-                            <EyeIcon style={{ width: '18px', height: '18px', marginRight: '8px' }} />
-                        </CtaButton>
+            <div style={{ ...styles.featureCard, marginBottom: '32px', display: 'flex', gap: '24px', alignItems: 'flex-start' }}>
+                <div style={{ width: '120px', height: '120px', flexShrink: 0 }}>
+                    <Components.DesignThumbnail 
+                        modelUrl={resolveMediaUrl(design?.design_view_url)} 
+                        thumbnailUrl={resolveMediaUrl(design?.design_thumbnail_url)}
+                        designId={designId} 
+                        designName={design?.design_name || 'Design'} 
+                    />
+                </div>
+                <div style={{ flex: 1 }}>
+                    <h2 style={styles.dashboardPageTitle}>Quotations for: {design?.design_name || 'Design'}</h2>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '16px', marginTop: '16px' }}>
+                        <div>
+                            <p style={{ fontSize: '14px', color: 'var(--text-secondary)', marginBottom: '4px' }}>Material</p>
+                            <p style={{ fontSize: '16px', fontWeight: '600' }}>{design?.material}</p>
+                        </div>
+                        <div>
+                            <p style={{ fontSize: '14px', color: 'var(--text-secondary)', marginBottom: '4px' }}>Quantity</p>
+                            <p style={{ fontSize: '16px', fontWeight: '600' }}>{design?.quantity} units</p>
+                        </div>
+                        <div>
+                            <p style={{ fontSize: '14px', color: 'var(--text-secondary)', marginBottom: '4px' }}>Quotes Received</p>
+                            <p style={{ fontSize: '16px', fontWeight: '600' }}>{quotes.length}</p>
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'flex-end' }}>
+                            <CtaButton
+                                text="View 3D Design"
+                                onClick={() => onViewFiles(designId)}
+                                className="button-small"
+                            >
+                                <EyeIcon style={{ width: '18px', height: '18px', marginRight: '8px' }} />
+                            </CtaButton>
+                        </div>
                     </div>
                 </div>
             </div>

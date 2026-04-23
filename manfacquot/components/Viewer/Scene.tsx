@@ -67,13 +67,23 @@ const Scene: React.FC<SceneProps> = ({
     }
     
     if (onLoadComplete) {
-      // Use a small delay to ensure the 3D geometry has fully painted 
-      // and the camera transition is settled before taking the screenshot.
+      // If we are doing a headless capture, jump immediately to the target position
+      // instead of lerping, to ensure we capture the full part perfectly framed.
+      const direction = CAMERA_VIEW_DIRECTIONS[view];
+      const jumpDistance = distance;
+      camera.position.copy(direction).multiplyScalar(jumpDistance);
+      if (controls) {
+        (controls as any).target.set(0, 0, 0);
+        (controls as any).update();
+      }
+      
+      // Use a slightly longer delay to ensure the 3D geometry has fully painted 
+      // and the browser has finished any initial layout/render cycles.
       setTimeout(() => {
         onLoadComplete();
-      }, 200);
+      }, 500);
     }
-  }, [camera, controls, onLoadComplete]);
+  }, [camera, controls, onLoadComplete, view]);
 
   // RESET LOGIC
   useEffect(() => {
