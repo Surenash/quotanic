@@ -1993,7 +1993,7 @@ export const QuoteRequestsPage = () => {
                 material: quote.design_material || 'N/A',
                 quantity: quote.design_quantity || 0,
                 dateReceived: quote.created_at,
-                status: quote.status === 'pending' ? 'Pending' : 'Quoted',
+                status: quote.status === 'pending' ? 'Pending' : (quote.status === 'rejected' ? 'Declined' : 'Quoted'),
                 price: quote.price_usd,
                 leadTime: quote.estimated_lead_time_days,
                 notes: quote.notes || '',
