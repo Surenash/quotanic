@@ -4,7 +4,7 @@ import { useCurrency } from '../../utils/currency';
 import { styles } from '../../types/theme';
 import CtaButton from '../../components/CtaButton';
 import Viewer from '../../components/Viewer';
-import { resolveMediaUrl } from '../../components';
+import { resolveMediaUrl } from '../../utils/api';
 import { ViewPreset, SupportedExtensions } from '../../types/types';
 
 // Icons
