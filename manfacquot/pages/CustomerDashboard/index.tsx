@@ -36,12 +36,24 @@ export const CustomerDashboard = ({ user }) => {
     const navigate = useNavigate();
     const { openViewer: onViewFiles } = useFileViewer();
     const [activeView, setActiveView] = useState('overview');
+    const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(() => {
+        return localStorage.getItem('cust_sidebar_collapsed') === 'true';
+    });
+
     const navItems = [
         { id: 'overview', label: 'Overview', icon: ChartPieIcon },
         { id: 'designs', label: 'My Designs', icon: CubeIcon },
         { id: 'orders', label: 'My Orders', icon: ArchiveBoxIcon },
         { id: 'profile', label: 'Profile', icon: UserCircleIcon },
     ];
+
+    const toggleSidebar = () => {
+        setIsSidebarCollapsed(prev => {
+            const newState = !prev;
+            localStorage.setItem('cust_sidebar_collapsed', String(newState));
+            return newState;
+        });
+    };
 
     const renderActiveView = () => {
         switch (activeView) {
@@ -54,11 +66,68 @@ export const CustomerDashboard = ({ user }) => {
         }
     };
 
+    // Dark Mode Optimized Sidebar Button Styles
+    const getSidebarBtnStyle = (isActive: boolean) => ({
+        ...styles.dashboardNavLink,
+        display: 'flex',
+        alignItems: 'center',
+        padding: '12px 16px',
+        borderRadius: '8px',
+        marginBottom: '4px',
+        transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+        border: 'none',
+        background: isActive ? 'rgba(10, 240, 240, 0.1)' : 'transparent',
+        color: isActive ? neon_cyan : 'rgba(255, 255, 255, 0.6)',
+        cursor: 'pointer',
+        textAlign: 'left' as const,
+        width: '100%',
+        fontFamily: 'inherit',
+        fontSize: '14px',
+        fontWeight: isActive ? 600 : 500,
+        position: 'relative' as const,
+        overflow: 'hidden',
+        ...(isActive && {
+            boxShadow: 'inset 0 0 10px rgba(10, 240, 240, 0.05)',
+            borderLeft: `3px solid ${neon_cyan}`,
+            paddingLeft: '13px'
+        })
+    });
+
     return (
         <div style={styles.dashboardContainer}>
-            <aside style={styles.dashboardSidebar}>
-                <h2 style={styles.dashboardSidebarTitle}>Customer<br />Dashboard</h2>
-                <nav style={styles.dashboardNav}>
+            <aside style={{ 
+                ...styles.dashboardSidebar, 
+                width: isSidebarCollapsed ? '80px' : '260px',
+                transition: 'width 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                display: 'flex',
+                flexDirection: 'column',
+                position: 'relative'
+            }}>
+                <div style={{ padding: '24px 16px', display: 'flex', alignItems: 'center', justifyContent: isSidebarCollapsed ? 'center' : 'space-between', marginBottom: '20px' }}>
+                    {!isSidebarCollapsed && (
+                        <h2 style={{ ...styles.dashboardSidebarTitle, margin: 0, fontSize: '18px' }}>Customer<br />Dashboard</h2>
+                    )}
+                    <button 
+                        onClick={toggleSidebar}
+                        style={{
+                            background: 'rgba(255,255,255,0.05)',
+                            border: `1px solid ${border_color}`,
+                            borderRadius: '6px',
+                            color: text_secondary,
+                            cursor: 'pointer',
+                            padding: '6px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            transition: 'all 0.2s'
+                        }}
+                        title={isSidebarCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
+                    >
+                        {isSidebarCollapsed ? <ArrowLeftIcon style={{ transform: 'rotate(180deg)', width: '16px', height: '16px' }} /> : <ArrowLeftIcon style={{ width: '16px', height: '16px' }} />}
+                    </button>
+                </div>
+
+                <nav style={{ ...styles.dashboardNav, padding: '0 12px' }}>
                     {navItems.map(item => {
                         const Icon = item.icon;
                         const isActive = activeView === item.id;
@@ -67,17 +136,47 @@ export const CustomerDashboard = ({ user }) => {
                                 type="button"
                                 key={item.id}
                                 onClick={() => setActiveView(item.id)}
-                                style={{ ...styles.dashboardNavLink, ...(isActive && styles.dashboardNavLinkActive), border: 'none', background: 'none', cursor: 'pointer', textAlign: 'left', width: '100%', fontFamily: 'inherit', fontSize: 'inherit' }}
+                                style={getSidebarBtnStyle(isActive)}
                                 aria-pressed={isActive}
+                                title={isSidebarCollapsed ? item.label : ""}
                             >
-                                <Icon style={{ width: '20px', height: '20px', marginRight: '12px' }} />
-                                {item.label}
+                                <Icon style={{ width: '20px', height: '20px', marginRight: isSidebarCollapsed ? 0 : '12px', flexShrink: 0 }} />
+                                {!isSidebarCollapsed && item.label}
+                                {isActive && !isSidebarCollapsed && (
+                                    <div style={{ position: 'absolute', right: 0, top: 0, bottom: 0, width: '4px', background: neon_cyan, boxShadow: `0 0 10px ${neon_cyan}` }} />
+                                )}
                             </button>
                         );
                     })}
                 </nav>
+
+                <div style={{ marginTop: 'auto', padding: '20px 16px', borderTop: `1px solid ${border_color}` }}>
+                     <button
+                        onClick={clearTokens}
+                        style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            padding: '12px 16px',
+                            color: '#ef4444',
+                            background: 'transparent',
+                            border: 'none',
+                            cursor: 'pointer',
+                            fontSize: '14px',
+                            width: '100%',
+                            opacity: 0.8
+                        }}
+                    >
+                        <XMarkIcon style={{ width: '20px', height: '20px', marginRight: isSidebarCollapsed ? 0 : '12px' }} />
+                        {!isSidebarCollapsed && "Log Out"}
+                    </button>
+                </div>
             </aside>
-            <main style={styles.dashboardMainContent}>
+            <main style={{ 
+                ...styles.dashboardMainContent,
+                flex: 1,
+                overflowY: 'auto',
+                transition: 'padding-left 0.3s'
+            }}>
                 {renderActiveView()}
             </main>
         </div>
