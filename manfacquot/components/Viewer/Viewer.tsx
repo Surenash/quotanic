@@ -16,7 +16,9 @@ interface ViewerProps {
   hideSidebar?: boolean;
   activeFeatureIndex?: number | null;
   onFeatureClick?: (index: number) => void;
+  lowQuality?: boolean;
   children?: React.ReactNode;
+  onLoadComplete?: () => void;
 }
 
 // Sidebar Panel Types
@@ -33,7 +35,9 @@ const Viewer: React.FC<ViewerProps> = ({
   hideSidebar = false,
   activeFeatureIndex = null,
   onFeatureClick,
-  children 
+  lowQuality = false,
+  children,
+  onLoadComplete 
 }) => {
   // --- STATE ---
   const [activePanel, setActivePanel] = useState<PanelType>(null);
@@ -288,8 +292,13 @@ const Viewer: React.FC<ViewerProps> = ({
           <Suspense fallback={<Loader />}>
             <Canvas
               camera={{ fov: 50 }}
-              shadows
-              gl={{ preserveDrawingBuffer: true, antialias: true }}
+              shadows={!lowQuality}
+              gl={{ 
+                  preserveDrawingBuffer: onLoadComplete ? true : !lowQuality, 
+                  antialias: !lowQuality,
+                  powerPreference: lowQuality ? 'low-power' : 'high-performance'
+              }}
+              dpr={lowQuality ? 1 : [1, 2]}
             >
               <Scene 
                 modelUrl={modelUrl} 
@@ -307,6 +316,7 @@ const Viewer: React.FC<ViewerProps> = ({
                 resetKey={resetKey}
                 activeFeatureIndex={activeFeatureIndex}
                 onFeatureClick={onFeatureClick}
+                onLoadComplete={onLoadComplete}
               />
             </Canvas>
           </Suspense>

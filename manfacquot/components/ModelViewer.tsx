@@ -249,7 +249,7 @@ const ModelViewer: React.FC<ModelViewerProps> = ({ className = '' }) => {
     <div className={`relative w-full h-full bg-gray-900 rounded-lg overflow-hidden ${className}`}>
       {!modelUrl ? (
         // File upload area
-        <div
+        <label
           className={`w-full h-full flex flex-col items-center justify-center border-2 border-dashed transition-colors cursor-pointer ${
             isDragging 
               ? 'border-blue-400 bg-blue-50/10' 
@@ -258,7 +258,6 @@ const ModelViewer: React.FC<ModelViewerProps> = ({ className = '' }) => {
           onDrop={handleDrop}
           onDragOver={handleDragOver}
           onDragLeave={handleDragLeave}
-          onClick={handleClick}
         >
           <div className="text-center p-8">
             <div className="mb-4">
@@ -282,15 +281,14 @@ const ModelViewer: React.FC<ModelViewerProps> = ({ className = '' }) => {
               Supports: {SUPPORTED_FORMATS.join(', ')}
             </p>
           </div>
-          
           <input
             ref={fileInputRef}
             type="file"
-            className="hidden"
+            className="sr-only"
             accept={SUPPORTED_FORMATS.join(',')}
             onChange={handleFileInputChange}
           />
-        </div>
+        </label>
       ) : (
         // 3D Viewer
         <>
