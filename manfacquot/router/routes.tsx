@@ -1,5 +1,5 @@
 import React, { Suspense } from 'react';
-import { Route, Routes, Navigate } from 'react-router-dom';
+import { Route, Routes, Navigate, useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { MainLayout } from '../layouts/MainLayout';
 import { BarebonesLayout } from '../layouts/BarebonesLayout';

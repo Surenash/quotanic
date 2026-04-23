@@ -1,5 +1,4 @@
 import React, { createContext, useContext, useState, ReactNode } from 'react';
-import { useNavigate } from 'react-router-dom';
 
 interface FileViewerState {
   isOpen: boolean;
@@ -8,7 +7,7 @@ interface FileViewerState {
 
 interface FileViewerContextType {
   fileViewerState: FileViewerState;
-  openViewer: (designId: string | any) => void;
+  openViewer: (design: any) => void;
   closeViewer: () => void;
 }
 
@@ -16,13 +15,9 @@ const FileViewerContext = createContext<FileViewerContextType | undefined>(undef
 
 export const FileViewerProvider = ({ children }: { children: ReactNode }) => {
   const [fileViewerState, setFileViewerState] = useState<FileViewerState>({ isOpen: false, design: null });
-  const navigate = useNavigate();
 
-  const openViewer = (designOrId: any) => {
-    const id = typeof designOrId === 'string' ? designOrId : designOrId?.id;
-    if (id) {
-        navigate(`/smart-view/${id}`);
-    }
+  const openViewer = (design: any) => {
+    setFileViewerState({ isOpen: true, design });
   };
 
   const closeViewer = () => {
