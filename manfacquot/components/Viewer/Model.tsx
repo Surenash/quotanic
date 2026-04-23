@@ -23,11 +23,11 @@ const applyMaterialSettings = (obj: any, mode: string, override: any, activeFeat
         child.material.wireframe = mode === 'wireframe';
         if (override.isOverride) {
           child.material.color.set(override.color);
-        } else if (activeFeatureIndex !== undefined && activeFeatureIndex !== null) {
-          // Highlight in yellow if a feature is selected
+        } else if (activeFeatureIndex !== undefined && activeFeatureIndex !== null && child.name === `Feature_${activeFeatureIndex}`) {
+          // Highlight ONLY the specific mesh if name matches
           child.material.color.set('#facc15');
         } else {
-           // Ensure it resets when no feature is selected
+           // Default color (Neon Blue-ish)
            child.material.color.set('#3b82f6');
         }
       }
@@ -47,9 +47,9 @@ const STLModel: React.FC<ModelComponentProps> = ({ url, viewportMode, materialOv
       materialRef.current.wireframe = viewportMode === 'wireframe';
       if (materialOverride.isOverride) {
         materialRef.current.color.set(materialOverride.color);
-      } else if (activeFeatureIndex !== undefined && activeFeatureIndex !== null) {
-        materialRef.current.color.set('#facc15'); // Yellow highlight
       } else {
+        // For STL (single mesh), we don't highlight the whole thing yellow on selection
+        // unless we have specific sub-geometry data. For now, keep it blue.
         materialRef.current.color.set('#3b82f6');
       }
     }
