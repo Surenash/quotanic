@@ -1854,12 +1854,15 @@ export const DesignThumbnail = ({ modelUrl, thumbnailUrl, designId, designName }
             const fileName = `thumb_${designId}.png`;
 
             console.log(`[DesignThumbnail] Getting upload URL for ${fileName}...`);
-            const { uploadUrl, s3Key } = await api.getUploadUrl(fileName, 'image/png');
-            console.log(`[DesignThumbnail] Uploading to S3: ${s3Key}`);
-            await api.uploadFileToS3(uploadUrl, new File([blob], fileName, { type: 'image/png' }));
+            const uploadRes = await api.getUploadUrl(fileName, 'image/png');
+            const targetUploadUrl = uploadRes.uploadUrl || uploadRes.upload_url;
+            const targetS3Key = uploadRes.s3Key || uploadRes.s3_file_key;
             
-            console.log(`[DesignThumbnail] Updating backend with key: ${s3Key}`);
-            await api.updateDesignThumbnail(designId, s3Key);
+            console.log(`[DesignThumbnail] Uploading to S3/Local: ${targetS3Key}`);
+            await api.uploadFileToS3(targetUploadUrl, new File([blob], fileName, { type: 'image/png' }));
+            
+            console.log(`[DesignThumbnail] Updating backend with key: ${targetS3Key}`);
+            await api.updateDesignThumbnail(designId, targetS3Key);
             
             // Re-fetch the design to get the proper presigned URL from the backend
             const updatedDesign = await api.getDesignById(designId);

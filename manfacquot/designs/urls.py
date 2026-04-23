@@ -9,6 +9,9 @@ urlpatterns = [
     # POST /api/designs/upload-url - Get pre-signed S3 URL
     path('upload-url/', views.DesignUploadURLView.as_view(), name='design_upload_url'),
 
+    # PUT /api/designs/upload-local/ - Upload file to local storage
+    path('upload-local/', views.LocalUploadView.as_view(), name='design_upload_local'),
+
     # POST /api/designs/ - Create a new Design record (after S3 upload)
     # GET  /api/designs/ - List Designs for the authenticated customer
     path('', views.DesignListCreateView.as_view(), name='design_list_create'),

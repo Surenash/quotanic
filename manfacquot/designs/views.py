@@ -46,8 +46,10 @@ class DesignUploadURLView(APIView):
         # Check if we should use local storage instead of S3
         if settings.USE_LOCAL_STORAGE:
             # For local storage, return a local upload endpoint
+            import urllib.parse
+            encoded_key = urllib.parse.quote(s3_object_name)
             return Response({
-                'upload_url': f'/api/designs/upload-local/',  # Will be handled by a new view
+                'upload_url': f'/api/designs/upload-local/?key={encoded_key}',  # Will be handled by a new view
                 's3_file_key': s3_object_name,  # Keep same naming convention
                 'file_name': file_name,
                 'use_local': True
@@ -90,6 +92,38 @@ class DesignUploadURLView(APIView):
             logger.error(f"Unexpected error generating pre-signed URL for {s3_object_name}: {e}")
             # In production, avoid sending detailed internal errors to client
             return Response({"error": "An unexpected error occurred while preparing the file upload."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+from rest_framework.parsers import BaseParser
+class RawFileUploadParser(BaseParser):
+    """Plain text parser for uploading raw files."""
+    media_type = '*/*'
+    def parse(self, stream, media_type=None, parser_context=None):
+        return stream.read()
+
+class LocalUploadView(APIView):
+    """
+    PUT /api/designs/upload-local/
+    Handles local file upload for development when USE_LOCAL_STORAGE is True.
+    """
+    permission_classes = [IsAuthenticated]
+    parser_classes = [RawFileUploadParser]
+
+    def put(self, request, *args, **kwargs):
+        if not settings.USE_LOCAL_STORAGE:
+            return Response({"error": "Local storage is disabled."}, status=status.HTTP_400_BAD_REQUEST)
+            
+        target_key = request.GET.get('key')
+        if not target_key:
+            return Response({"error": "key query parameter is required."}, status=status.HTTP_400_BAD_REQUEST)
+
+        from pathlib import Path
+        file_path = Path(settings.MEDIA_ROOT) / target_key
+        file_path.parent.mkdir(parents=True, exist_ok=True)
+        
+        with open(file_path, 'wb') as f:
+            f.write(request.data)
+            
+        return Response({"message": "File uploaded successfully"}, status=status.HTTP_200_OK)
 
 # --- Design CRUD Views ---
 from rest_framework import generics
