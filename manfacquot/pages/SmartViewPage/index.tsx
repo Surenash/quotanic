@@ -90,7 +90,9 @@ const SmartViewPage = ({ designId, onNavigate }: { designId: string, onNavigate:
             // Only update state if this is still the latest request
             if (currentRequest === latestRequestRef.current) {
                 setDesign(designData);
-                setFbmAnalysis(fbmData);
+                // The FBMAnalysisView returns { design_id, design_name, status, fbm_analysis: { ... } }
+                // We need to extract the inner fbm_analysis or fallback to geometric_data
+                setFbmAnalysis(fbmData?.fbm_analysis || designData?.geometric_data || null);
                 setQuotes(quoteData);
                 setError('');
                 setLoading(false);
@@ -615,54 +617,43 @@ const SmartViewPage = ({ designId, onNavigate }: { designId: string, onNavigate:
                                 }
                             };
 
-                            const breakdown = quotes?.[0]?.notes ? parseBreakdown(quotes[0].notes) : null;
+                            const breakdown = (quotes?.[0]?.notes ? parseBreakdown(quotes[0].notes) : null) || intelligence?.cost_estimation;
 
                             const getMaterialCost = () => {
-                                if (breakdown?.material_cost_per_unit !== undefined) {
-                                    const val = typeof breakdown.material_cost_per_unit === 'number'
-                                        ? breakdown.material_cost_per_unit
-                                        : parseFloat(String(breakdown.material_cost_per_unit).replace(/[^0-9.]/g, ''));
-                                    return Number.isFinite(val) ? formatPrice(val) : 'N/A';
-                                }
-                                return 'N/A';
+                                const val = breakdown?.material_cost_per_unit || breakdown?.material_cost || 0;
+                                return val > 0 ? formatPrice(val) : 'N/A';
                             };
 
-                            const getLaborCost = () => {
-                                if (breakdown?.labor_cost_per_unit !== undefined) {
-                                    const val = typeof breakdown.labor_cost_per_unit === 'number'
-                                        ? breakdown.labor_cost_per_unit
-                                        : parseFloat(String(breakdown.labor_cost_per_unit).split(' ')[0]?.replace(/[^0-9.]/g, '') || '0');
-                                    return Number.isFinite(val) ? formatPrice(val) : 'N/A';
-                                }
-                                return 'N/A';
+                            const getMachiningCost = () => {
+                                const val = breakdown?.labor_cost_per_unit || breakdown?.machining_cost || 0;
+                                return val > 0 ? formatPrice(val) : 'N/A';
                             };
 
-                            const getFinishingCost = () => {
-                                if (breakdown?.finishing_cost_per_unit !== undefined) {
-                                    const val = typeof breakdown.finishing_cost_per_unit === 'number'
-                                        ? breakdown.finishing_cost_per_unit
-                                        : parseFloat(String(breakdown.finishing_cost_per_unit).replace(/[^0-9.]/g, ''));
-                                    return Number.isFinite(val) ? formatPrice(val) : 'N/A';
-                                }
-                                return 'N/A';
+                            const getToolingCost = () => {
+                                const val = breakdown?.tool_cost_per_unit || breakdown?.tooling_cost || 0;
+                                return val > 0 ? formatPrice(val) : 'N/A';
                             };
 
                             return (
                                 <div style={{ animation: 'fadeIn 0.2s' }}>
-                                    <h3 style={sectionTitleStyle}>Cost Breakdown</h3>
+                                    <h3 style={sectionTitleStyle}>Commercial Analysis</h3>
                                     {quotes?.[0] ? (
                                         <div style={{ backgroundColor: '#161821', border: '1px solid #3b82f6', borderRadius: '12px', padding: '16px', marginBottom: '20px' }}>
-                                            <div style={{ fontSize: '10px', color: '#94a3b8', textTransform: 'uppercase', marginBottom: '4px' }}>Unit Price</div>
+                                            <div style={{ fontSize: '10px', color: '#94a3b8', textTransform: 'uppercase', marginBottom: '4px' }}>Quoted Unit Price</div>
                                             <div style={{ fontSize: '28px', fontWeight: 800, color: 'white' }}>{formatPrice(quotes[0].price_usd)}</div>
+                                            <div style={{ fontSize: '10px', color: '#34d399', marginTop: '4px' }}>ESTIMATED LEAD TIME: {quotes[0].estimated_lead_time_days} DAYS</div>
                                         </div>
                                     ) : (
-                                        <div style={{ padding: '16px', textAlign: 'center', border: '1px dashed #2d2d3a', borderRadius: '8px', color: '#64748b', fontSize: '12px', marginBottom: '20px' }}>Quotation pending.</div>
+                                        <div style={{ backgroundColor: 'rgba(255,255,255,0.03)', borderRadius: '12px', padding: '16px', marginBottom: '20px', border: '1px dashed #2d2d3a' }}>
+                                            <div style={{ fontSize: '10px', color: '#64748b', textTransform: 'uppercase', marginBottom: '4px' }}>Internal Cost Estimate</div>
+                                            <div style={{ fontSize: '24px', fontWeight: 800, color: '#94a3b8' }}>{breakdown?.total_cost ? formatPrice(breakdown.total_cost) : 'Pending...'}</div>
+                                        </div>
                                     )}
                                     <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-                                        <InsightRow label="Material Cost" value={getMaterialCost()} />
-                                        <InsightRow label="Machining Cost" value={getLaborCost()} />
-                                        <InsightRow label="Finishing Cost" value={getFinishingCost()} />
-                                        <InsightRow label="Inspection/QA" value="N/A" />
+                                        <InsightRow label="Material" value={getMaterialCost()} />
+                                        <InsightRow label="Machining" value={getMachiningCost()} />
+                                        <InsightRow label="Tooling" value={getToolingCost()} />
+                                        <InsightRow label="Setup Fee" value={breakdown?.setup_cost ? formatPrice(breakdown.setup_cost) : 'N/A'} />
                                     </div>
                                 </div>
                             );
@@ -694,6 +685,11 @@ const SmartViewPage = ({ designId, onNavigate }: { designId: string, onNavigate:
                                     <div style={{ backgroundColor: 'rgba(255,255,255,0.03)', padding: '12px', borderRadius: '8px' }}>
                                         <div style={{ fontSize: '10px', color: '#64748b' }}>COMPLEXITY SCORE</div>
                                         <div style={{ fontSize: '18px', fontWeight: 800, color: 'white', marginTop: '4px' }}>{(fbmAnalysis?.complexity_score || intelligence?.complexity_rating || 0.3).toFixed(2)} / 1.0</div>
+                                    </div>
+                                    <div style={{ backgroundColor: 'rgba(59, 130, 246, 0.05)', padding: '12px', borderRadius: '8px', border: '1px solid rgba(59, 130, 246, 0.1)' }}>
+                                        <div style={{ fontSize: '10px', color: '#3b82f6', fontWeight: 700 }}>MACHINABILITY INDEX</div>
+                                        <div style={{ fontSize: '20px', fontWeight: 900, color: 'white', marginTop: '4px' }}>{((intelligence?.machinability_assessment?.accessibility_score || 0.85) * 100).toFixed(0)}%</div>
+                                        <div style={{ fontSize: '9px', color: '#64748b', marginTop: '4px' }}>Based on tool access & setup requirements</div>
                                     </div>
                                 </div>
                             </div>
