@@ -82,12 +82,19 @@ export const api = {
     },
 
     async uploadFileToS3(url: string, file: File) {
-        const response = await fetch(url, {
+        let fetchUrl = url;
+        if (url.startsWith('/')) {
+            // If the URL is a relative API path (e.g., from USE_LOCAL_STORAGE), prepend the correct domain.
+            const domain = API_BASE_URL.replace(/\/api$/, '');
+            fetchUrl = `${domain}${url}`;
+        }
+        
+        const response = await fetch(fetchUrl, {
             method: 'PUT',
             body: file,
             headers: { 'Content-Type': file.type }
         });
-        if (!response.ok) { throw new Error('Failed to upload file to S3.'); }
+        if (!response.ok) { throw new Error(`Failed to upload file to S3: ${response.status}`); }
     },
 
     createDesign(designData: object) {
