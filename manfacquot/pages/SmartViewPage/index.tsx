@@ -72,6 +72,7 @@ const SmartViewPage = ({ designId, onNavigate }: { designId: string, onNavigate:
     }, []);
 
     const fetchDesignData = useCallback(async (id: string) => {
+        let isCurrent = true;
         setLoading(true);
         setActiveDesignId(id);
         setActiveFeatureIndex(null);
@@ -81,15 +82,20 @@ const SmartViewPage = ({ designId, onNavigate }: { designId: string, onNavigate:
                 api.getFBMAnalysis(id).catch(() => null),
                 api.getDesignQuotes(id).catch(() => [])
             ]);
+            if (!isCurrent) return;
             setDesign(designData);
-            setFbmAnalysis(fbmData);
+            setFbmAnalysis(fbmData?.fbm_analysis || fbmData);
             setQuotes(quoteData);
         } catch (err) {
             console.error("Failed to fetch design details:", err);
+            if (!isCurrent) return;
             setError('Failed to load manufacturing analysis data.');
         } finally {
-            setLoading(false);
+            if (isCurrent) {
+                setLoading(false);
+            }
         }
+        return () => { isCurrent = false; };
     }, []);
 
     useEffect(() => {
@@ -97,7 +103,12 @@ const SmartViewPage = ({ designId, onNavigate }: { designId: string, onNavigate:
     }, [fetchExplorerData]);
 
     useEffect(() => {
-        if (activeDesignId) fetchDesignData(activeDesignId);
+        if (activeDesignId) {
+            const cleanup = fetchDesignData(activeDesignId);
+            return () => {
+                cleanup?.then(fn => fn?.());
+            };
+        }
     }, [activeDesignId, fetchDesignData]);
 
     // --- DERIVED DATA ---
@@ -115,6 +126,10 @@ const SmartViewPage = ({ designId, onNavigate }: { designId: string, onNavigate:
     const toggleFolder = (path: string, e?: React.MouseEvent) => {
         if (e) e.stopPropagation();
         setExpandedFolders(prev => ({ ...prev, [path]: !prev[path] }));
+    };
+
+    const toggleSetup = (index: number) => {
+        setExpandedSetups(prev => ({ ...prev, [index]: !prev[index] }));
     };
 
     const handleFeatureClick = (index: number) => {
