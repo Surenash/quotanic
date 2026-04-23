@@ -21,20 +21,7 @@ export const CurrencyProvider = ({ children }: { children: React.ReactNode }) =>
         setIsLoadingRates(true);
         setRatesError(null);
 
-        // Provider 1: Frankfurter (Official, high reliability)
-        try {
-            const resp = await fetch('https://api.frankfurter.app/latest?from=USD');
-            if (resp.ok) {
-                const data = await resp.json();
-                if (data?.rates) {
-                    setRates({ USD: 1, ...data.rates });
-                    setIsLoadingRates(false);
-                    return;
-                }
-            }
-        } catch (e) { console.warn("Frankfurter API failed, trying fallback 1..."); }
-
-        // Provider 2: Open ER API (High reliability fallback)
+        // Provider 1: Open ER API (High reliability)
         try {
             const resp = await fetch('https://open.er-api.com/v6/latest/USD');
             if (resp.ok) {
@@ -45,7 +32,20 @@ export const CurrencyProvider = ({ children }: { children: React.ReactNode }) =>
                     return;
                 }
             }
-        } catch (e) { console.warn("Open ER API failed, trying fallback 2..."); }
+        } catch (e) { console.warn("Open ER API failed, trying fallback 1..."); }
+
+        // Provider 2: ExchangeRate-API (Fallback)
+        try {
+            const resp = await fetch('https://api.exchangerate-api.com/v4/latest/USD');
+            if (resp.ok) {
+                const data = await resp.json();
+                if (data?.rates) {
+                    setRates({ USD: 1, ...data.rates });
+                    setIsLoadingRates(false);
+                    return;
+                }
+            }
+        } catch (e) { console.warn("ExchangeRate API failed, trying fallback 2..."); }
 
         // Provider 3: JSDelivr Currency API (Mirror of Fawaz Ahmed)
         try {
