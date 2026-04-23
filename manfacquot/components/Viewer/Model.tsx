@@ -15,21 +15,35 @@ interface ModelComponentProps {
 }
 
 const applyMaterialSettings = (obj: any, mode: string, override: any, activeFeatureIndex?: number | null) => {
-  obj.traverse((child: any) => {
-    if (child.isMesh) {
-      child.castShadow = true;
-      child.receiveShadow = true;
-      if (child.material) {
-        child.material.wireframe = mode === 'wireframe';
-        if (override.isOverride) {
-          child.material.color.set(override.color);
-        } else if (activeFeatureIndex !== undefined && activeFeatureIndex !== null && child.name === `Feature_${activeFeatureIndex}`) {
-          // Highlight ONLY the specific mesh if name matches
-          child.material.color.set('#facc15');
+  let meshIndex = 0;
+  const meshes: any[] = [];
+  obj.traverse((child: any) => { if (child.isMesh) meshes.push(child); });
+  const totalMeshes = meshes.length;
+
+  meshes.forEach((child, idx) => {
+    child.castShadow = true;
+    child.receiveShadow = true;
+    if (child.material) {
+      child.material.wireframe = mode === 'wireframe';
+      if (override.isOverride) {
+        child.material.color.set(override.color);
+      } else if (activeFeatureIndex !== undefined && activeFeatureIndex !== null) {
+        // Highlighting Logic:
+        // 1. Try name match (e.g., Feature_0)
+        // 2. Try index match if multiple meshes exist
+        // 3. Fallback to whole model if only 1 mesh exists
+        const isSelected = 
+          child.name === `Feature_${activeFeatureIndex}` || 
+          (totalMeshes > 1 && idx === activeFeatureIndex) ||
+          (totalMeshes === 1);
+
+        if (isSelected) {
+          child.material.color.set('#facc15'); // Yellow highlight
         } else {
-           // Default color (Neon Blue-ish)
-           child.material.color.set('#3b82f6');
+          child.material.color.set('#3b82f6'); // Default Blue
         }
+      } else {
+         child.material.color.set('#3b82f6');
       }
     }
   });
@@ -47,9 +61,10 @@ const STLModel: React.FC<ModelComponentProps> = ({ url, viewportMode, materialOv
       materialRef.current.wireframe = viewportMode === 'wireframe';
       if (materialOverride.isOverride) {
         materialRef.current.color.set(materialOverride.color);
+      } else if (activeFeatureIndex !== undefined && activeFeatureIndex !== null) {
+        // STL is almost always 1 mesh, so we highlight the whole thing
+        materialRef.current.color.set('#facc15');
       } else {
-        // For STL (single mesh), we don't highlight the whole thing yellow on selection
-        // unless we have specific sub-geometry data. For now, keep it blue.
         materialRef.current.color.set('#3b82f6');
       }
     }
@@ -60,7 +75,10 @@ const STLModel: React.FC<ModelComponentProps> = ({ url, viewportMode, materialOv
         geometry={geometry}
         castShadow
         receiveShadow
-        onClick={(e) => { e.stopPropagation(); if (onFeatureClick) onFeatureClick(0); }}
+        onClick={(e) => { 
+            e.stopPropagation(); 
+            if (onFeatureClick) onFeatureClick(0); // For STL, we only have one mesh/feature to click
+        }}
         onPointerOver={() => { document.body.style.cursor = 'pointer'; }}
         onPointerOut={() => { document.body.style.cursor = 'auto'; }}
     >
@@ -81,7 +99,12 @@ const OBJModel: React.FC<ModelComponentProps> = ({ url, viewportMode, materialOv
 
   return <primitive
       object={model}
-      onClick={(e: any) => { e.stopPropagation(); if (onFeatureClick) onFeatureClick(0); }}
+      onClick={(e: any) => { 
+          e.stopPropagation(); 
+          // Detect which sub-mesh was clicked if possible
+          const meshIdx = e.intersections?.[0]?.object?.userData?.index || 0;
+          if (onFeatureClick) onFeatureClick(meshIdx); 
+      }}
       onPointerOver={() => { document.body.style.cursor = 'pointer'; }}
       onPointerOut={() => { document.body.style.cursor = 'auto'; }}
   />;
@@ -93,13 +116,23 @@ const GLTFModel: React.FC<ModelComponentProps> = ({ url, viewportMode, materialO
     loader.setCrossOrigin('anonymous');
   });
 
+  // Assign indices to meshes for identification
+  scene.traverse((child: any, idx: number) => {
+      if (child.isMesh) child.userData.index = idx;
+  });
+
   useFrame(() => {
     applyMaterialSettings(scene, viewportMode, materialOverride, activeFeatureIndex);
   });
 
   return <primitive
       object={scene}
-      onClick={(e: any) => { e.stopPropagation(); if (onFeatureClick) onFeatureClick(0); }}
+      onClick={(e: any) => { 
+          e.stopPropagation(); 
+          // Get the index of the clicked mesh
+          const meshIdx = e.object?.userData?.index || 0;
+          if (onFeatureClick) onFeatureClick(meshIdx);
+      }}
       onPointerOver={() => { document.body.style.cursor = 'pointer'; }}
       onPointerOut={() => { document.body.style.cursor = 'auto'; }}
   />;
