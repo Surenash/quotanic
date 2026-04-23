@@ -2051,6 +2051,21 @@ export const QuoteRequestsPage = () => {
         <div>
             <h2 style={styles.dashboardPageTitle}>Quote Requests</h2>
             <p style={styles.dashboardPageSubtitle}>Review and respond to quote requests from customers.</p>
+            
+            <div style={{ marginBottom: '24px', display: 'flex', gap: '12px' }}>
+                <CtaButton 
+                    text="Engineering Smart View Workspace" 
+                    primary 
+                    onClick={() => {
+                        if (requests.length > 0) {
+                            navigate(`/smart-view/${requests[0].designId}`);
+                        } else {
+                            alert("No active requests to view in workspace.");
+                        }
+                    }} 
+                />
+            </div>
+
             {notification.show && <Notification message={notification.message} type={notification.type} onDismiss={() => setNotification({ show: false, message: '', type: 'success' })} />}
             <div style={styles.tableContainer}>
                 <table style={styles.table}>
@@ -2392,6 +2407,19 @@ export const InternalQuotationsPage = () => {
                     <p style={styles.dashboardPageSubtitle}>Assess parts and generate instant 14-point manufacturing quotes.</p>
                 </div>
                 <CtaButton text="Upload New Design" primary onClick={() => navigate('/upload-internal')} />
+            </div>
+
+            <div style={{ marginBottom: '24px', display: 'flex', gap: '12px' }}>
+                <CtaButton 
+                    text="Engineering Smart View Workspace" 
+                    onClick={() => {
+                        if (requests.length > 0) {
+                            navigate(`/smart-view/${requests[0].designId}`);
+                        } else {
+                            alert("No active internal designs to view in workspace.");
+                        }
+                    }} 
+                />
             </div>
 
             <div style={styles.tableContainer}>
