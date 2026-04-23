@@ -77,7 +77,7 @@ export const CustomerDashboard = ({ user }) => {
         transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
         border: 'none',
         background: isActive ? 'rgba(10, 240, 240, 0.1)' : 'transparent',
-        color: isActive ? neon_cyan : 'rgba(255, 255, 255, 0.6)',
+        color: isActive ? neon_cyan : 'var(--text-secondary)',
         cursor: 'pointer',
         textAlign: 'left' as const,
         width: '100%',

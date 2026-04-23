@@ -2378,6 +2378,7 @@ export const InternalQuotationsPage = () => {
     const [error, setError] = useState('');
     const [breakdownModalInfo, setBreakdownModalInfo] = useState({ isOpen: false, request: null });
     const [expandedRequestId, setExpandedRequestId] = useState<number | null>(null);
+    const [notification, setNotification] = useState({ show: false, message: '', type: 'success' });
     const { formatPrice } = useCurrency();
 
     const parseBreakdown = (notes) => {
