@@ -2054,16 +2054,17 @@ export const QuoteRequestsPage = () => {
             <p style={styles.dashboardPageSubtitle}>Review and respond to quote requests from customers.</p>
             
             <div style={{ marginBottom: '24px', display: 'flex', gap: '12px' }}>
-                <CtaButton 
-                    text="Engineering Smart View Workspace" 
-                    primary 
+                <CtaButton
+                    text="Engineering Smart View Workspace"
+                    primary
                     onClick={() => {
-                        if (requests.length > 0) {
-                            navigate(`/smart-view/${requests[0].designId}`);
+                        const requestWithDesign = requests.find(r => r.designId);
+                        if (requestWithDesign && requestWithDesign.designId) {
+                            navigate(`/smart-view/${requestWithDesign.designId}`);
                         } else {
                             alert("No active requests to view in workspace.");
                         }
-                    }} 
+                    }}
                 />
             </div>
 
@@ -2411,15 +2412,15 @@ export const InternalQuotationsPage = () => {
             </div>
 
             <div style={{ marginBottom: '24px', display: 'flex', gap: '12px' }}>
-                <CtaButton 
-                    text="Engineering Smart View Workspace" 
+                <CtaButton
+                    text="Engineering Smart View Workspace"
                     onClick={() => {
-                        if (requests.length > 0) {
+                        if (requests.length > 0 && requests[0].designId) {
                             navigate(`/smart-view/${requests[0].designId}`);
                         } else {
                             alert("No active internal designs to view in workspace.");
                         }
-                    }} 
+                    }}
                 />
             </div>
 

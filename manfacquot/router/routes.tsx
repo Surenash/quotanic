@@ -93,7 +93,9 @@ export const AppRoutes = () => {
                     <Route path="/upload-internal" element={<UploadPage isInternal={true} />} />
                     <Route path="/view-quotes/:designId" element={<DesignQuotationsPage />} />
                     <Route path="/smart-view/:designId" element={
-                        <SmartViewWrapper />
+                        <ProtectedRoute>
+                            <SmartViewWrapper />
+                        </ProtectedRoute>
                     } />
                 </Route>
             </Routes>
