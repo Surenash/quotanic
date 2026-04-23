@@ -37,11 +37,13 @@ const Scene: React.FC<SceneProps> = ({
 
   // Force camera update when size changes (e.g. sidebar or fullscreen)
   useEffect(() => {
-    if (camera instanceof THREE.PerspectiveCamera) {
-      camera.aspect = size.width / size.height;
-      camera.updateProjectionMatrix();
+    if (size.width > 0 && size.height > 0) {
+      if (camera instanceof THREE.PerspectiveCamera) {
+        camera.aspect = size.width / size.height;
+        camera.updateProjectionMatrix();
+      }
+      gl.setSize(size.width, size.height);
     }
-    gl.setSize(size.width, size.height);
   }, [size, camera, gl]);
 
   const handleModelLoad = useCallback((payload: { boundingBox: THREE.Box3 }) => {

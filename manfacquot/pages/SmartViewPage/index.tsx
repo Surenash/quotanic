@@ -204,10 +204,10 @@ const SmartViewPage = ({ designId, onNavigate }: { designId: string, onNavigate:
             </header>
 
             {/* --- MAIN WORKSPACE --- */}
-            <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
+            <div style={{ display: 'flex', flex: 1, overflow: 'hidden', minHeight: 0 }}>
 
                 {/* 1. LEFT EXPLORER */}
-                <aside style={{ width: '320px', backgroundColor: '#0d0f17', borderRight: '1px solid #2d2d3a', display: 'flex', flexDirection: 'column' }}>
+                <aside style={{ width: '320px', flexShrink: 0, backgroundColor: '#0d0f17', borderRight: '1px solid #2d2d3a', display: 'flex', flexDirection: 'column' }}>
                     <div style={{ display: 'flex', backgroundColor: '#161821', borderBottom: '1px solid #2d2d3a' }}>
                         {[
                             { id: 'tree', label: 'CAM TREE', icon: LucideLayers },
@@ -453,8 +453,8 @@ const SmartViewPage = ({ designId, onNavigate }: { designId: string, onNavigate:
                 </aside>
 
                 {/* 2. CENTRAL VIEWER */}
-                <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-                    <div style={{ flex: 1, position: 'relative', backgroundColor: '#050508' }}>
+                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
+                    <div style={{ flex: 1, position: 'relative', backgroundColor: '#050508', minHeight: 0 }}>
                         {loading ? (
                             <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%', color: '#3b82f6' }}>
                                 <div style={{ width: '30px', height: '30px', border: '2px solid #3b82f6', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
@@ -547,7 +547,7 @@ const SmartViewPage = ({ designId, onNavigate }: { designId: string, onNavigate:
                 </div>
 
                 {/* 3. RIGHT PANEL - MANUFACTURING INSIGHTS */}
-                <aside style={{ width: '360px', backgroundColor: '#0d0f17', borderLeft: '1px solid #2d2d3a', display: 'flex', flexDirection: 'column' }}>
+                <aside style={{ width: '360px', flexShrink: 0, backgroundColor: '#0d0f17', borderLeft: '1px solid #2d2d3a', display: 'flex', flexDirection: 'column' }}>
                     <div style={{ display: 'flex', backgroundColor: '#161821', borderBottom: '1px solid #2d2d3a', overflowX: 'auto' }} className="no-scrollbar">
                         {[
                             { id: 'specs', label: 'SPECS', icon: LucideSettings },
