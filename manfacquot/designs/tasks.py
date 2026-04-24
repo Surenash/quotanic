@@ -564,9 +564,13 @@ def generate_feature_aware_glb(file_path, features_data=None):
     try:
         from OCC.Core.Quantity import Quantity_Color, Quantity_TOC_RGB
         from OCC.Core.TCollection import TCollection_AsciiString
-        from OCC.Core.BRepBuilderAPI import BRepBuilderAPI_MakeCompound
+        from OCC.Core.TopoDS import TopoDS_Compound, TopoDS_Shape
         from OCC.Core.BRep import BRep_Builder
         from OCC.Core.BRepMesh import BRepMesh_IncrementalMesh
+        from OCC.Core.GeomAbs import GeomAbs_Cylinder, GeomAbs_Plane
+        from OCC.Core.BRepAdaptor import BRepAdaptor_Surface
+        from OCC.Core.TopExp import TopExp_Explorer
+        from OCC.Core.TopAbs import TopAbs_FACE
         
         # 1. Initialize XCAF Document
         app = XCAFApp_Application.GetApplication()
@@ -590,52 +594,56 @@ def generate_feature_aware_glb(file_path, features_data=None):
             return None
 
         # 3. Sub-mesh isolation logic
-        # We group faces by their geometric signature to correspond with detected features
-        explorer = TopologyExplorer(shape)
-        faces = list(explorer.faces())
-        
+        # We group faces by their geometric signature
         hole_faces = []
         pocket_faces = []
         base_faces = []
         
-        for face in faces:
-            adaptor = BRepAdaptor_Surface(face)
+        explorer = TopExp_Explorer(shape, TopAbs_FACE)
+        while explorer.More():
+            face = explorer.Current()
+            adaptor = BRepAdaptor_Surface(TopoDS.topods.Face(face))
             surf_type = adaptor.GetType()
             
-            # Simplified classification
             if surf_type == GeomAbs_Cylinder:
                 hole_faces.append(face)
             elif surf_type == GeomAbs_Plane:
-                # Check if it's internal (likely a pocket floor)
                 pocket_faces.append(face)
             else:
                 base_faces.append(face)
+            explorer.Next()
 
         def create_submesh(face_list, name, color_rgb):
-            if not face_list: return
-            compound_builder = BRep_Builder()
-            compound = TopoDS_Shape()
-            compound_builder.MakeCompound(TopoDS.TopoDS_Compound(compound))
-            for f in face_list:
-                compound_builder.Add(compound, f)
+            if not face_list: return None
             
+            builder = BRep_Builder()
+            comp = TopoDS_Compound()
+            builder.MakeCompound(comp)
+            for f in face_list:
+                builder.Add(comp, f)
+            
+            # Tessellate the sub-shape
+            BRepMesh_IncrementalMesh(comp, 0.1, False, 0.5, True)
+            
+            # Add to XCAF with name and color
             label = shape_tool.NewShape()
-            shape_tool.SetShape(label, compound)
+            shape_tool.SetShape(label, comp)
             shape_tool.SetComponentName(label, TCollection_AsciiString(name))
+            
             color = Quantity_Color(color_rgb[0], color_rgb[1], color_rgb[2], Quantity_TOC_RGB)
             color_tool.SetColor(label, color, XCAFDoc_ColorGen)
+            return label
 
         # Create distinct nodes in GLB
-        create_submesh(hole_faces, "Features_Holes", (1.0, 0.4, 0.4)) # Reddish
-        create_submesh(pocket_faces, "Features_Pockets", (0.4, 1.0, 0.4)) # Greenish
-        create_submesh(base_faces, "BaseModel", (0.23, 0.51, 0.96)) # Blue (#3b82f6)
+        create_submesh(hole_faces, "Features_Holes", (1.0, 0.4, 0.4))
+        create_submesh(pocket_faces, "Features_Pockets", (0.4, 1.0, 0.4))
+        create_submesh(base_faces, "BaseModel", (0.23, 0.51, 0.96))
 
-        # 4. Tessellate the entire compound
-        BRepMesh_IncrementalMesh(shape, 0.1, False, 0.5, True)
-
-        # 5. Export to GLB
+        # 4. Export to GLB
         output_path = file_path.rsplit('.', 1)[0] + '_view.glb'
         writer = RWGltf_CafWriter(TCollection_AsciiString(output_path), True)
+        writer.SetTransformationFormat(RWGltf_CafWriter.RWGltf_Tf_Gltf)
+        
         status = writer.Perform(doc, gp_Trsf(), None)
         
         if status and os.path.exists(output_path):
