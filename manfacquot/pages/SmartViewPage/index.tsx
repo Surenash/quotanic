@@ -468,6 +468,7 @@ const SmartViewPage = ({ designId, onNavigate }: { designId: string, onNavigate:
                                 hideToolbar={false}
                                 hideSidebar={true}
                                 activeFeatureIndex={activeFeatureIndex}
+                                activeFeatureType={activeFeatureIndex !== null ? features[activeFeatureIndex]?.feature_type : undefined}
                                 onFeatureClick={(index) => setActiveFeatureIndex(index)}
                             />
                         ) : (

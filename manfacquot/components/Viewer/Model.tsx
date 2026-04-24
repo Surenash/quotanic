@@ -8,13 +8,15 @@ import { SupportedExtensions } from '../../types/types';
 
 interface ModelComponentProps {
   url: string;
-  viewportMode: 'solid' | 'wireframe';
+  viewportMode: string;
   materialOverride: { color: string, isOverride: boolean };
   activeFeatureIndex?: number | null;
+  activeFeatureType?: string;
   onFeatureClick?: (index: number) => void;
 }
 
-const applyMaterialSettings = (obj: any, mode: string, override: any, activeFeatureIndex?: number | null) => {
+
+const applyMaterialSettings = (obj: any, mode: string, override: any, activeFeatureIndex?: number | null, activeFeatureType?: string) => {
   let meshIndex = 0;
   const meshes: any[] = [];
   obj.traverse((child: any) => { if (child.isMesh) meshes.push(child); });
@@ -30,10 +32,18 @@ const applyMaterialSettings = (obj: any, mode: string, override: any, activeFeat
       } else if (activeFeatureIndex !== undefined && activeFeatureIndex !== null) {
         // Highlighting Logic:
         // 1. Try name match (e.g., Feature_0)
-        // 2. Try index match if multiple meshes exist
-        // 3. Fallback to whole model if only 1 mesh exists
+        // 2. Try category match from GLB sub-meshes (e.g., Features_Holes)
+        // 3. Try index match if multiple meshes exist
+        // 4. Fallback to whole model if only 1 mesh exists
+        
+        const typeMatch = activeFeatureType ? (
+            (activeFeatureType.toLowerCase().includes('hole') && child.name.includes('Holes')) ||
+            (activeFeatureType.toLowerCase().includes('pocket') && child.name.includes('Pockets'))
+        ) : false;
+
         const isSelected = 
           child.name === `Feature_${activeFeatureIndex}` || 
+          typeMatch ||
           (totalMeshes > 1 && idx === activeFeatureIndex) ||
           (totalMeshes === 1);
 
@@ -88,13 +98,13 @@ const STLModel: React.FC<ModelComponentProps> = ({ url, viewportMode, materialOv
 };
 
 // OBJ Loader Component
-const OBJModel: React.FC<ModelComponentProps> = ({ url, viewportMode, materialOverride, activeFeatureIndex, onFeatureClick }) => {
+const OBJModel: React.FC<ModelComponentProps> = ({ url, viewportMode, materialOverride, activeFeatureIndex, activeFeatureType, onFeatureClick }) => {
   const model = useLoader(OBJLoader, url, (loader) => {
     loader.setCrossOrigin('anonymous');
   });
 
   useFrame(() => {
-    applyMaterialSettings(model, viewportMode, materialOverride, activeFeatureIndex);
+    applyMaterialSettings(model, viewportMode, materialOverride, activeFeatureIndex, activeFeatureType);
   });
 
   return <primitive
@@ -111,7 +121,7 @@ const OBJModel: React.FC<ModelComponentProps> = ({ url, viewportMode, materialOv
 };
 
 // GLTF/GLB Loader Component
-const GLTFModel: React.FC<ModelComponentProps> = ({ url, viewportMode, materialOverride, activeFeatureIndex, onFeatureClick }) => {
+const GLTFModel: React.FC<ModelComponentProps> = ({ url, viewportMode, materialOverride, activeFeatureIndex, activeFeatureType, onFeatureClick }) => {
   const { scene } = useGLTF(url, undefined, undefined, (loader: any) => {
     loader.setCrossOrigin('anonymous');
   });
@@ -122,7 +132,7 @@ const GLTFModel: React.FC<ModelComponentProps> = ({ url, viewportMode, materialO
   });
 
   useFrame(() => {
-    applyMaterialSettings(scene, viewportMode, materialOverride, activeFeatureIndex);
+    applyMaterialSettings(scene, viewportMode, materialOverride, activeFeatureIndex, activeFeatureType);
   });
 
   return <primitive
@@ -146,10 +156,11 @@ interface ModelProps {
   materialOverride: { color: string, isOverride: boolean };
   animation: any;
   activeFeatureIndex?: number | null;
+  activeFeatureType?: string;
   onFeatureClick?: (index: number) => void;
 }
 
-const Model: React.FC<ModelProps> = ({ modelUrl, fileExtension, onLoad, viewportMode, materialOverride, animation, activeFeatureIndex, onFeatureClick }) => {
+const Model: React.FC<ModelProps> = ({ modelUrl, fileExtension, onLoad, viewportMode, materialOverride, animation, activeFeatureIndex, activeFeatureType, onFeatureClick }) => {
   const groupRef = useRef<THREE.Group>(null);
 
   useFrame((state) => {
@@ -195,7 +206,7 @@ const Model: React.FC<ModelProps> = ({ modelUrl, fileExtension, onLoad, viewport
   });
 
   const renderLoader = () => {
-    const props = { url: modelUrl, viewportMode, materialOverride, activeFeatureIndex, onFeatureClick };
+    const props = { url: modelUrl, viewportMode, materialOverride, activeFeatureIndex, activeFeatureType, onFeatureClick };
     switch (fileExtension) {
       case 'stl': return <STLModel {...props} />;
       case 'obj': return <OBJModel {...props} />;
