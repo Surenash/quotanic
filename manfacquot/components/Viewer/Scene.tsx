@@ -21,6 +21,7 @@ interface SceneProps {
   showAxes: boolean;
   resetKey: number;
   activeFeatureIndex?: number | null;
+  activeFeatureType?: string;
   onFeatureClick?: (index: number) => void;
   onLoadComplete?: () => void;
 }
@@ -28,7 +29,7 @@ interface SceneProps {
 const Scene: React.FC<SceneProps> = ({ 
   modelUrl, fileExtension, view, isViewLocked, onUserInteraction,
   viewportMode, material, lighting, animation, zoomLevel,
-  showGrid, showAxes, resetKey, activeFeatureIndex, onFeatureClick, onLoadComplete
+  showGrid, showAxes, resetKey, activeFeatureIndex, activeFeatureType, onFeatureClick, onLoadComplete
 }) => {
   const { camera, controls, size, gl } = useThree();
   const targetPosition = useRef(new THREE.Vector3(5, 5, 5));
@@ -160,6 +161,7 @@ const Scene: React.FC<SceneProps> = ({
         materialOverride={material}
         animation={animation}
         activeFeatureIndex={activeFeatureIndex}
+        activeFeatureType={activeFeatureType}
         onFeatureClick={onFeatureClick}
       />
       

@@ -550,19 +550,33 @@ def generate_snapshot(file_path, output_path):
         return False
 
 
-def generate_glb_from_step(file_path):
+def generate_feature_aware_glb(file_path, features_data=None):
     """
-    Converts a STEP/IGES file to a renderable STL format for 3D viewing.
-    Uses StlAPI_Writer which is more stable in this environment than GLTF export.
+    Converts a STEP/IGES file to a GLB file with separate sub-meshes for each feature category.
+    This enables targeted feature highlighting in the 3D viewer.
     """
     if not PYTHONOCC_AVAILABLE:
         logger.error("pythonocc-core not available for 3D conversion.")
         return None
 
-    logger.info(f"3D Conversion: Starting for {file_path}...")
+    logger.info(f"Feature-Aware GLB Conversion: Starting for {file_path}...")
     
     try:
-        # 1. Load the shape
+        from OCC.Core.Quantity import Quantity_Color, Quantity_TOC_RGB
+        from OCC.Core.TCollection import TCollection_AsciiString
+        from OCC.Core.BRepBuilderAPI import BRepBuilderAPI_MakeCompound
+        from OCC.Core.BRep import BRep_Builder
+        from OCC.Core.BRepMesh import BRepMesh_IncrementalMesh
+        
+        # 1. Initialize XCAF Document
+        app = XCAFApp_Application.GetApplication()
+        doc = TDocStd_Document(TCollection_AsciiString("CAF"))
+        app.NewDocument(TCollection_AsciiString("MDTV-XCAF"), doc)
+        
+        shape_tool = XCAFDoc_DocumentTool.ShapeTool(doc.Main())
+        color_tool = XCAFDoc_DocumentTool.ColorTool(doc.Main())
+        
+        # 2. Load the base shape
         file_ext = os.path.splitext(file_path)[1].lower()
         shape = None
         if file_ext in ['.step', '.stp']:
@@ -571,33 +585,71 @@ def generate_glb_from_step(file_path):
         elif file_ext in ['.iges', '.igs']:
             from OCC.Extend.DataExchange import read_iges_file
             shape = read_iges_file(file_path)
-        
+            
         if not shape or shape.IsNull():
-            logger.error("Failed to load shape for 3D conversion.")
             return None
 
-        # 2. Tessellate (Required for export)
-        linear_deflection = 0.1
-        angular_deflection = 0.5
-        BRepMesh_IncrementalMesh(shape, linear_deflection, False, angular_deflection, True)
-
-        # 3. Export to STL (Binary STL is compact and fast to load)
-        output_path = file_path.rsplit('.', 1)[0] + '_view.stl'
-        try:
-            from OCC.Core.StlAPI import StlAPI_Writer
-            writer = StlAPI_Writer()
-            writer.SetASCIIMode(False) # Ensure binary format
-            writer.Write(shape, output_path)
+        # 3. Sub-mesh isolation logic
+        # We group faces by their geometric signature to correspond with detected features
+        explorer = TopologyExplorer(shape)
+        faces = list(explorer.faces())
+        
+        hole_faces = []
+        pocket_faces = []
+        base_faces = []
+        
+        for face in faces:
+            adaptor = BRepAdaptor_Surface(face)
+            surf_type = adaptor.GetType()
             
-            if os.path.exists(output_path):
-                logger.info(f"3D Conversion: Successfully saved view STL to {output_path}")
-                return output_path
-        except Exception as stl_err:
-            logger.error(f"3D Conversion: STL export failed: {stl_err}")
+            # Simplified classification
+            if surf_type == GeomAbs_Cylinder:
+                hole_faces.append(face)
+            elif surf_type == GeomAbs_Plane:
+                # Check if it's internal (likely a pocket floor)
+                pocket_faces.append(face)
+            else:
+                base_faces.append(face)
 
-        return None
+        def create_submesh(face_list, name, color_rgb):
+            if not face_list: return
+            compound_builder = BRep_Builder()
+            compound = TopoDS_Shape()
+            compound_builder.MakeCompound(TopoDS.TopoDS_Compound(compound))
+            for f in face_list:
+                compound_builder.Add(compound, f)
+            
+            label = shape_tool.NewShape()
+            shape_tool.SetShape(label, compound)
+            shape_tool.SetComponentName(label, TCollection_AsciiString(name))
+            color = Quantity_Color(color_rgb[0], color_rgb[1], color_rgb[2], Quantity_TOC_RGB)
+            color_tool.SetColor(label, color, XCAFDoc_ColorGen)
+
+        # Create distinct nodes in GLB
+        create_submesh(hole_faces, "Features_Holes", (1.0, 0.4, 0.4)) # Reddish
+        create_submesh(pocket_faces, "Features_Pockets", (0.4, 1.0, 0.4)) # Greenish
+        create_submesh(base_faces, "BaseModel", (0.23, 0.51, 0.96)) # Blue (#3b82f6)
+
+        # 4. Tessellate the entire compound
+        BRepMesh_IncrementalMesh(shape, 0.1, False, 0.5, True)
+
+        # 5. Export to GLB
+        output_path = file_path.rsplit('.', 1)[0] + '_view.glb'
+        writer = RWGltf_CafWriter(TCollection_AsciiString(output_path), True)
+        status = writer.Perform(doc, gp_Trsf(), None)
+        
+        if status and os.path.exists(output_path):
+            logger.info(f"Feature-Aware GLB: Successfully saved with sub-meshes to {output_path}")
+            return output_path
+            
+        return generate_glb_from_step(file_path)
 
     except Exception as e:
+        logger.error(f"GLB Multi-mesh Conversion Failed: {e}", exc_info=True)
+        return generate_glb_from_step(file_path)
+
+
+def generate_glb_from_step(file_path):
         logger.error(f"3D Conversion: Unexpected error: {e}", exc_info=True)
         return None
 
@@ -682,7 +734,7 @@ def analyze_cad_file(self, design_id):
 
                         # Generate view file (GLB with STL fallback)
                         try:
-                            view_file_path = generate_glb_from_step(local_file_path)
+                            view_file_path = generate_feature_aware_glb(local_file_path, geometric_data.get('fbm_features'))
                             if view_file_path and os.path.exists(view_file_path):
                                 # Determine correct extension (could be .glb or .stl)
                                 view_ext = os.path.splitext(view_file_path)[1].lower()

@@ -15,6 +15,7 @@ interface ViewerProps {
   hideToolbar?: boolean;
   hideSidebar?: boolean;
   activeFeatureIndex?: number | null;
+  activeFeatureType?: string;
   onFeatureClick?: (index: number) => void;
   lowQuality?: boolean;
   children?: React.ReactNode;
@@ -34,6 +35,7 @@ const Viewer: React.FC<ViewerProps> = ({
   hideToolbar = false,
   hideSidebar = false,
   activeFeatureIndex = null,
+  activeFeatureType,
   onFeatureClick,
   lowQuality = false,
   children,
@@ -315,6 +317,7 @@ const Viewer: React.FC<ViewerProps> = ({
                 showAxes={showAxes}
                 resetKey={resetKey}
                 activeFeatureIndex={activeFeatureIndex}
+                activeFeatureType={activeFeatureType}
                 onFeatureClick={onFeatureClick}
                 onLoadComplete={onLoadComplete}
               />
