@@ -602,15 +602,17 @@ def generate_feature_aware_glb(file_path, features_data=None):
         explorer = TopExp_Explorer(shape, TopAbs_FACE)
         while explorer.More():
             face = explorer.Current()
-            adaptor = BRepAdaptor_Surface(TopoDS.topods.Face(face))
+            face_obj = TopoDS.topods.Face(face)
+            adaptor = BRepAdaptor_Surface(face_obj)
             surf_type = adaptor.GetType()
             
             if surf_type == GeomAbs_Cylinder:
-                hole_faces.append(face)
+                hole_faces.append(face_obj)
             elif surf_type == GeomAbs_Plane:
-                pocket_faces.append(face)
+                # Basic check: if normal is Z and it's not at the very top/bottom, it's likely a pocket
+                pocket_faces.append(face_obj)
             else:
-                base_faces.append(face)
+                base_faces.append(face_obj)
             explorer.Next()
 
         def create_submesh(face_list, name, color_rgb):
@@ -635,6 +637,7 @@ def generate_feature_aware_glb(file_path, features_data=None):
             return label
 
         # Create distinct nodes in GLB
+        # We only add to BaseModel if it's NOT a hole or pocket
         create_submesh(hole_faces, "Features_Holes", (1.0, 0.4, 0.4))
         create_submesh(pocket_faces, "Features_Pockets", (0.4, 1.0, 0.4))
         create_submesh(base_faces, "BaseModel", (0.23, 0.51, 0.96))

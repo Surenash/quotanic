@@ -36,15 +36,17 @@ const applyMaterialSettings = (obj: any, mode: string, override: any, activeFeat
         // 3. Try index match if multiple meshes exist
         // 4. Fallback to whole model if only 1 mesh exists
         
+        const isBase = child.name.includes('BaseModel');
+        
         const typeMatch = activeFeatureType ? (
             (activeFeatureType.toLowerCase().includes('hole') && child.name.includes('Holes')) ||
             (activeFeatureType.toLowerCase().includes('pocket') && child.name.includes('Pockets'))
         ) : false;
 
         const isSelected = 
-          child.name === `Feature_${activeFeatureIndex}` || 
-          typeMatch ||
-          (totalMeshes > 1 && idx === activeFeatureIndex) ||
+          (!isBase && child.name === `Feature_${activeFeatureIndex}`) || 
+          (!isBase && typeMatch) ||
+          (!isBase && totalMeshes > 1 && idx === activeFeatureIndex) ||
           (totalMeshes === 1);
 
         if (isSelected) {
