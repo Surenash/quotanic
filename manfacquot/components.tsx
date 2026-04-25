@@ -467,20 +467,32 @@ export const Hero = () => {
             }}></div>
 
             <div style={{ ...styles.container, position: 'relative', zIndex: 1 }}>
-                {/* Previous Hero Elements restored above */}
-                <div style={{ marginBottom: '48px', display: 'flex', flexDirection: 'column', alignItems: 'center' }} className="animate-slide-up">
+                {/* Entire Previous Hero Elements restored above */}
+                <div style={{ marginBottom: '80px', display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }} className="animate-slide-up">
                     <h1 style={{ 
-                        fontSize: 'clamp(3rem, 10vw, 6rem)', 
+                        fontSize: 'clamp(4rem, 12vw, 8rem)', 
                         fontWeight: '900', 
                         margin: 0, 
                         background: `linear-gradient(to right, ${neon_cyan}, #fff, ${neon_magenta})`, 
                         WebkitBackgroundClip: 'text', 
                         WebkitTextFillColor: 'transparent', 
-                        textShadow: `0 0 30px rgba(10, 240, 240, 0.5)`, 
-                        letterSpacing: '-4px',
+                        textShadow: `0 0 40px rgba(10, 240, 240, 0.4)`, 
+                        letterSpacing: '-2px',
                         lineHeight: 1
                     }}>QUOTANIC</h1>
-                    <div style={{ width: '100px', height: '4px', background: `linear-gradient(90deg, transparent, ${neon_cyan}, transparent)`, marginTop: '16px' }}></div>
+                    
+                    <h1 style={{ ...styles.heroTitle, textAlign: 'center', fontSize: 'clamp(2.5rem, 5vw, 4rem)', marginTop: '24px' }} className="animate-slide-up stagger-child-1">
+                        From Design to Production, Faster Than Ever.
+                    </h1>
+                    
+                    <p style={{ ...styles.heroSubtitle, textAlign: 'center', fontSize: '20px', color: 'rgba(255,255,255,0.7)', maxWidth: '700px', margin: '24px auto 48px' }} className="animate-slide-up stagger-child-2">
+                        Get instant quotes from a global network of vetted manufacturers. Upload your design and compare prices, lead times, and quality in one place.
+                    </p>
+                    
+                    <div style={{ display: 'flex', gap: '20px', justifyContent: 'center' }} className="animate-slide-up stagger-child-3">
+                        <CtaButton text="Get an Instant Quote" primary onClick={() => navigate('/upload')} style={{ padding: '18px 36px', fontSize: '18px' }} />
+                        <CtaButton text="Join as a Manufacturer" onClick={() => navigate('/signup/manufacturer')} style={{ padding: '18px 36px', fontSize: '18px' }} />
+                    </div>
                 </div>
 
                 <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 0.8fr', gap: '64px', alignItems: 'center' }} className="hero-grid">
@@ -733,17 +745,20 @@ export const Footer = () => {
                     <div>
                         <h3 style={{ fontSize: '16px', fontWeight: 800, color: '#fff', marginBottom: '24px', textTransform: 'uppercase', letterSpacing: '1px' }}>Platform</h3>
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                            {['How It Works', 'Directory', 'Trust & Security'].map(item => (
-                                <Link key={item} to={`/${item.toLowerCase().replace(/ & /g, '-and-').replace(/ /g, '-')}`} style={footerLinkStyle}>{item}</Link>
-                            ))}
+                            <Link to="/how-it-works" style={footerLinkStyle}>How It Works</Link>
+                            <Link to="/directory" style={footerLinkStyle}>Directory</Link>
+                            <Link to="/trust-and-security" style={footerLinkStyle}>Trust & Security</Link>
+                            <Link to="/faq" style={footerLinkStyle}>FAQ</Link>
+                            <Link to="/help-center" style={footerLinkStyle}>Help Center</Link>
                         </div>
                     </div>
                     <div>
                         <h3 style={{ fontSize: '16px', fontWeight: 800, color: '#fff', marginBottom: '24px', textTransform: 'uppercase', letterSpacing: '1px' }}>Company</h3>
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                            {['About Us', 'Contact Us', 'Blog', 'Resources'].map(item => (
-                                <Link key={item} to={`/${item.toLowerCase().replace(/ /g, '-')}`} style={footerLinkStyle}>{item}</Link>
-                            ))}
+                            <Link to="/about" style={footerLinkStyle}>About Us</Link>
+                            <Link to="/contact" style={footerLinkStyle}>Contact Us</Link>
+                            <Link to="/blog" style={footerLinkStyle}>Blog</Link>
+                            <Link to="/resources" style={footerLinkStyle}>Resources</Link>
                         </div>
                     </div>
                     <div>
