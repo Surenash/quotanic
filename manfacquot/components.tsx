@@ -14,7 +14,7 @@ import { ViewPreset } from './types/types';
 import { ManufacturerProfileView } from './pages/ManufacturerProfilePage';
 import {
     ArrowLeftIcon, UploadIcon, QuoteIcon, ManufactureIcon, FileIcon, ShieldCheckIcon,
-    GlobeAltIcon, ScaleIcon, LightningBoltIcon, SparklesIcon, CodeBracketIcon,
+    GlobeAltIcon, ScaleIcon, LightningBoltIcon, ZapIcon, SparklesIcon, CodeBracketIcon,
     WrenchScrewdriverIcon, CubeIcon, GithubIcon, LinkedInIcon, TwitterIcon,
     SearchIcon, LocationMarkerIcon, StarIcon, BuildingOfficeIcon, XMarkIcon,
     ChartPieIcon, UserCircleIcon, CogIcon, ArchiveBoxIcon, DocumentTextIcon,

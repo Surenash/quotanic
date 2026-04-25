@@ -35,7 +35,8 @@ import {
     PieChart as LucidePieChart,
     Sparkles as LucideSparkles,
     TrendingUp as LucideTrendingUp,
-    AlertTriangle as LucideAlertTriangle
+    AlertTriangle as LucideAlertTriangle,
+    Lock as LucideLock
 } from 'lucide-react';
 
 // Wrapper components maintain backward compatibility with existing code
@@ -189,6 +190,10 @@ export const CogWheelIcon = ({ style }: { style?: React.CSSProperties }) => (
 
 export const DollarSignIcon = ({ style }: { style?: React.CSSProperties }) => (
     <LucideDollarSign style={style} />
+);
+
+export const LockIcon = ({ style }: { style?: React.CSSProperties }) => (
+    <LucideLock style={style} />
 );
 
 // Default icon style for components that use iconStyle
