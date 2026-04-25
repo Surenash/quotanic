@@ -77,6 +77,8 @@ export const LightningBoltIcon = ({ style }: { style?: React.CSSProperties }) =>
     <LucideZap style={{ width: '48px', height: '48px', ...style }} />
 );
 
+export const ZapIcon = LightningBoltIcon;
+
 export const SparklesIcon = ({ style }: { style?: React.CSSProperties }) => (
     <LucideSparkles style={{ width: '48px', height: '48px', ...style }} />
 );
