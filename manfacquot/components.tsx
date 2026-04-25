@@ -469,6 +469,36 @@ export const Hero = () => {
             <div style={{ ...styles.container, position: 'relative', zIndex: 1 }}>
                 {/* Entire Previous Hero Elements restored above */}
                 <div style={{ marginBottom: '80px', display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }} className="animate-slide-up">
+                    
+                    {/* Enhanced Logo */}
+                    <div style={{ position: 'relative', marginBottom: '16px' }} className="animate-float">
+                        <img 
+                            src="/quotanic-logo.png" 
+                            alt="Quotanic Logo" 
+                            style={{ 
+                                height: '240px', 
+                                width: 'auto', 
+                                filter: `drop-shadow(0 0 25px rgba(10, 240, 240, 0.6)) drop-shadow(0 0 50px rgba(255, 0, 255, 0.3))`,
+                                transition: 'all 0.5s ease',
+                                cursor: 'pointer'
+                            }} 
+                            onMouseOver={(e) => e.currentTarget.style.filter = `drop-shadow(0 0 40px rgba(10, 240, 240, 0.8)) drop-shadow(0 0 80px rgba(255, 0, 255, 0.5))`}
+                            onMouseOut={(e) => e.currentTarget.style.filter = `drop-shadow(0 0 25px rgba(10, 240, 240, 0.6)) drop-shadow(0 0 50px rgba(255, 0, 255, 0.3))`}
+                        />
+                        {/* Core ambient glow behind logo */}
+                        <div style={{ 
+                            position: 'absolute', 
+                            top: '50%', 
+                            left: '50%', 
+                            transform: 'translate(-50%, -50%)', 
+                            width: '150%', 
+                            height: '150%', 
+                            background: `radial-gradient(circle, rgba(10, 240, 240, 0.15) 0%, transparent 60%)`, 
+                            filter: 'blur(40px)', 
+                            zIndex: -1 
+                        }}></div>
+                    </div>
+
                     <h1 style={{ 
                         fontSize: 'clamp(4rem, 12vw, 8rem)', 
                         fontWeight: '900', 
