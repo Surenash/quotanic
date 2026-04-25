@@ -21,7 +21,6 @@ const applyMaterialSettings = (obj: any, mode: string, override: any, activeFeat
   obj.traverse((child: any) => { 
     if (child.isMesh) {
       meshes.push(child);
-      // IMPORTANT: Clone material if shared to prevent cross-highlighting
       if (child.material && !child.userData.materialCloned) {
         child.material = child.material.clone();
         child.userData.materialCloned = true;
@@ -30,6 +29,9 @@ const applyMaterialSettings = (obj: any, mode: string, override: any, activeFeat
   });
   
   const totalMeshes = meshes.length;
+  if (activeFeatureIndex !== null && activeFeatureIndex !== undefined) {
+    console.log(`[Viewer Debug] Selecting Feature #${activeFeatureIndex} (${activeFeatureType}). Total Meshes in Model: ${totalMeshes}`);
+  }
 
   meshes.forEach((child, idx) => {
     child.castShadow = true;
@@ -41,7 +43,6 @@ const applyMaterialSettings = (obj: any, mode: string, override: any, activeFeat
       if (override.isOverride) {
         child.material.color.set(override.color);
       } else if (activeFeatureIndex !== undefined && activeFeatureIndex !== null) {
-        // Highlighting Logic:
         const isBase = child.name.toLowerCase().includes('base');
         
         const typeMatch = activeFeatureType ? (
@@ -55,10 +56,13 @@ const applyMaterialSettings = (obj: any, mode: string, override: any, activeFeat
           (!isBase && totalMeshes > 1 && idx === activeFeatureIndex);
 
         if (isSelected) {
-          child.material.color.set('#facc15'); // Yellow highlight
+          if (idx < 5 || idx === activeFeatureIndex) {
+             console.log(`[Viewer Debug] Highlighting Mesh: idx=${idx}, name="${child.name}", isSelected=${isSelected}`);
+          }
+          child.material.color.set('#facc15'); 
           child.material.emissive?.set('#332200');
         } else {
-          child.material.color.set('#3b82f6'); // Default Blue
+          child.material.color.set('#3b82f6');
           child.material.emissive?.set('#000000');
         }
       } else {
