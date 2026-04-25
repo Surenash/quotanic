@@ -59,6 +59,7 @@ cloudflared*
 *.tar.gz
 *.pem
 *.key
+temp_key
 *.pub
 *.json
 !package.json
