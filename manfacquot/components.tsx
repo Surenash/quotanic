@@ -467,6 +467,22 @@ export const Hero = () => {
             }}></div>
 
             <div style={{ ...styles.container, position: 'relative', zIndex: 1 }}>
+                {/* Previous Hero Elements restored above */}
+                <div style={{ marginBottom: '48px', display: 'flex', flexDirection: 'column', alignItems: 'center' }} className="animate-slide-up">
+                    <h1 style={{ 
+                        fontSize: 'clamp(3rem, 10vw, 6rem)', 
+                        fontWeight: '900', 
+                        margin: 0, 
+                        background: `linear-gradient(to right, ${neon_cyan}, #fff, ${neon_magenta})`, 
+                        WebkitBackgroundClip: 'text', 
+                        WebkitTextFillColor: 'transparent', 
+                        textShadow: `0 0 30px rgba(10, 240, 240, 0.5)`, 
+                        letterSpacing: '-4px',
+                        lineHeight: 1
+                    }}>QUOTANIC</h1>
+                    <div style={{ width: '100px', height: '4px', background: `linear-gradient(90deg, transparent, ${neon_cyan}, transparent)`, marginTop: '16px' }}></div>
+                </div>
+
                 <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 0.8fr', gap: '64px', alignItems: 'center' }} className="hero-grid">
                     <div style={{ textAlign: 'left' }} className="animate-slide-up">
                         <div style={{ display: 'inline-flex', alignItems: 'center', gap: '12px', padding: '8px 16px', background: 'rgba(10, 240, 240, 0.1)', border: `1px solid ${neon_cyan}`, borderRadius: '20px', marginBottom: '32px' }}>
