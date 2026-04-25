@@ -141,6 +141,7 @@ class MachiningFeature:
     accessibility: str = 'Top'
     surface_finish_required: str = 'Standard'
     tolerance: str = 'Standard'
+    faces: List[Any] = field(default_factory=list) # Store actual TopoDS_Face objects
 
 @dataclass
 class MachiningOperation:
@@ -272,11 +273,13 @@ class FeatureRecognitionEngine:
                         'total_depth': face_depth,
                         'total_area': face_area,
                         'direction': direction,
-                        'location': location
+                        'location': location,
+                        'face_list': [topo_face]
                     }
                 else:
                     detected_holes[hole_key]['total_depth'] += face_depth
                     detected_holes[hole_key]['total_area'] += face_area
+                    detected_holes[hole_key]['face_list'].append(topo_face)
                     
             explorer.Next()
             
@@ -292,7 +295,8 @@ class FeatureRecognitionEngine:
                 depth=round(data['total_depth'], 2),
                 area=round(data['total_area'], 2),
                 orientation={'x': round(direction.X(), 3), 'y': round(direction.Y(), 3), 'z': round(direction.Z(), 3)},
-                accessibility=self._determine_accessibility(direction)
+                accessibility=self._determine_accessibility(direction),
+                faces=data['face_list']
             )
             holes.append(feature)
             self.feature_counter += 1
@@ -351,11 +355,12 @@ class FeatureRecognitionEngine:
         explorer = TopExp_Explorer(self.shape, TopAbs_FACE)
         while explorer.More():
             face = explorer.Current()
-            adaptor = BRepAdaptor_Surface(topods_Face(face))
+            topo_face = topods_Face(face)
+            adaptor = BRepAdaptor_Surface(topo_face)
             
             if adaptor.GetType() == GeomAbs_Plane:
                 props = GProp_GProps()
-                brepgprop_SurfaceProperties(topods_Face(face), props)
+                brepgprop_SurfaceProperties(topo_face, props)
                 area = props.Mass()
                 
                 plane = adaptor.Plane()
@@ -364,7 +369,7 @@ class FeatureRecognitionEngine:
                 # Identify internal planar faces (pockets) based on area and Z-orientation
                 if area < 5000 and abs(normal.Z()) > 0.7:
                     bbox = Bnd_Box()
-                    brepbndlib_Add(topods_Face(face), bbox)
+                    brepbndlib_Add(topo_face, bbox)
                     xmin, ymin, zmin, xmax, ymax, zmax = bbox.Get()
                     
                     width = xmax - xmin
@@ -387,7 +392,8 @@ class FeatureRecognitionEngine:
                         area=area,
                         depth=10.0, # Heuristic default
                         orientation={'x': normal.X(), 'y': normal.Y(), 'z': normal.Z()},
-                        accessibility=self._determine_accessibility(normal)
+                        accessibility=self._determine_accessibility(normal),
+                        faces=[topo_face]
                     )
                     pockets.append(feature)
                     self.feature_counter += 1
@@ -402,11 +408,12 @@ class FeatureRecognitionEngine:
         explorer = TopExp_Explorer(self.shape, TopAbs_FACE)
         while explorer.More():
             face = explorer.Current()
-            adaptor = BRepAdaptor_Surface(topods_Face(face))
+            topo_face = topods_Face(face)
+            adaptor = BRepAdaptor_Surface(topo_face)
             
             if adaptor.GetType() == GeomAbs_Plane:
                 props = GProp_GProps()
-                brepgprop_SurfaceProperties(topods_Face(face), props)
+                brepgprop_SurfaceProperties(topo_face, props)
                 area = props.Mass()
                 
                 if area > 5000: # Threshold for "Large" face
@@ -419,7 +426,8 @@ class FeatureRecognitionEngine:
                         geometry={'plane': plane, 'normal': normal},
                         area=area,
                         orientation={'x': normal.X(), 'y': normal.Y(), 'z': normal.Z()},
-                        accessibility=self._determine_accessibility(normal)
+                        accessibility=self._determine_accessibility(normal),
+                        faces=[topo_face]
                     )
                     faces.append(feature)
                     self.feature_counter += 1
@@ -434,12 +442,13 @@ class FeatureRecognitionEngine:
         explorer = TopExp_Explorer(self.shape, TopAbs_FACE)
         while explorer.More():
             face = explorer.Current()
-            adaptor = BRepAdaptor_Surface(topods_Face(face))
+            topo_face = topods_Face(face)
+            adaptor = BRepAdaptor_Surface(topo_face)
             surf_type = adaptor.GetType()
             
             if surf_type in (GeomAbs_BSplineSurface, GeomAbs_Sphere, GeomAbs_Torus):
                 props = GProp_GProps()
-                brepgprop_SurfaceProperties(topods_Face(face), props)
+                brepgprop_SurfaceProperties(topo_face, props)
                 area = props.Mass()
                 
                 feature = MachiningFeature(
@@ -448,7 +457,8 @@ class FeatureRecognitionEngine:
                     geometry={'surface_type': str(surf_type)},
                     area=area,
                     accessibility='Multi-axis',
-                    surface_finish_required='Fine'
+                    surface_finish_required='Fine',
+                    faces=[topo_face]
                 )
                 surfaces.append(feature)
                 self.feature_counter += 1

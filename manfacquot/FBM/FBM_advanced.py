@@ -168,7 +168,8 @@ class AdvancedFeatureRecognitionEngine(FeatureRecognitionEngine):
                     confidence_score=0.85,
                     complexity_rating=6,
                     manufacturing_notes=["Requires thread milling or tapping"],
-                    surface_finish_required="Standard"
+                    surface_finish_required="Standard",
+                    faces=[topo_edge] # Store the edge as geometric reference
                 )
                 
                 threaded_holes.append(feature)
@@ -1133,7 +1134,8 @@ if __name__ == "__main__":
                                 f"Thin rib {thickness:.1f}mm thick - leave as protrusion",
                                 "Machine material around rib carefully"
                             ],
-                            risk_factors=["Thin wall - risk of deflection during machining"]
+                            risk_factors=["Thin wall - risk of deflection during machining"],
+                            faces=[topods_Face(face)]
                         )
                         
                         ribs.append(feature)
@@ -1183,7 +1185,8 @@ if __name__ == "__main__":
                             manufacturing_notes=[
                                 f"Cylindrical stud Ø{diameter:.1f}mm x {height:.1f}mm",
                                 "Machine surrounding material to leave stud"
-                            ]
+                            ],
+                            faces=[topods_Face(face)]
                         )
                         
                         studs.append(feature)
