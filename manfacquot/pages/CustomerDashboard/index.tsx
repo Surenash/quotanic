@@ -40,12 +40,19 @@ export const CustomerDashboard = ({ user }) => {
         return localStorage.getItem('cust_sidebar_collapsed') === 'true';
     });
 
+    const mainContentRef = useRef<HTMLElement>(null);
     const navItems = [
         { id: 'overview', label: 'Overview', icon: ChartPieIcon },
         { id: 'designs', label: 'My Designs', icon: CubeIcon },
         { id: 'orders', label: 'My Orders', icon: ArchiveBoxIcon },
         { id: 'profile', label: 'Profile', icon: UserCircleIcon },
     ];
+
+    useEffect(() => {
+        if (mainContentRef.current) {
+            mainContentRef.current.scrollTo(0, 0);
+        }
+    }, [activeView]);
 
     const toggleSidebar = () => {
         setIsSidebarCollapsed(prev => {
@@ -171,12 +178,15 @@ export const CustomerDashboard = ({ user }) => {
                     </button>
                 </div>
             </aside>
-            <main style={{ 
-                ...styles.dashboardMainContent,
-                flex: 1,
-                overflowY: 'auto',
-                transition: 'padding-left 0.3s'
-            }}>
+            <main 
+                ref={mainContentRef}
+                style={{ 
+                    ...styles.dashboardMainContent,
+                    flex: 1,
+                    overflowY: 'auto',
+                    transition: 'padding-left 0.3s'
+                }}
+            >
                 {renderActiveView()}
             </main>
         </div>
