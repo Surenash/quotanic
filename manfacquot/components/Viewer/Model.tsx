@@ -85,9 +85,6 @@ const STLModel: React.FC<ModelComponentProps> = ({ url, viewportMode, materialOv
       materialRef.current.wireframe = viewportMode === 'wireframe';
       if (materialOverride.isOverride) {
         materialRef.current.color.set(materialOverride.color);
-      } else if (activeFeatureIndex !== undefined && activeFeatureIndex !== null) {
-        // STL is almost always 1 mesh, so we highlight the whole thing
-        materialRef.current.color.set('#facc15');
       } else {
         materialRef.current.color.set('#3b82f6');
       }
@@ -101,7 +98,6 @@ const STLModel: React.FC<ModelComponentProps> = ({ url, viewportMode, materialOv
         receiveShadow
         onClick={(e) => { 
             e.stopPropagation(); 
-            if (onFeatureClick) onFeatureClick(0); // For STL, we only have one mesh/feature to click
         }}
         onPointerOver={() => { document.body.style.cursor = 'pointer'; }}
         onPointerOut={() => { document.body.style.cursor = 'auto'; }}
