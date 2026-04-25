@@ -8,27 +8,73 @@ import { SupportedExtensions } from '../../types/types';
 
 interface ModelComponentProps {
   url: string;
-  viewportMode: 'solid' | 'wireframe';
+  viewportMode: string;
   materialOverride: { color: string, isOverride: boolean };
+  activeFeatureIndex?: number | null;
+  activeFeatureType?: string;
+  onFeatureClick?: (index: number) => void;
 }
 
-const applyMaterialSettings = (obj: any, mode: string, override: any) => {
-  obj.traverse((child: any) => {
+
+const applyMaterialSettings = (obj: any, mode: string, override: any, activeFeatureIndex?: number | null, activeFeatureType?: string) => {
+  const meshes: any[] = [];
+  obj.traverse((child: any) => { 
     if (child.isMesh) {
-      child.castShadow = true;
-      child.receiveShadow = true;
-      if (child.material) {
-        child.material.wireframe = mode === 'wireframe';
-        if (override.isOverride) {
-          child.material.color.set(override.color);
+      meshes.push(child);
+      if (child.material && !child.userData.materialCloned) {
+        child.material = child.material.clone();
+        child.userData.materialCloned = true;
+      }
+    }
+  });
+  
+  const totalMeshes = meshes.length;
+  if (activeFeatureIndex !== null && activeFeatureIndex !== undefined) {
+    console.log(`[Viewer Debug] Selecting Feature #${activeFeatureIndex} (${activeFeatureType}). Total Meshes in Model: ${totalMeshes}`);
+  }
+
+  meshes.forEach((child, idx) => {
+    child.castShadow = true;
+    child.receiveShadow = true;
+    
+    if (child.material) {
+      child.material.wireframe = mode === 'wireframe';
+      
+      if (override.isOverride) {
+        child.material.color.set(override.color);
+      } else if (activeFeatureIndex !== undefined && activeFeatureIndex !== null) {
+        const isBase = child.name.toLowerCase().includes('base');
+        
+        const typeMatch = activeFeatureType ? (
+            (activeFeatureType.toLowerCase().includes('hole') && child.name.includes('Holes')) ||
+            (activeFeatureType.toLowerCase().includes('pocket') && child.name.includes('Pockets'))
+        ) : false;
+
+        const isSelected = 
+          (!isBase && (child.name === `Feature_${activeFeatureIndex}` || child.name === `Feature ${activeFeatureIndex}`)) || 
+          (!isBase && typeMatch) ||
+          (!isBase && totalMeshes > 1 && idx === activeFeatureIndex);
+
+        if (isSelected) {
+          if (idx < 5 || idx === activeFeatureIndex) {
+             console.log(`[Viewer Debug] Highlighting Mesh: idx=${idx}, name="${child.name}", isSelected=${isSelected}`);
+          }
+          child.material.color.set('#facc15'); 
+          child.material.emissive?.set('#332200');
+        } else {
+          child.material.color.set('#3b82f6');
+          child.material.emissive?.set('#000000');
         }
+      } else {
+         child.material.color.set('#3b82f6');
+         child.material.emissive?.set('#000000');
       }
     }
   });
 };
 
 // STL Loader Component
-const STLModel: React.FC<ModelComponentProps> = ({ url, viewportMode, materialOverride }) => {
+const STLModel: React.FC<ModelComponentProps> = ({ url, viewportMode, materialOverride, activeFeatureIndex, onFeatureClick }) => {
   const geometry = useLoader(STLLoader, url, (loader) => {
     loader.setCrossOrigin('anonymous');
   });
@@ -46,28 +92,70 @@ const STLModel: React.FC<ModelComponentProps> = ({ url, viewportMode, materialOv
   });
 
   return (
-    <mesh geometry={geometry} castShadow receiveShadow>
+    <mesh
+        geometry={geometry}
+        castShadow
+        receiveShadow
+        onClick={(e) => { 
+            e.stopPropagation(); 
+        }}
+        onPointerOver={() => { document.body.style.cursor = 'pointer'; }}
+        onPointerOut={() => { document.body.style.cursor = 'auto'; }}
+    >
       <meshStandardMaterial ref={materialRef} color="#3b82f6" metalness={0.6} roughness={0.4} />
     </mesh>
   );
 };
 
 // OBJ Loader Component
-const OBJModel: React.FC<ModelComponentProps> = ({ url, viewportMode, materialOverride }) => {
+const OBJModel: React.FC<ModelComponentProps> = ({ url, viewportMode, materialOverride, activeFeatureIndex, activeFeatureType, onFeatureClick }) => {
   const model = useLoader(OBJLoader, url, (loader) => {
     loader.setCrossOrigin('anonymous');
   });
-  useFrame(() => applyMaterialSettings(model, viewportMode, materialOverride));
-  return <primitive object={model} />;
+
+  useFrame(() => {
+    applyMaterialSettings(model, viewportMode, materialOverride, activeFeatureIndex, activeFeatureType);
+  });
+
+  return <primitive
+      object={model}
+      onClick={(e: any) => { 
+          e.stopPropagation(); 
+          // Detect which sub-mesh was clicked if possible
+          const meshIdx = e.intersections?.[0]?.object?.userData?.index || 0;
+          if (onFeatureClick) onFeatureClick(meshIdx); 
+      }}
+      onPointerOver={() => { document.body.style.cursor = 'pointer'; }}
+      onPointerOut={() => { document.body.style.cursor = 'auto'; }}
+  />;
 };
 
 // GLTF/GLB Loader Component
-const GLTFModel: React.FC<ModelComponentProps> = ({ url, viewportMode, materialOverride }) => {
+const GLTFModel: React.FC<ModelComponentProps> = ({ url, viewportMode, materialOverride, activeFeatureIndex, activeFeatureType, onFeatureClick }) => {
   const { scene } = useGLTF(url, undefined, undefined, (loader: any) => {
     loader.setCrossOrigin('anonymous');
   });
-  useFrame(() => applyMaterialSettings(scene, viewportMode, materialOverride));
-  return <primitive object={scene} />;
+
+  // Assign indices to meshes for identification
+  scene.traverse((child: any, idx: number) => {
+      if (child.isMesh) child.userData.index = idx;
+  });
+
+  useFrame(() => {
+    applyMaterialSettings(scene, viewportMode, materialOverride, activeFeatureIndex, activeFeatureType);
+  });
+
+  return <primitive
+      object={scene}
+      onClick={(e: any) => { 
+          e.stopPropagation(); 
+          // Get the index of the clicked mesh
+          const meshIdx = e.object?.userData?.index || 0;
+          if (onFeatureClick) onFeatureClick(meshIdx);
+      }}
+      onPointerOver={() => { document.body.style.cursor = 'pointer'; }}
+      onPointerOut={() => { document.body.style.cursor = 'auto'; }}
+  />;
 };
 
 interface ModelProps {
@@ -77,9 +165,12 @@ interface ModelProps {
   viewportMode: 'solid' | 'wireframe';
   materialOverride: { color: string, isOverride: boolean };
   animation: any;
+  activeFeatureIndex?: number | null;
+  activeFeatureType?: string;
+  onFeatureClick?: (index: number) => void;
 }
 
-const Model: React.FC<ModelProps> = ({ modelUrl, fileExtension, onLoad, viewportMode, materialOverride, animation }) => {
+const Model: React.FC<ModelProps> = ({ modelUrl, fileExtension, onLoad, viewportMode, materialOverride, animation, activeFeatureIndex, activeFeatureType, onFeatureClick }) => {
   const groupRef = useRef<THREE.Group>(null);
 
   useFrame((state) => {
@@ -125,7 +216,7 @@ const Model: React.FC<ModelProps> = ({ modelUrl, fileExtension, onLoad, viewport
   });
 
   const renderLoader = () => {
-    const props = { url: modelUrl, viewportMode, materialOverride };
+    const props = { url: modelUrl, viewportMode, materialOverride, activeFeatureIndex, activeFeatureType, onFeatureClick };
     switch (fileExtension) {
       case 'stl': return <STLModel {...props} />;
       case 'obj': return <OBJModel {...props} />;

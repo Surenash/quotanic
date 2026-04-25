@@ -5,12 +5,16 @@ import { AuthProvider } from './contexts/AuthContext';
 import { FileViewerProvider } from './contexts/FileViewerContext';
 import { CurrencyProvider } from './utils/currency';
 import { AppRoutes } from './router/routes';
+import ScrollToTop from './components/ScrollToTop';
+// @ts-ignore
+import SmartViewPage from './pages/SmartViewPage';
 
 import './index.css';
 
 const App = () => {
     return (
         <BrowserRouter>
+            <ScrollToTop />
             <AuthProvider>
                 <FileViewerProvider>
                     <CurrencyProvider>

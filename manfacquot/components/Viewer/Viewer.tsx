@@ -14,6 +14,9 @@ interface ViewerProps {
   design?: any; // To get the original file key for download
   hideToolbar?: boolean;
   hideSidebar?: boolean;
+  activeFeatureIndex?: number | null;
+  activeFeatureType?: string;
+  onFeatureClick?: (index: number) => void;
   lowQuality?: boolean;
   children?: React.ReactNode;
   onLoadComplete?: () => void;
@@ -31,6 +34,9 @@ const Viewer: React.FC<ViewerProps> = ({
   design, 
   hideToolbar = false,
   hideSidebar = false,
+  activeFeatureIndex = null,
+  activeFeatureType,
+  onFeatureClick,
   lowQuality = false,
   children,
   onLoadComplete 
@@ -310,6 +316,9 @@ const Viewer: React.FC<ViewerProps> = ({
                 showGrid={showGrid}
                 showAxes={showAxes}
                 resetKey={resetKey}
+                activeFeatureIndex={activeFeatureIndex}
+                activeFeatureType={activeFeatureType}
+                onFeatureClick={onFeatureClick}
                 onLoadComplete={onLoadComplete}
               />
             </Canvas>

@@ -1,6 +1,21 @@
 // API Client extracted from index.tsx
 
 const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || '') + '/api'; // Uses env var in production
+const MEDIA_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
+
+/**
+ * Robust helper to resolve media URLs from the backend, 
+ * to prevent double-media paths or missing slashes.
+ */
+export const resolveMediaUrl = (path: string | null | undefined) => {
+    if (!path) return null;
+    if (path.startsWith('http')) return path;
+    
+    const cleanPath = path.startsWith('/') ? path.substring(1) : path;
+    const isMediaPath = cleanPath.startsWith('media/');
+    
+    return `${MEDIA_BASE_URL}/${isMediaPath ? '' : 'media/'}${cleanPath}`;
+};
 
 export const getTokens = () => ({
     access: localStorage.getItem('accessToken'),
@@ -82,12 +97,30 @@ export const api = {
     },
 
     async uploadFileToS3(url: string, file: File) {
-        const response = await fetch(url, {
+        const isRelativePath = url.startsWith('/');
+        let fetchUrl = url;
+        if (isRelativePath) {
+            // If the URL is a relative API path (e.g., from USE_LOCAL_STORAGE), prepend the correct domain.
+            const domain = API_BASE_URL.replace(/\/api$/, '');
+            fetchUrl = `${domain}${url}`;
+        }
+
+        const headers: Record<string, string> = { 'Content-Type': file.type };
+
+        // Add auth header for relative paths (protected endpoints)
+        if (isRelativePath) {
+            const { access } = getTokens();
+            if (access) {
+                headers['Authorization'] = `Bearer ${access}`;
+            }
+        }
+
+        const response = await fetch(fetchUrl, {
             method: 'PUT',
             body: file,
-            headers: { 'Content-Type': file.type }
+            headers
         });
-        if (!response.ok) { throw new Error('Failed to upload file to S3.'); }
+        if (!response.ok) { throw new Error(`Failed to upload file to S3: ${response.status}`); }
     },
 
     createDesign(designData: object) {
@@ -127,10 +160,12 @@ export const api = {
         return this.request(`/designs/${designId}/quotes/`, { method: 'POST', body: quoteData });
     },
 
-    declineQuoteRequest(designId: string) {
-        // Mock decline - in real app would interact with backend
-        console.log(`MOCK API: Declining quote request for design ${designId}`);
-        return new Promise(resolve => setTimeout(() => resolve({ success: true, designId }), 300));
+    declineQuoteRequest(quoteId: string) {
+        return this.updateQuoteStatus(quoteId, 'rejected');
+    },
+
+    deleteQuote(id: string) {
+        return this.request(`/quotes/${id}/`, { method: 'DELETE' });
     },
 
     getActiveOrders() {

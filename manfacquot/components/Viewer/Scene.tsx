@@ -1,4 +1,3 @@
-
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { useFrame, useThree } from '@react-three/fiber';
 import { OrbitControls, Grid, Environment } from '@react-three/drei';
@@ -21,13 +20,16 @@ interface SceneProps {
   showGrid: boolean;
   showAxes: boolean;
   resetKey: number;
+  activeFeatureIndex?: number | null;
+  activeFeatureType?: string;
+  onFeatureClick?: (index: number) => void;
   onLoadComplete?: () => void;
 }
 
 const Scene: React.FC<SceneProps> = ({ 
   modelUrl, fileExtension, view, isViewLocked, onUserInteraction,
   viewportMode, material, lighting, animation, zoomLevel,
-  showGrid, showAxes, resetKey, onLoadComplete
+  showGrid, showAxes, resetKey, activeFeatureIndex, activeFeatureType, onFeatureClick, onLoadComplete
 }) => {
   const { camera, controls, size, gl } = useThree();
   const targetPosition = useRef(new THREE.Vector3(5, 5, 5));
@@ -36,11 +38,13 @@ const Scene: React.FC<SceneProps> = ({
 
   // Force camera update when size changes (e.g. sidebar or fullscreen)
   useEffect(() => {
-    if (camera instanceof THREE.PerspectiveCamera) {
-      camera.aspect = size.width / size.height;
-      camera.updateProjectionMatrix();
+    if (size.width > 0 && size.height > 0) {
+      if (camera instanceof THREE.PerspectiveCamera) {
+        camera.aspect = size.width / size.height;
+        camera.updateProjectionMatrix();
+      }
+      gl.setSize(size.width, size.height);
     }
-    gl.setSize(size.width, size.height);
   }, [size, camera, gl]);
 
   const handleModelLoad = useCallback((payload: { boundingBox: THREE.Box3 }) => {
@@ -66,13 +70,23 @@ const Scene: React.FC<SceneProps> = ({
     }
     
     if (onLoadComplete) {
-      // Use a small delay to ensure the 3D geometry has fully painted 
-      // and the camera transition is settled before taking the screenshot.
+      // If we are doing a headless capture, jump immediately to the target position
+      // instead of lerping, to ensure we capture the full part perfectly framed.
+      const direction = CAMERA_VIEW_DIRECTIONS[view];
+      const jumpDistance = distance;
+      camera.position.copy(direction).multiplyScalar(jumpDistance);
+      if (controls) {
+        (controls as any).target.set(0, 0, 0);
+        (controls as any).update();
+      }
+      
+      // Use a slightly longer delay to ensure the 3D geometry has fully painted 
+      // and the browser has finished any initial layout/render cycles.
       setTimeout(() => {
         onLoadComplete();
-      }, 200);
+      }, 500);
     }
-  }, [camera, controls, onLoadComplete]);
+  }, [camera, controls, onLoadComplete, view]);
 
   // RESET LOGIC
   useEffect(() => {
@@ -146,6 +160,9 @@ const Scene: React.FC<SceneProps> = ({
         viewportMode={viewportMode}
         materialOverride={material}
         animation={animation}
+        activeFeatureIndex={activeFeatureIndex}
+        activeFeatureType={activeFeatureType}
+        onFeatureClick={onFeatureClick}
       />
       
       <OrbitControls

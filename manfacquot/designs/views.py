@@ -46,8 +46,10 @@ class DesignUploadURLView(APIView):
         # Check if we should use local storage instead of S3
         if settings.USE_LOCAL_STORAGE:
             # For local storage, return a local upload endpoint
+            import urllib.parse
+            encoded_key = urllib.parse.quote(s3_object_name)
             return Response({
-                'upload_url': f'/api/designs/upload-local/',  # Will be handled by a new view
+                'upload_url': f'/api/designs/upload-local/?key={encoded_key}',  # Will be handled by a new view
                 's3_file_key': s3_object_name,  # Keep same naming convention
                 'file_name': file_name,
                 'use_local': True
@@ -90,6 +92,58 @@ class DesignUploadURLView(APIView):
             logger.error(f"Unexpected error generating pre-signed URL for {s3_object_name}: {e}")
             # In production, avoid sending detailed internal errors to client
             return Response({"error": "An unexpected error occurred while preparing the file upload."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+from rest_framework.parsers import BaseParser
+class RawFileUploadParser(BaseParser):
+    """Plain text parser for uploading raw files."""
+    media_type = '*/*'
+    def parse(self, stream, media_type=None, parser_context=None):
+        return stream.read()
+
+class LocalUploadView(APIView):
+    """
+    PUT /api/designs/upload-local/
+    Handles local file upload for development when USE_LOCAL_STORAGE is True.
+    """
+    permission_classes = [IsAuthenticated]
+    parser_classes = [RawFileUploadParser]
+
+    def put(self, request, *args, **kwargs):
+        if not settings.USE_LOCAL_STORAGE:
+            return Response({"error": "Local storage is disabled."}, status=status.HTTP_400_BAD_REQUEST)
+
+        target_key = request.GET.get('key')
+        if not target_key:
+            return Response({"error": "key query parameter is required."}, status=status.HTTP_400_BAD_REQUEST)
+
+        from pathlib import Path
+
+        # Normalize and validate the key
+        normalized_key = target_key.lstrip('/')
+        if not normalized_key or Path(normalized_key).is_absolute():
+            return Response({"error": "Invalid key: must be a relative path."}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Ensure the key begins with the user's prefix
+        user_prefix = f"{request.user.id}/"
+        if not normalized_key.startswith(user_prefix):
+            return Response({"error": f"Invalid key: must start with user prefix {user_prefix}."}, status=status.HTTP_403_FORBIDDEN)
+
+        # Build and validate file path
+        media_root = Path(settings.MEDIA_ROOT).resolve()
+        file_path = (media_root / normalized_key).resolve()
+
+        # Ensure the resolved path is within MEDIA_ROOT
+        try:
+            file_path.relative_to(media_root)
+        except ValueError:
+            return Response({"error": "Invalid key: path traversal detected."}, status=status.HTTP_403_FORBIDDEN)
+
+        file_path.parent.mkdir(parents=True, exist_ok=True)
+
+        with open(file_path, 'wb') as f:
+            f.write(request.data)
+
+        return Response({"message": "File uploaded successfully"}, status=status.HTTP_200_OK)
 
 # --- Design CRUD Views ---
 from rest_framework import generics
@@ -228,12 +282,18 @@ class DesignThumbnailUpdateView(APIView):
     def patch(self, request, id, *args, **kwargs):
         design = get_object_or_404(Design, id=id)
 
-        # Check permissions using IsOwnerOrAdmin manual logic if needed, 
-        # or rely on get_object_or_404 returning 404 if unfiltered.
-        # Check permissions using the same logic as DesignDetailView
-        if not (request.user.is_staff or design.customer == request.user):
+        # Allow if user is staff, the owner (customer), or a manufacturer associated with a quote for this design
+        has_permission = request.user.is_staff or design.customer == request.user
+
+        if not has_permission:
+            # Check if this user is a manufacturer who has a quote for this design
+            from quotes.models import Quote
+            if Quote.objects.filter(design=design, manufacturer=request.user).exists():
+                has_permission = True
+
+        if not has_permission:
             return Response(
-                {"error": "You do not have permission to update this design."},
+                {"error": "You do not have permission to update this design thumbnail."},
                 status=status.HTTP_403_FORBIDDEN
             )
 
@@ -712,6 +772,5 @@ class FBMManufacturingIntelligenceView(APIView):
                 "cost_saving_opportunities": len(intelligence.get('cost_opportunities', []))
             }
         }, status=status.HTTP_200_OK)
-
 
 

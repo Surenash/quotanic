@@ -79,11 +79,15 @@ class OrderSerializer(serializers.ModelSerializer):
 
     def get_design_info(self, obj):
         if obj.design:
+            from designs.serializers import DesignSerializer
+            serializer = DesignSerializer(context=self.context)
             return {
                 "id": obj.design.id,
                 "design_name": obj.design.design_name,
                 "material": obj.design.material,
-                "quantity": obj.design.quantity
+                "quantity": obj.design.quantity,
+                "design_thumbnail_url": serializer.get_thumbnail_url(obj.design),
+                "design_view_url": serializer.get_view_url(obj.design)
             }
         return None
 

@@ -128,14 +128,14 @@ export const UploadPage = ({ isInternal = false }: { isInternal?: boolean }) => 
     };
 
     const handleDirectUpload = async () => {
+        setLoading(true);
         try {
-            // Get upload URL (or local storage flag)
+            // 1. Upload Primary CAD File
             const uploadUrlResponse = await api.getUploadUrl(file.name, file.type);
             const { upload_url, s3_file_key, use_local } = uploadUrlResponse;
 
-            // Handle local storage differently
             if (use_local) {
-                // For local storage, convert file to base64 and send directly
+                // Local storage fallback for dev
                 const reader = new FileReader();
                 const fileData = await new Promise((resolve, reject) => {
                     reader.onload = () => resolve(reader.result);
@@ -143,11 +143,21 @@ export const UploadPage = ({ isInternal = false }: { isInternal?: boolean }) => 
                     reader.readAsDataURL(file);
                 });
 
-                // Create design with file data embedded
+                // Prepare supporting files for local storage
+                const supportingFilesData = await Promise.all(supportingFiles.map(async (f) => {
+                    const r = new FileReader();
+                    const d = await new Promise((res, rej) => {
+                        r.onload = () => res(r.result);
+                        r.onerror = rej;
+                        r.readAsDataURL(f);
+                    });
+                    return { name: f.name, data: d, type: f.type };
+                }));
+
                 const designData = {
                     design_name: formData.designName,
                     s3_file_key,
-                    file_data: fileData, // Base64 encoded file
+                    file_data: fileData,
                     file_name: file.name,
                     material: formData.material,
                     quantity: parseInt(formData.quantity) || 1,
@@ -164,7 +174,8 @@ export const UploadPage = ({ isInternal = false }: { isInternal?: boolean }) => 
                     inspection_requirements: formData.inspectionRequirements,
                     requires_engineering_review: formData.requiresEngineeringReview,
                     is_internal: isInternal,
-                    use_local_storage: true
+                    use_local_storage: true,
+                    supporting_files_data: supportingFilesData
                 };
 
                 await api.createDesign(designData);
@@ -172,53 +183,52 @@ export const UploadPage = ({ isInternal = false }: { isInternal?: boolean }) => 
                 return;
             }
 
-            // Otherwise use S3 flow
-            const uploadResponse = await fetch(upload_url, {
-                method: 'PUT',
-                body: file,
-                headers: { 'Content-Type': file.type }
-            });
+            // --- S3 PRODUCTION FLOW ---
+            
+            // Upload primary file
+            await api.uploadFileToS3(upload_url, file);
 
-            if (!uploadResponse.ok) {
-                throw new Error('File upload to S3 failed');
+            // Upload supporting files
+            const supportingS3Keys = [];
+            for (const sFile of supportingFiles) {
+                const sUrlResp = await api.getUploadUrl(sFile.name, sFile.type);
+                await api.uploadFileToS3(sUrlResp.upload_url, sFile);
+                supportingS3Keys.push(sUrlResp.s3_file_key);
             }
 
-            // Create design with all form data
             const designData = {
                 design_name: formData.designName,
                 s3_file_key,
+                supporting_files: supportingS3Keys, // Pass keys to backend
                 material: formData.material,
                 quantity: parseInt(formData.quantity) || 1,
                 manufacturing_process: formData.manufacturingProcess,
                 surface_finish: formData.surfaceFinish,
                 tolerances: formData.tolerances,
                 post_processing: formData.postProcessing,
-                additional_instructions: formData.additionalInstructions,
+                additional_instructions: formData.quantity.includes('-') 
+                    ? `[Qty: ${formData.quantity}] ${formData.additionalInstructions}`
+                    : formData.additionalInstructions,
                 required_certifications: formData.requiredCertifications,
                 shipping_destination: formData.shippingDestination,
                 target_price: formData.targetPrice,
                 urgency: formData.urgency,
-                packaging: formData.packaging,
+                packaging_requirements: formData.packaging,
                 inspection_requirements: formData.inspectionRequirements,
                 requires_engineering_review: formData.requiresEngineeringReview,
                 is_internal: isInternal
             };
 
             const newDesign = await api.createDesign(designData);
-
+            
             if (targetManufacturerId) {
                 try {
-                    // Attempt to generate a quote for this specific manufacturer
                     await api.generateQuotes(newDesign.id, targetManufacturerId);
-                    alert("Design uploaded and quote requested from manufacturer.");
                 } catch (quoteErr) {
-                    console.error("Failed to generate targeted quote:", quoteErr);
-                    // Don't block success navigation, but maybe warn
-                    alert("Design uploaded, but failed to request quote immediately. Please try again from dashboard.");
+                    console.error("Quote generation failed:", quoteErr);
                 }
             }
 
-            // Success! Navigate to dashboard
             navigate('/dashboard');
         } catch (err) {
             setError(err.message || 'Upload failed. Please try again.');
@@ -456,20 +466,28 @@ export const UploadPage = ({ isInternal = false }: { isInternal?: boolean }) => 
 
                                 {supportingFiles.length > 0 && (
                                     <div style={styles.supportingFileList}>
-                                        {supportingFiles.map((f, index) => (
-                                            <div key={`${f.name}-${index}`} style={styles.supportingFileItem}>
-                                                <DocumentTextIcon style={{ width: '20px', height: '20px', color: 'var(--text-secondary)', flexShrink: 0, marginRight: '8px' }} />
-                                                <span style={styles.supportingFileName} title={f.name}>{f.name}</span>
-                                                <button 
-                                                    type="button" 
-                                                    onClick={() => removeSupportingFile(index)} 
-                                                    style={styles.supportingFileRemoveBtn} 
-                                                    aria-label={`Remove ${f.name}`}
-                                                >
-                                                    <XMarkIcon style={{ width: '16px', height: '16px' }} />
-                                                </button>
-                                            </div>
-                                        ))}
+                                        {supportingFiles.map((f, index) => {
+                                            const ext = f.name.split('.').pop()?.toLowerCase();
+                                            let Icon = DocumentTextIcon;
+                                            if (ext === 'pdf') Icon = DocumentTextIcon;
+                                            else if (ext === 'dwg' || ext === 'dxf') Icon = CubeIcon;
+                                            else if (['step', 'stp', 'iges', 'igs', 'stl'].includes(ext || '')) Icon = CubeIcon;
+                                            
+                                            return (
+                                                <div key={`${f.name}-${index}`} style={styles.supportingFileItem}>
+                                                    <Icon style={{ width: '20px', height: '20px', color: ext === 'pdf' ? '#ef4444' : '#3b82f6', flexShrink: 0, marginRight: '8px' }} />
+                                                    <span style={styles.supportingFileName} title={f.name}>{f.name}</span>
+                                                    <button 
+                                                        type="button" 
+                                                        onClick={() => removeSupportingFile(index)} 
+                                                        style={styles.supportingFileRemoveBtn} 
+                                                        aria-label={`Remove ${f.name}`}
+                                                    >
+                                                        <XMarkIcon style={{ width: '16px', height: '16px' }} />
+                                                    </button>
+                                                </div>
+                                            );
+                                        })}
                                     </div>
                                 )}
                             </div>

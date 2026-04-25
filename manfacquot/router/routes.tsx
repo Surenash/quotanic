@@ -1,5 +1,5 @@
 import React, { Suspense } from 'react';
-import { Route, Routes, Navigate } from 'react-router-dom';
+import { Route, Routes, Navigate, useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { MainLayout } from '../layouts/MainLayout';
 import { BarebonesLayout } from '../layouts/BarebonesLayout';
@@ -24,6 +24,7 @@ const ManufacturerDashboard = React.lazy(() => import('../pages/ManufacturerDash
 const CustomerDashboard = React.lazy(() => import('../pages/CustomerDashboard').then(module => ({ default: module.CustomerDashboard })));
 const UploadPage = React.lazy(() => import('../pages/UploadPage').then(module => ({ default: module.UploadPage })));
 const DesignQuotationsPage = React.lazy(() => import('../pages/DesignQuotationsPage').then(module => ({ default: module.DesignQuotationsPage })));
+const SmartViewPage = React.lazy(() => import('../pages/SmartViewPage'));
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
     const { isAuthenticated, authLoading } = useAuth();
@@ -91,8 +92,19 @@ export const AppRoutes = () => {
                     <Route path="/upload" element={<UploadPage />} />
                     <Route path="/upload-internal" element={<UploadPage isInternal={true} />} />
                     <Route path="/view-quotes/:designId" element={<DesignQuotationsPage />} />
+                    <Route path="/smart-view/:designId" element={
+                        <ProtectedRoute>
+                            <SmartViewWrapper />
+                        </ProtectedRoute>
+                    } />
                 </Route>
             </Routes>
         </Suspense>
     );
+};
+
+const SmartViewWrapper = () => {
+    const { designId } = useParams<{ designId: string }>();
+    const navigate = useNavigate();
+    return <SmartViewPage designId={designId || ''} onNavigate={(page) => navigate(page)} />;
 };

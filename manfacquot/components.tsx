@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams, useLocation, Link, Navigate, Outlet } from 'react-router-dom';
 import { useAuth } from './contexts/AuthContext';
 import { useFileViewer } from './contexts/FileViewerContext';
-import { api, setTokens, getTokens, clearTokens } from './utils/api';
+import { api, setTokens, getTokens, clearTokens, resolveMediaUrl } from './utils/api';
 import { useCurrency, CurrencyProvider } from './utils/currency';
 import { styles, bg_deep_space, text_primary, text_secondary, border_color, border_color_strong, neon_cyan, neon_magenta, neon_orange } from './types/theme';
 import CtaButton from './components/CtaButton';
@@ -29,15 +29,7 @@ export const MEDIA_BASE_URL = 'https://api.quotanic.com';
  * Standardizes how MEDIA_BASE_URL and /media/ paths are joined
  * to prevent double-media paths or missing slashes.
  */
-export const resolveMediaUrl = (path: string | null | undefined) => {
-    if (!path) return null;
-    if (path.startsWith('http')) return path;
-    
-    const cleanPath = path.startsWith('/') ? path.substring(1) : path;
-    const isMediaPath = cleanPath.startsWith('media/');
-    
-    return `${MEDIA_BASE_URL}/${isMediaPath ? '' : 'media/'}${cleanPath}`;
-};
+
 
 import {
     PRODUCTION_VOLUMES, CERTIFICATIONS, MACHINING_PROCESSES, SHEET_METAL_PROCESSES, CASTING_PROCESSES, FORGING_PROCESSES,
@@ -1854,12 +1846,20 @@ export const DesignThumbnail = ({ modelUrl, thumbnailUrl, designId, designName }
             const fileName = `thumb_${designId}.png`;
 
             console.log(`[DesignThumbnail] Getting upload URL for ${fileName}...`);
-            const { uploadUrl, s3Key } = await api.getUploadUrl(fileName, 'image/png');
-            console.log(`[DesignThumbnail] Uploading to S3: ${s3Key}`);
-            await api.uploadFileToS3(uploadUrl, new File([blob], fileName, { type: 'image/png' }));
-            
-            console.log(`[DesignThumbnail] Updating backend with key: ${s3Key}`);
-            await api.updateDesignThumbnail(designId, s3Key);
+            const uploadRes = await api.getUploadUrl(fileName, 'image/png');
+            const targetUploadUrl = uploadRes.uploadUrl || uploadRes.upload_url;
+            const targetS3Key = uploadRes.s3Key || uploadRes.s3_file_key;
+
+            if (!targetUploadUrl || !targetS3Key) {
+                console.error('[DesignThumbnail] Invalid upload response: missing uploadUrl or s3Key', uploadRes);
+                throw new Error('Failed to get valid upload URL from server');
+            }
+
+            console.log(`[DesignThumbnail] Uploading to S3/Local: ${targetS3Key}`);
+            await api.uploadFileToS3(targetUploadUrl, new File([blob], fileName, { type: 'image/png' }));
+
+            console.log(`[DesignThumbnail] Updating backend with key: ${targetS3Key}`);
+            await api.updateDesignThumbnail(designId, targetS3Key);
             
             // Re-fetch the design to get the proper presigned URL from the backend
             const updatedDesign = await api.getDesignById(designId);
@@ -1902,14 +1902,25 @@ export const DesignThumbnail = ({ modelUrl, thumbnailUrl, designId, designName }
             onMouseLeave={() => setIsHovered(false)}
             title="Hover to rotate 3D Model"
         >
-            {!isHovered ? (
-                actualThumbUrl ? (
-                    <img src={actualThumbUrl} alt={designName} style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
-                ) : (
-                    <CubeIcon style={{ width: '24px', height: '24px' }} color="var(--neon-cyan)" />
-                )
-            ) : (
-                actualUrl ? (
+            {/* 1. Show Image if we have it and not hovered */}
+            {actualThumbUrl && !isHovered && (
+                <img src={actualThumbUrl} alt={designName} style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+            )}
+            
+            {/* 2. Show CubeIcon if we don't have image and not hovered, OR if hovered but no 3D model */}
+            {((!actualThumbUrl && !isHovered) || (isHovered && !actualUrl)) && (
+                <CubeIcon style={{ width: '24px', height: '24px', zIndex: 1 }} color="var(--neon-cyan)" />
+            )}
+
+            {/* 3. Render the Viewer if hovered (visible) OR if we need to generate thumbnail (invisible) */}
+            {(isHovered || (!actualThumbUrl && actualUrl)) && actualUrl && (
+                <div style={{ 
+                    width: '100%', height: '100%', 
+                    opacity: isHovered ? 1 : 0, 
+                    position: isHovered ? 'relative' : 'absolute', 
+                    pointerEvents: isHovered ? 'auto' : 'none', 
+                    display: 'flex', alignItems: 'center', justifyContent: 'center' 
+                }}>
                     <ErrorBoundary
                         fallback={(error) => {
                             console.error(`[DesignThumbnail] 💥 Error rendering ${designName}:`, error);
@@ -1928,15 +1939,14 @@ export const DesignThumbnail = ({ modelUrl, thumbnailUrl, designId, designName }
                             onLoadComplete={handleLoadComplete}
                         />
                     </ErrorBoundary>
-                ) : (
-                    <CubeIcon style={{ width: '24px', height: '24px' }} color="var(--neon-cyan)" />
-                )
+                </div>
             )}
         </div>
     );
 };
 export const QuoteRequestsPage = () => {
     const { openViewer: onViewFiles } = useFileViewer();
+    const navigate = useNavigate();
     const [requests, setRequests] = useState([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
@@ -1983,7 +1993,7 @@ export const QuoteRequestsPage = () => {
                 material: quote.design_material || 'N/A',
                 quantity: quote.design_quantity || 0,
                 dateReceived: quote.created_at,
-                status: quote.status === 'pending' ? 'Pending' : 'Quoted',
+                status: quote.status === 'pending' ? 'Pending' : (quote.status === 'rejected' ? 'Declined' : 'Quoted'),
                 price: quote.price_usd,
                 leadTime: quote.estimated_lead_time_days,
                 notes: quote.notes || '',
@@ -2016,7 +2026,7 @@ export const QuoteRequestsPage = () => {
         // Using confirm for simplicity. A custom modal would be better for UX.
         if (window.confirm(`Are you sure you want to decline the quote for "${request.designName}"?`)) {
             try {
-                await api.declineQuoteRequest(request.designId);
+                await api.declineQuoteRequest(request.id);
                 setNotification({ show: true, message: `Request for ${request.designName} declined.`, type: 'success' });
                 const updatedRequests = requests.map(r => r.id === request.id ? { ...r, status: 'Declined' } : r);
                 setRequests(updatedRequests);
@@ -2044,6 +2054,8 @@ export const QuoteRequestsPage = () => {
         }
     };
 
+    const { items: sortedRequests, requestSort, sortConfig } = useSortableData(requests, null, ['Pending', 'Quoted', 'Declined']);
+
     if (loading) return <div>Loading requests...</div>;
     if (error) return <p style={styles.loginError}>{error}</p>;
 
@@ -2051,23 +2063,51 @@ export const QuoteRequestsPage = () => {
         <div>
             <h2 style={styles.dashboardPageTitle}>Quote Requests</h2>
             <p style={styles.dashboardPageSubtitle}>Review and respond to quote requests from customers.</p>
+            
+            <div style={{ marginBottom: '24px', display: 'flex', gap: '12px' }}>
+                <CtaButton
+                    text="Engineering Smart View Workspace"
+                    primary
+                    onClick={() => {
+                        const requestWithDesign = requests.find(r => r.designId);
+                        if (requestWithDesign && requestWithDesign.designId) {
+                            navigate(`/smart-view/${requestWithDesign.designId}`);
+                        } else {
+                            alert("No active requests to view in workspace.");
+                        }
+                    }}
+                />
+            </div>
+
             {notification.show && <Notification message={notification.message} type={notification.type} onDismiss={() => setNotification({ show: false, message: '', type: 'success' })} />}
-            <div style={styles.tableContainer}>
+            <div className="table-responsive-container">
                 <table style={styles.table}>
                     <thead>
                         <tr>
                             <th style={styles.tableHeader}>Part</th>
-                            <th style={styles.tableHeader}>Part Name</th>
-                            <th style={styles.tableHeader}>Customer</th>
-                            <th style={styles.tableHeader}>Material</th>
-                            <th style={styles.tableHeader}>Qty</th>
-                            <th style={styles.tableHeader}>Date Received</th>
-                            <th style={styles.tableHeader}>Status</th>
+                            <th style={styles.tableHeader} className="sortable-header" onClick={() => requestSort('designName')}>
+                                Part Name <SortIcon sortConfig={sortConfig} columnKey="designName" />
+                            </th>
+                            <th style={styles.tableHeader} className="sortable-header" onClick={() => requestSort('customer')}>
+                                Customer <SortIcon sortConfig={sortConfig} columnKey="customer" />
+                            </th>
+                            <th style={styles.tableHeader} className="sortable-header" onClick={() => requestSort('material')}>
+                                Material <SortIcon sortConfig={sortConfig} columnKey="material" />
+                            </th>
+                            <th style={styles.tableHeader} className="sortable-header" onClick={() => requestSort('quantity')}>
+                                Qty <SortIcon sortConfig={sortConfig} columnKey="quantity" />
+                            </th>
+                            <th style={styles.tableHeader} className="sortable-header" onClick={() => requestSort('dateReceived')}>
+                                Date Received <SortIcon sortConfig={sortConfig} columnKey="dateReceived" />
+                            </th>
+                            <th style={styles.tableHeader} className="sortable-header" onClick={() => requestSort('status')}>
+                                Status <SortIcon sortConfig={sortConfig} columnKey="status" />
+                            </th>
                             <th style={styles.tableHeader}>Actions</th>
                         </tr>
                     </thead>
                     <tbody>
-                        {requests.map(req => (
+                        {sortedRequests.map(req => (
                             <React.Fragment key={req.id}>
                                 <tr>
                                     <td style={styles.tableCell}>
@@ -2258,6 +2298,12 @@ export const ActiveOrdersPage = () => {
         }
     };
 
+    const { items: sortedOrders, requestSort, sortConfig } = useSortableData(orders);
+
+    const handleDownloadInvoice = (id) => {
+        alert(`Generating invoice for Order #${String(id).substring(0, 8)}...`);
+    };
+
     if (loading) return <div>Loading orders...</div>;
     if (error) return <p style={styles.loginError}>{error}</p>;
 
@@ -2266,37 +2312,57 @@ export const ActiveOrdersPage = () => {
             <h2 style={styles.dashboardPageTitle}>Active Orders</h2>
             <p style={styles.dashboardPageSubtitle}>Manage orders that are in production or have been recently completed.</p>
             {notification.show && <Notification message={notification.message} type={notification.type} onDismiss={() => setNotification({ show: false, message: '', type: 'success' })} />}
-            <div style={styles.tableContainer}>
+            <div className="table-responsive-container">
                 <table style={styles.table}>
                     <thead>
                         <tr>
-                            <th style={styles.tableHeader}>Order ID</th>
-                            <th style={styles.tableHeader}>Part Name</th>
-                            <th style={styles.tableHeader}>Customer</th>
-                            <th style={styles.tableHeader}>Date</th>
+                            <th style={styles.tableHeader}>Part</th>
+                            <th style={styles.tableHeader} className="sortable-header" onClick={() => requestSort('id')}>
+                                Order ID <SortIcon sortConfig={sortConfig} columnKey="id" />
+                            </th>
+                            <th style={styles.tableHeader} className="sortable-header" onClick={() => requestSort('designName')}>
+                                Part Name <SortIcon sortConfig={sortConfig} columnKey="designName" />
+                            </th>
+                            <th style={styles.tableHeader} className="sortable-header" onClick={() => requestSort('customer')}>
+                                Customer <SortIcon sortConfig={sortConfig} columnKey="customer" />
+                            </th>
+                            <th style={styles.tableHeader} className="sortable-header" onClick={() => requestSort('created_at')}>
+                                Date <SortIcon sortConfig={sortConfig} columnKey="created_at" />
+                            </th>
                             <th style={styles.tableHeader}>Status</th>
                             <th style={styles.tableHeader}>Tracking</th>
                             <th style={styles.tableHeader}>Actions</th>
                         </tr>
                     </thead>
                     <tbody>
-                        {orders.length > 0 ? orders.map((order: any) => (
+                        {sortedOrders.length > 0 ? sortedOrders.map((order: any) => (
                             <tr key={order.id}>
+                                <td style={styles.tableCell}>
+                                    <DesignThumbnail 
+                                        modelUrl={resolveMediaUrl(order.design_info?.design_view_url)} 
+                                        thumbnailUrl={resolveMediaUrl(order.design_info?.design_thumbnail_url)}
+                                        designId={order.design_info?.id} 
+                                        designName={order.design_info?.design_name} 
+                                    />
+                                </td>
                                 <td style={styles.tableCell}>{order.id}</td>
-                                <td style={styles.tableCell}>{order.designName}</td>
-                                <td style={styles.tableCell}>{order.customer}</td>
-                                <td style={styles.tableCell}>{new Date(order.dateCreated).toLocaleDateString()}</td>
-                                <td style={styles.tableCell}><span style={getStatusStyle(order.status)}>{order.status}</span></td>
-                                <td style={{ ...styles.tableCell, fontFamily: 'monospace' }}>{order.trackingNumber || 'N/A'}</td>
+                                <td style={styles.tableCell}>{order.design_info?.design_name || order.designName}</td>
+                                <td style={styles.tableCell}>{order.customer_info?.company_name || order.customer}</td>
+                                <td style={styles.tableCell}>{new Date(order.created_at || order.dateCreated).toLocaleDateString()}</td>
+                                <td style={styles.tableCell}><span style={getStatusStyle(order.status)}>{order.status_display || order.status}</span></td>
+                                <td style={{ ...styles.tableCell, fontFamily: 'monospace' }}>{order.tracking_number || order.trackingNumber || 'N/A'}</td>
                                 <td style={styles.tableCell}>
                                     <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
                                         <CtaButton text="Manage" primary onClick={() => handleOpenModal(order)} className="button-small" />
                                         <CtaButton text="View Files" onClick={() => onViewFiles(order.designId)} className="button-small" />
+                                        <CtaButton text="Invoice" onClick={() => handleDownloadInvoice(order.id)} className="button-small">
+                                            <DownloadIcon style={{ width: '14px', height: '14px' }} />
+                                        </CtaButton>
                                     </div>
                                 </td>
                             </tr>
                         )) : (
-                            <tr><td colSpan={7} style={{ ...styles.tableCell, textAlign: 'center' }}>No active orders found.</td></tr>
+                            <tr><td colSpan={8} style={{ ...styles.tableCell, textAlign: 'center' }}>No active orders found.</td></tr>
                         )}
                     </tbody>
                 </table>
@@ -2314,6 +2380,7 @@ export const InternalQuotationsPage = () => {
     const [error, setError] = useState('');
     const [breakdownModalInfo, setBreakdownModalInfo] = useState({ isOpen: false, request: null });
     const [expandedRequestId, setExpandedRequestId] = useState<number | null>(null);
+    const [notification, setNotification] = useState({ show: false, message: '', type: 'success' });
     const { formatPrice } = useCurrency();
 
     const parseBreakdown = (notes) => {
@@ -2347,16 +2414,8 @@ export const InternalQuotationsPage = () => {
                     id: quote.id,
                     designId: quote.design,
                     designName: quote.design_name || 'Unnamed Part',
-                    designViewUrl: (quote as any).design_view_url
-                        ? ((quote as any).design_view_url.startsWith('http')
-                            ? (quote as any).design_view_url
-                            : `https://api.quotanic.com${(quote as any).design_view_url}`)
-                        : null,
-                    designThumbnailUrl: (quote as any).design_thumbnail_url
-                        ? ((quote as any).design_thumbnail_url.startsWith('http')
-                            ? (quote as any).design_thumbnail_url
-                            : `https://api.quotanic.com${(quote as any).design_thumbnail_url}`)
-                        : null,
+                    designViewUrl: resolveMediaUrl((quote as any).design_view_url),
+                    designThumbnailUrl: resolveMediaUrl((quote as any).design_thumbnail_url),
                     material: quote.design_material || 'N/A',
                     quantity: quote.design_quantity || 0,
                     dateReceived: quote.created_at,
@@ -2381,6 +2440,20 @@ export const InternalQuotationsPage = () => {
         setBreakdownModalInfo({ isOpen: false, request: null });
     };
 
+    const { items: sortedRequests, requestSort, sortConfig } = useSortableData(requests);
+
+    const handleDelete = async (id: string) => {
+        if (window.confirm("Are you sure you want to delete this internal quotation?")) {
+            try {
+                await api.deleteQuote(id);
+                setRequests(prev => prev.filter((r: any) => r.id !== id));
+                setNotification({ show: true, message: 'Internal quotation deleted successfully.', type: 'success' });
+            } catch (err) {
+                setNotification({ show: true, message: 'Failed to delete internal quotation.', type: 'error' });
+            }
+        }
+    };
+
     if (loading) return <div>Loading records...</div>;
     if (error) return <p style={styles.loginError}>{error}</p>;
 
@@ -2394,21 +2467,46 @@ export const InternalQuotationsPage = () => {
                 <CtaButton text="Upload New Design" primary onClick={() => navigate('/upload-internal')} />
             </div>
 
-            <div style={styles.tableContainer}>
+            {notification.show && <Notification message={notification.message} type={notification.type} onDismiss={() => setNotification({ show: false, message: '', type: 'success' })} />}
+
+            <div style={{ marginBottom: '24px', display: 'flex', gap: '12px' }}>
+                <CtaButton
+                    text="Engineering Smart View Workspace"
+                    onClick={() => {
+                        if (requests.length > 0 && requests[0].designId) {
+                            navigate(`/smart-view/${requests[0].designId}`);
+                        } else {
+                            alert("No active internal designs to view in workspace.");
+                        }
+                    }}
+                />
+            </div>
+
+            <div className="table-responsive-container">
                 <table style={styles.table}>
                     <thead>
                         <tr>
                             <th style={styles.tableHeader}>Part</th>
-                            <th style={styles.tableHeader}>Part Name</th>
-                            <th style={styles.tableHeader}>Material</th>
-                            <th style={styles.tableHeader}>Qty</th>
-                            <th style={styles.tableHeader}>Date Uploaded</th>
-                            <th style={styles.tableHeader}>Cost Estimate</th>
+                            <th style={styles.tableHeader} className="sortable-header" onClick={() => requestSort('designName')}>
+                                Part Name <SortIcon sortConfig={sortConfig} columnKey="designName" />
+                            </th>
+                            <th style={styles.tableHeader} className="sortable-header" onClick={() => requestSort('material')}>
+                                Material <SortIcon sortConfig={sortConfig} columnKey="material" />
+                            </th>
+                            <th style={styles.tableHeader} className="sortable-header" onClick={() => requestSort('quantity')}>
+                                Qty <SortIcon sortConfig={sortConfig} columnKey="quantity" />
+                            </th>
+                            <th style={styles.tableHeader} className="sortable-header" onClick={() => requestSort('dateReceived')}>
+                                Date Uploaded <SortIcon sortConfig={sortConfig} columnKey="dateReceived" />
+                            </th>
+                            <th style={styles.tableHeader} className="sortable-header" onClick={() => requestSort('price')}>
+                                Cost Estimate <SortIcon sortConfig={sortConfig} columnKey="price" />
+                            </th>
                             <th style={styles.tableHeader}>Actions</th>
                         </tr>
                     </thead>
                     <tbody>
-                        {requests.length > 0 ? requests.map((req: any) => (
+                        {sortedRequests.length > 0 ? sortedRequests.map((req: any) => (
                             <React.Fragment key={req.id}>
                                 <tr>
                                     <td style={styles.tableCell}>
@@ -2432,6 +2530,7 @@ export const InternalQuotationsPage = () => {
                                                 className="button-small"
                                             />
                                             <CtaButton text="View Files" onClick={() => onViewFiles(req.designId)} className="button-small" />
+                                            <CtaButton text="Delete" onClick={() => handleDelete(req.id)} className="button-small-danger" />
                                         </div>
                                     </td>
                                 </tr>
@@ -3247,21 +3346,10 @@ export const CustomerDesignsPage = () => {
             try {
                 await api.deleteCustomerDesign(design.id);
                 setNotification({ show: true, message: `Design "${design.design_name}" deleted successfully.`, type: 'success' });
-                setDesigns(prev => prev.filter(d => d.id !== design.id));
+                setDesigns(prev => prev.filter(d => (d as any).id !== design.id));
             } catch (err) {
                 setNotification({ show: true, message: `Error deleting design: ${err.message}`, type: 'error' });
             }
-        }
-    };
-
-    const getStatusStyle = (status) => {
-        const baseStyle = { ...styles.statusBadge };
-        switch (status) {
-            case 'Analysis Complete': return { ...baseStyle, color: '#34D399', backgroundColor: 'rgba(52, 211, 153, 0.1)', border: '1px solid rgba(52, 211, 153, 0.3)' };
-            case 'Quoting': return { ...baseStyle, color: '#60A5FA', backgroundColor: 'rgba(96, 165, 250, 0.1)', border: '1px solid rgba(96, 165, 250, 0.3)' };
-            case 'Ordered': return { ...baseStyle, color: '#86EFAC', backgroundColor: 'rgba(134, 239, 172, 0.1)', border: '1px solid rgba(134, 239, 172, 0.3)' };
-            case 'Analysis Failed': return { ...baseStyle, color: 'var(--status-error)', backgroundColor: 'rgba(var(--status-error-rgb), 0.1)', border: '1px solid rgba(var(--status-error-rgb), 0.3)' };
-            default: return { ...baseStyle, color: 'var(--text-secondary)', backgroundColor: 'rgba(var(--text-secondary), 0.1)', border: '1px solid rgba(var(--text-secondary), 0.2)' };
         }
     };
 
@@ -3273,21 +3361,38 @@ export const CustomerDesignsPage = () => {
             <h2 style={styles.dashboardPageTitle}>My Designs</h2>
             <p style={styles.dashboardPageSubtitle}>Manage your uploaded designs and check their quoting status.</p>
             {notification.show && <Notification message={notification.message} type={notification.type} onDismiss={() => setNotification({ show: false, message: '', type: 'success' })} />}
-            <div style={styles.tableContainer}>
+            <div className="table-responsive-container">
                 <table style={styles.table}>
                     <thead>
                         <tr>
-                            <th style={styles.tableHeader}>Design Name</th>
-                            <th style={styles.tableHeader}>Material</th>
-                            <th style={styles.tableHeader}>Quantity</th>
-                            <th style={styles.tableHeader}>Date Uploaded</th>
+                            <th style={styles.tableHeader}>Part</th>
+                            <th style={styles.tableHeader} className="sortable-header" onClick={() => requestSort('design_name')}>
+                                Design Name <SortIcon sortConfig={sortConfig} columnKey="design_name" />
+                            </th>
+                            <th style={styles.tableHeader} className="sortable-header" onClick={() => requestSort('material')}>
+                                Material <SortIcon sortConfig={sortConfig} columnKey="material" />
+                            </th>
+                            <th style={styles.tableHeader} className="sortable-header" onClick={() => requestSort('quantity')}>
+                                Quantity <SortIcon sortConfig={sortConfig} columnKey="quantity" />
+                            </th>
+                            <th style={styles.tableHeader} className="sortable-header" onClick={() => requestSort('created_at')}>
+                                Date Uploaded <SortIcon sortConfig={sortConfig} columnKey="created_at" />
+                            </th>
                             <th style={styles.tableHeader}>Status</th>
                             <th style={styles.tableHeader}>Actions</th>
                         </tr>
                     </thead>
                     <tbody>
-                        {designs.length > 0 ? designs.map(design => (
+                        {sortedDesigns.length > 0 ? sortedDesigns.map((design: any) => (
                             <tr key={design.id}>
+                                <td style={styles.tableCell}>
+                                    <DesignThumbnail 
+                                        modelUrl={resolveMediaUrl(design.design_view_url)} 
+                                        thumbnailUrl={resolveMediaUrl(design.design_thumbnail_url)}
+                                        designId={design.id} 
+                                        designName={design.design_name} 
+                                    />
+                                </td>
                                 <td style={styles.tableCell}>{design.design_name}</td>
                                 <td style={styles.tableCell}>{design.material}</td>
                                 <td style={styles.tableCell}>{design.quantity}</td>
@@ -3304,12 +3409,13 @@ export const CustomerDesignsPage = () => {
                                             />
                                         )}
                                         <CtaButton text="View Files" onClick={() => onViewFiles(design.id)} className="button-small" />
+                                        <CtaButton text="Copy" onClick={() => handleDuplicate(design)} className="button-small" />
                                         <CtaButton text="Delete" onClick={() => handleDelete(design)} className="button-small-danger" />
                                     </div>
                                 </td>
                             </tr>
                         )) : (
-                            <tr><td colSpan={6} style={{ ...styles.tableCell, textAlign: 'center' }}>You haven't uploaded any designs yet.</td></tr>
+                            <tr><td colSpan={7} style={{ ...styles.tableCell, textAlign: 'center' }}>You haven't uploaded any designs yet.</td></tr>
                         )}
                     </tbody>
                 </table>
@@ -3352,6 +3458,8 @@ export const CustomerOrdersPage = () => {
         }
     };
 
+    const { items: sortedOrders, requestSort, sortConfig } = useSortableData(orders);
+
     if (loading) return <div>Loading orders...</div>;
     if (error) return <p style={styles.loginError}>{error}</p>;
 
@@ -3359,40 +3467,63 @@ export const CustomerOrdersPage = () => {
         <div>
             <h2 style={styles.dashboardPageTitle}>My Orders</h2>
             <p style={styles.dashboardPageSubtitle}>Track your active and completed orders.</p>
-            <div style={styles.tableContainer}>
+            <div className="table-responsive-container">
                 <table style={styles.table}>
                     <thead>
                         <tr>
-                            <th style={styles.tableHeader}>Order ID</th>
-                            <th style={styles.tableHeader}>Design Name</th>
-                            <th style={styles.tableHeader}>Manufacturer</th>
-                            <th style={styles.tableHeader}>Price</th>
+                            <th style={styles.tableHeader}>Part</th>
+                            <th style={styles.tableHeader} className="sortable-header" onClick={() => requestSort('id')}>
+                                Order ID <SortIcon sortConfig={sortConfig} columnKey="id" />
+                            </th>
+                            <th style={styles.tableHeader} className="sortable-header" onClick={() => requestSort('design_name')}>
+                                Part Name <SortIcon sortConfig={sortConfig} columnKey="design_name" />
+                            </th>
+                            <th style={styles.tableHeader} className="sortable-header" onClick={() => requestSort('manufacturer')}>
+                                Manufacturer <SortIcon sortConfig={sortConfig} columnKey="manufacturer" />
+                            </th>
+                            <th style={styles.tableHeader} className="sortable-header" onClick={() => requestSort('price')}>
+                                Price <SortIcon sortConfig={sortConfig} columnKey="price" />
+                            </th>
                             <th style={styles.tableHeader}>Status</th>
                             <th style={styles.tableHeader}>Tracking</th>
-                            <th style={styles.tableHeader}>Files</th>
+                            <th style={styles.tableHeader}>Actions</th>
                         </tr>
                     </thead>
                     <tbody>
-                        {orders.length > 0 ? orders.map(order => (
+                        {sortedOrders.length > 0 ? sortedOrders.map((order: any) => (
                             <tr key={order.id}>
+                                <td style={styles.tableCell}>
+                                    <DesignThumbnail 
+                                        modelUrl={resolveMediaUrl(order.design_info?.design_view_url)} 
+                                        thumbnailUrl={resolveMediaUrl(order.design_info?.design_thumbnail_url)}
+                                        designId={order.design_info?.id} 
+                                        designName={order.design_info?.design_name} 
+                                    />
+                                </td>
                                 <td style={{ ...styles.tableCell, fontFamily: 'monospace' }}>{order.id}</td>
-                                <td style={styles.tableCell}>{order.designName}</td>
-                                <td style={styles.tableCell}>{order.manufacturer}</td>
-                                <td style={styles.tableCell}>{formatPrice(order.price)}</td>
-                                <td style={styles.tableCell}><span style={getStatusStyle(order.status)}>{order.status}</span></td>
+                                <td style={styles.tableCell}>{order.design_info?.design_name || order.designName}</td>
+                                <td style={styles.tableCell}>{order.manufacturer_info?.company_name || order.manufacturer}</td>
+                                <td style={styles.tableCell}>{formatPrice(order.order_total_price_usd || order.price)}</td>
+                                <td style={styles.tableCell}><span style={getStatusStyle(order.status)}>{order.status_display || order.status}</span></td>
                                 <td style={{ ...styles.tableCell, fontFamily: 'monospace' }}>
-                                    {order.trackingNumber ? (
-                                        <a href={`https://www.google.com/search?q=${order.trackingNumber}`} target="_blank" rel="noopener noreferrer" style={styles.loginLink}>
-                                            {order.trackingNumber} ({order.shippingCarrier})
+                                    {order.tracking_number || order.trackingNumber ? (
+                                        <a href={`https://www.google.com/search?q=${order.tracking_number || order.trackingNumber}`} target="_blank" rel="noopener noreferrer" style={styles.loginLink}>
+                                            {order.tracking_number || order.trackingNumber}
                                         </a>
                                     ) : 'N/A'}
                                 </td>
                                 <td style={styles.tableCell}>
-                                    <CtaButton text="View Files" onClick={() => onViewFiles(order.designId)} className="button-small" />
+                                    <div style={{ display: 'flex', gap: '8px' }}>
+                                        <CtaButton text="Quote" onClick={() => alert('Viewing Quotation PDF...')} className="button-small" />
+                                        <CtaButton text="Files" onClick={() => onViewFiles(order.designId)} className="button-small" />
+                                        <CtaButton text="Receipt" onClick={() => alert('Downloading Receipt...')} className="button-small">
+                                            <DownloadIcon style={{ width: '14px', height: '14px' }} />
+                                        </CtaButton>
+                                    </div>
                                 </td>
                             </tr>
                         )) : (
-                            <tr><td colSpan={7} style={{ ...styles.tableCell, textAlign: 'center' }}>You have no orders.</td></tr>
+                            <tr><td colSpan={8} style={{ ...styles.tableCell, textAlign: 'center' }}>You have no orders.</td></tr>
                         )}
                     </tbody>
                 </table>
@@ -3581,3 +3712,110 @@ export const CurrencyRatesWarning = () => {
         </div>
     );
 };
+/**
+ * Reusable hook for sorting table data
+ */
+export const useSortableData = (items, config = null, statusOrder = []) => {
+    const [sortConfig, setSortConfig] = useState(config);
+
+    const sortedItems = React.useMemo(() => {
+        let sortableItems = [...items];
+        if (sortConfig !== null) {
+            sortableItems.sort((a, b) => {
+                const aValue = a[sortConfig.key];
+                const bValue = b[sortConfig.key];
+                
+                // Handle custom status ordering
+                if (sortConfig.key === 'status' && statusOrder.length > 0) {
+                    const indexA = statusOrder.indexOf(aValue);
+                    const indexB = statusOrder.indexOf(bValue);
+                    if (indexA !== -1 && indexB !== -1) {
+                        return sortConfig.direction === 'ascending' ? indexA - indexB : indexB - indexA;
+                    }
+                }
+
+                // Handle different types (dates, numbers, strings)
+                if (aValue instanceof Date && bValue instanceof Date) {
+                    return sortConfig.direction === 'ascending' ? aValue.getTime() - bValue.getTime() : bValue.getTime() - aValue.getTime();
+                }
+                
+                if (typeof aValue === 'number' && typeof bValue === 'number') {
+                    return sortConfig.direction === 'ascending' ? aValue - bValue : bValue - aValue;
+                }
+                
+                const aString = String(aValue || '').toLowerCase();
+                const bString = String(bValue || '').toLowerCase();
+                
+                if (aString < bString) {
+                    return sortConfig.direction === 'ascending' ? -1 : 1;
+                }
+                if (aString > bString) {
+                    return sortConfig.direction === 'ascending' ? 1 : -1;
+                }
+                return 0;
+            });
+        }
+        return sortableItems;
+    }, [items, sortConfig]);
+
+    const requestSort = (key) => {
+        let direction = 'ascending';
+        if (sortConfig && sortConfig.key === key && sortConfig.direction === 'ascending') {
+            direction = 'descending';
+        }
+        setSortConfig({ key, direction });
+    };
+
+    return { items: sortedItems, requestSort, sortConfig };
+};
+
+/**
+ * Reusable Sort Icon component
+ */
+export const SortIcon = ({ sortConfig, columnKey }) => {
+    if (!sortConfig || sortConfig.key !== columnKey) {
+        return <span style={{ marginLeft: '8px', opacity: 0.3 }}>↕</span>;
+    }
+    return (
+        <span style={{ marginLeft: '8px', color: neon_cyan }}>
+            {sortConfig.direction === 'ascending' ? '↑' : '↓'}
+        </span>
+    );
+};
+
+// --- Add global table overflow style ---
+if (typeof document !== 'undefined') {
+    const style = document.createElement('style');
+    style.innerHTML = `
+        .table-responsive-container {
+            width: 100%;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            margin-bottom: 1rem;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+        }
+        .table-responsive-container::-webkit-scrollbar {
+            height: 6px;
+        }
+        .table-responsive-container::-webkit-scrollbar-track {
+            background: rgba(255,255,255,0.02);
+        }
+        .table-responsive-container::-webkit-scrollbar-thumb {
+            background: rgba(10, 240, 240, 0.2);
+            border-radius: 10px;
+        }
+        .table-responsive-container::-webkit-scrollbar-thumb:hover {
+            background: var(--neon-cyan);
+        }
+        .sortable-header {
+            cursor: pointer;
+            user-select: none;
+            transition: background 0.2s;
+        }
+        .sortable-header:hover {
+            background: rgba(255,255,255,0.05) !important;
+        }
+    `;
+    document.head.appendChild(style);
+}

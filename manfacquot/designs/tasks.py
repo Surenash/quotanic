@@ -467,7 +467,10 @@ def perform_fbm_analysis(file_path, file_extension):
                 "error": str(intel_error)
             }
         
-        return analysis_results
+        return {
+            "mapped_data": analysis_results,
+            "raw_features": features
+        }
         
     except Exception as e:
         logger.error(f"FBM Analysis: Failed with error: {e}", exc_info=True)
@@ -550,19 +553,34 @@ def generate_snapshot(file_path, output_path):
         return False
 
 
-def generate_glb_from_step(file_path):
+def generate_feature_aware_glb(file_path, raw_features=None):
     """
-    Converts a STEP/IGES file to a renderable STL format for 3D viewing.
-    Uses StlAPI_Writer which is more stable in this environment than GLTF export.
+    Converts a STEP/IGES file to a GLB file with separate sub-meshes for EVERY feature.
+    Uses direct XCAF component addition for maximum node isolation.
     """
     if not PYTHONOCC_AVAILABLE:
         logger.error("pythonocc-core not available for 3D conversion.")
         return None
 
-    logger.info(f"3D Conversion: Starting for {file_path}...")
+    logger.info(f"Feature-Aware GLB Overhaul: Starting for {file_path}...")
     
     try:
-        # 1. Load the shape
+        from OCC.Core.Quantity import Quantity_Color, Quantity_TOC_RGB
+        from OCC.Core.TCollection import TCollection_AsciiString, TCollection_ExtendedString
+        from OCC.Core.TopoDS import TopoDS_Compound, TopoDS_Shape
+        from OCC.Core.BRep import BRep_Builder
+        from OCC.Core.BRepMesh import BRepMesh_IncrementalMesh
+        from OCC.Core.TDataStd import TDataStd_Name
+        
+        # 1. Initialize XCAF Document
+        app = XCAFApp_Application.GetApplication()
+        doc = TDocStd_Document(TCollection_AsciiString("CAF"))
+        app.NewDocument(TCollection_AsciiString("MDTV-XCAF"), doc)
+        
+        shape_tool = XCAFDoc_DocumentTool.ShapeTool(doc.Main())
+        color_tool = XCAFDoc_DocumentTool.ColorTool(doc.Main())
+        
+        # 2. Load the base shape
         file_ext = os.path.splitext(file_path)[1].lower()
         shape = None
         if file_ext in ['.step', '.stp']:
@@ -571,33 +589,93 @@ def generate_glb_from_step(file_path):
         elif file_ext in ['.iges', '.igs']:
             from OCC.Extend.DataExchange import read_iges_file
             shape = read_iges_file(file_path)
-        
+            
         if not shape or shape.IsNull():
-            logger.error("Failed to load shape for 3D conversion.")
             return None
 
-        # 2. Tessellate (Required for export)
-        linear_deflection = 0.1
-        angular_deflection = 0.5
-        BRepMesh_IncrementalMesh(shape, linear_deflection, False, angular_deflection, True)
+        # 3. Process individual features
+        feature_face_set = set()
+        
+        if raw_features and isinstance(raw_features, list):
+            for i, feature in enumerate(raw_features):
+                faces = getattr(feature, 'faces', [])
+                if not faces: continue
+                
+                builder = BRep_Builder()
+                comp = TopoDS_Compound()
+                builder.MakeCompound(comp)
+                
+                valid_feature = False
+                for f in faces:
+                    builder.Add(comp, f)
+                    feature_face_set.add(f)
+                    valid_feature = True
+                
+                if valid_feature:
+                    BRepMesh_IncrementalMesh(comp, 0.1, False, 0.5, True)
+                    feat_label = shape_tool.NewShape()
+                    shape_tool.SetShape(feat_label, comp)
+                    # Use both component name and TDataStd_Name for safety
+                    shape_tool.SetComponentName(feat_label, TCollection_AsciiString(f"Feature_{i}"))
+                    try:
+                        TDataStd_Name.Set(feat_label, TCollection_ExtendedString(f"Feature_{i}"))
+                    except Exception as name_err:
+                        pass # Ignore if TDataStd_Name isn't supported in this OCC version
 
-        # 3. Export to STL (Binary STL is compact and fast to load)
-        output_path = file_path.rsplit('.', 1)[0] + '_view.stl'
-        try:
-            from OCC.Core.StlAPI import StlAPI_Writer
-            writer = StlAPI_Writer()
-            writer.SetASCIIMode(False) # Ensure binary format
-            writer.Write(shape, output_path)
+                    
+                    yellow = Quantity_Color(1.0, 0.8, 0.0, Quantity_TOC_RGB)
+                    color_tool.SetColor(feat_label, yellow, XCAFDoc_ColorGen)
+
+        # 4. Create the Base Model from remaining faces
+        all_faces = list(TopologyExplorer(shape).faces())
+        base_faces = []
+        for f in all_faces:
+            is_feature_face = False
+            for ff in feature_face_set:
+                if f.IsSame(ff):
+                    is_feature_face = True
+                    break
+            if not is_feature_face:
+                base_faces.append(f)
+        
+        if base_faces:
+            builder = BRep_Builder()
+            base_comp = TopoDS_Compound()
+            builder.MakeCompound(base_comp)
+            for f in base_faces:
+                builder.Add(base_comp, f)
             
-            if os.path.exists(output_path):
-                logger.info(f"3D Conversion: Successfully saved view STL to {output_path}")
-                return output_path
-        except Exception as stl_err:
-            logger.error(f"3D Conversion: STL export failed: {stl_err}")
+            BRepMesh_IncrementalMesh(base_comp, 0.1, False, 0.5, True)
+            base_label = shape_tool.NewShape()
+            shape_tool.SetShape(base_label, base_comp)
+            shape_tool.SetComponentName(base_label, TCollection_AsciiString("BaseModel"))
+            try:
+                TDataStd_Name.Set(base_label, TCollection_ExtendedString("BaseModel"))
+            except Exception as name_err:
+                pass
 
-        return None
+            
+            blue = Quantity_Color(0.23, 0.51, 0.96, Quantity_TOC_RGB)
+            color_tool.SetColor(base_label, blue, XCAFDoc_ColorGen)
+
+        # 5. Export to GLB
+        output_path = file_path.rsplit('.', 1)[0] + '_view.glb'
+        writer = RWGltf_CafWriter(TCollection_AsciiString(output_path), True)
+        
+        status = writer.Perform(doc, gp_Trsf(), None)
+        
+        if status and os.path.exists(output_path):
+            logger.info(f"GLB Node Isolation Success: {len(raw_features) if raw_features else 0} features isolated.")
+            return output_path
+            
+        return generate_glb_from_step(file_path)
 
     except Exception as e:
+        logger.error(f"GLB Node Isolation Failed: {e}", exc_info=True)
+        return generate_glb_from_step(file_path)
+
+
+def generate_glb_from_step(file_path):
         logger.error(f"3D Conversion: Unexpected error: {e}", exc_info=True)
         return None
 
@@ -673,16 +751,19 @@ def analyze_cad_file(self, design_id):
                         # Use unified FBM analysis for STEP/IGES files
                         try:
                             logger.info(f"Attempting FBM analysis for {file_extension} file...")
-                            geometric_data = perform_fbm_analysis(local_file_path, file_extension)
+                            fbm_res = perform_fbm_analysis(local_file_path, file_extension)
+                            geometric_data = fbm_res["mapped_data"]
+                            raw_features = fbm_res["raw_features"]
                             analysis_successful = True
                             logger.info("FBM analysis successful")
                         except Exception as fbm_error:
                             error_message = f"FBM analysis failed: {fbm_error}"
                             logger.error(error_message)
+                            raw_features = None
 
                         # Generate view file (GLB with STL fallback)
                         try:
-                            view_file_path = generate_glb_from_step(local_file_path)
+                            view_file_path = generate_feature_aware_glb(local_file_path, raw_features)
                             if view_file_path and os.path.exists(view_file_path):
                                 # Determine correct extension (could be .glb or .stl)
                                 view_ext = os.path.splitext(view_file_path)[1].lower()
