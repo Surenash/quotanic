@@ -617,7 +617,11 @@ def generate_feature_aware_glb(file_path, raw_features=None):
                     shape_tool.SetShape(feat_label, comp)
                     # Use both component name and TDataStd_Name for safety
                     shape_tool.SetComponentName(feat_label, TCollection_AsciiString(f"Feature_{i}"))
-                    TDataStd_Name.Set(feat_label, TCollection_ExtendedString(f"Feature_{i}"))
+                    try:
+                        TDataStd_Name.Set(feat_label, TCollection_ExtendedString(f"Feature_{i}"))
+                    except Exception as name_err:
+                        pass # Ignore if TDataStd_Name isn't supported in this OCC version
+
                     
                     yellow = Quantity_Color(1.0, 0.8, 0.0, Quantity_TOC_RGB)
                     color_tool.SetColor(feat_label, yellow, XCAFDoc_ColorGen)
@@ -645,7 +649,11 @@ def generate_feature_aware_glb(file_path, raw_features=None):
             base_label = shape_tool.NewShape()
             shape_tool.SetShape(base_label, base_comp)
             shape_tool.SetComponentName(base_label, TCollection_AsciiString("BaseModel"))
-            TDataStd_Name.Set(base_label, TCollection_ExtendedString("BaseModel"))
+            try:
+                TDataStd_Name.Set(base_label, TCollection_ExtendedString("BaseModel"))
+            except Exception as name_err:
+                pass
+
             
             blue = Quantity_Color(0.23, 0.51, 0.96, Quantity_TOC_RGB)
             color_tool.SetColor(base_label, blue, XCAFDoc_ColorGen)
@@ -653,7 +661,6 @@ def generate_feature_aware_glb(file_path, raw_features=None):
         # 5. Export to GLB
         output_path = file_path.rsplit('.', 1)[0] + '_view.glb'
         writer = RWGltf_CafWriter(TCollection_AsciiString(output_path), True)
-        writer.SetTransformationFormat(RWGltf_CafWriter.RWGltf_Tf_Gltf)
         
         status = writer.Perform(doc, gp_Trsf(), None)
         
