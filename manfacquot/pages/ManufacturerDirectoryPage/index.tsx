@@ -95,49 +95,125 @@ export const ManufacturerDirectoryPage = () => {
     };
 
     return (
-        <div style={{ ...styles.container, padding: '64px 24px' }}>
-            <div style={{ textAlign: 'center' }}>
-                <h1 style={styles.heroTitle}>Manufacturer Directory</h1>
-                <p style={styles.heroSubtitle}>Find the perfect partner for your manufacturing needs.</p>
-            </div>
-            <div style={styles.directoryLayout}>
-                <aside style={styles.directoryFilters}>
-                    <h2 style={{ fontSize: '20px', fontWeight: '600', color: 'var(--text-primary)', borderBottom: '1px solid var(--border-color)', paddingBottom: '16px' }}>Filters</h2>
-                    <div style={styles.searchContainer}>
-                        <SearchIcon style={{ position: 'absolute', left: '12px', top: '12px', width: '20px', height: '20px', color: 'var(--text-secondary)' }} />
-                        <input
-                            type="text"
-                            placeholder="Search by name..."
-                            value={searchTerm}
-                            onChange={e => setSearchTerm(e.target.value)}
-                            style={styles.searchInput}
-                        />
-                    </div>
-                    <div style={{ marginTop: '24px' }}>
-                        <CheckboxGroup title="Capabilities" options={ALL_CAPABILITIES_FLAT.slice(0, 9)} selected={selectedCapabilities} onChange={handleCapabilityChange} columns={1} />
-                        {ALL_CAPABILITIES_FLAT.length > 9 && <a href="#" style={{ ...styles.loginLink, fontSize: '14px' }}>Show all...</a>}
-                    </div>
-                    <div style={{ marginTop: '24px' }}>
-                        <CheckboxGroup title="Certifications" options={CERTIFICATIONS} selected={selectedCertifications} onChange={handleCertificationChange} columns={1} />
-                    </div>
-                </aside>
-                <main style={styles.directoryResults}>
-                    {loading ? (
-                        <p>Loading manufacturers...</p>
-                    ) : error ? (
-                        <p style={{ color: 'red' }}>{error}</p>
-                    ) : filteredManufacturers.length > 0 ? (
-                        <div style={styles.mfgGrid}>
-                            {filteredManufacturers.map(mfg => <Components.ManufacturerCard key={mfg.id} manufacturer={mfg} navigate={navigate} />)}
+        <div style={{ background: 'var(--bg-deep-space)', minHeight: '100vh', color: 'var(--text-primary)' }}>
+            <div style={{ ...styles.container, padding: '80px 24px' }}>
+                <header style={{ textAlign: 'center', marginBottom: '80px' }}>
+                    <h1 style={{ ...styles.heroTitle, fontSize: 'clamp(2.5rem, 6vw, 4rem)', marginBottom: '16px' }}>Verified <span style={{ color: neon_cyan }}>Network</span></h1>
+                    <p style={{ ...styles.heroSubtitle, color: 'rgba(255,255,255,0.6)' }}>Browse 50+ vetted manufacturers with certified capabilities.</p>
+                </header>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '300px 1fr', gap: '48px' }} className="directory-grid">
+                    {/* Glassmorphism Filters */}
+                    <aside style={{ 
+                        background: 'rgba(255,255,255,0.02)', 
+                        border: `1px solid ${border_color}`, 
+                        borderRadius: '24px', 
+                        padding: '32px',
+                        backdropFilter: 'blur(10px)',
+                        height: 'fit-content',
+                        position: 'sticky',
+                        top: '100px'
+                    }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '32px' }}>
+                            <SearchIcon style={{ width: '20px', height: '20px', color: neon_cyan }} />
+                            <h2 style={{ fontSize: '20px', fontWeight: 700, margin: 0 }}>Filters</h2>
                         </div>
-                    ) : (
-                        <div style={{ textAlign: 'center', padding: '64px', border: '2px dashed var(--border-color)', borderRadius: '8px' }}>
-                            <h3 style={{ color: 'var(--text-primary)' }}>No Manufacturers Found</h3>
-                            <p style={{ color: 'var(--text-secondary)' }}>Try adjusting your search or filter criteria.</p>
+
+                        <div style={{ position: 'relative', marginBottom: '32px' }}>
+                            <input
+                                type="text"
+                                placeholder="Search by name..."
+                                value={searchTerm}
+                                onChange={e => setSearchTerm(e.target.value)}
+                                style={{ 
+                                    width: '100%', 
+                                    background: 'rgba(255,255,255,0.05)', 
+                                    border: `1px solid ${border_color}`, 
+                                    borderRadius: '12px', 
+                                    padding: '12px 16px',
+                                    color: '#fff',
+                                    fontSize: '14px',
+                                    outline: 'none',
+                                    transition: 'all 0.3s ease'
+                                }}
+                                className="search-input-premium"
+                            />
                         </div>
-                    )}
-                </main>
+
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
+                            <CheckboxGroup 
+                                title="Capabilities" 
+                                options={ALL_CAPABILITIES_FLAT.slice(0, 12)} 
+                                selected={selectedCapabilities} 
+                                onChange={handleCapabilityChange} 
+                                columns={1} 
+                            />
+                            <CheckboxGroup 
+                                title="Certifications" 
+                                options={CERTIFICATIONS} 
+                                selected={selectedCertifications} 
+                                onChange={handleCertificationChange} 
+                                columns={1} 
+                            />
+                        </div>
+                        
+                        <div style={{ marginTop: '32px', paddingTop: '24px', borderTop: `1px solid ${border_color}` }}>
+                            <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '1px' }}>
+                                Matching: {filteredManufacturers.length} Manufacturers
+                            </p>
+                        </div>
+                    </aside>
+
+                    {/* Results Grid */}
+                    <main>
+                        {loading ? (
+                            <div style={{ display: 'flex', justifyContent: 'center', padding: '100px' }}>
+                                <div style={{ width: '40px', height: '40px', border: '3px solid rgba(10, 240, 240, 0.1)', borderTopColor: neon_cyan, borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
+                            </div>
+                        ) : error ? (
+                            <p style={{ color: neon_orange, textAlign: 'center', padding: '40px' }}>{error}</p>
+                        ) : filteredManufacturers.length > 0 ? (
+                            <div style={{ 
+                                display: 'grid', 
+                                gridTemplateColumns: 'repeat(auto-fill, minmax(350px, 1fr))', 
+                                gap: '24px' 
+                            }}>
+                                {filteredManufacturers.map(mfg => (
+                                    <Components.ManufacturerCard key={mfg.id} manufacturer={mfg} navigate={navigate} />
+                                ))}
+                            </div>
+                        ) : (
+                            <div style={{ 
+                                textAlign: 'center', padding: '100px 48px', 
+                                background: 'rgba(255,255,255,0.01)', border: `1px dashed ${border_color}`, 
+                                borderRadius: '24px' 
+                            }}>
+                                <h3 style={{ fontSize: '24px', marginBottom: '16px' }}>No matches found</h3>
+                                <p style={{ color: 'rgba(255,255,255,0.5)' }}>Try broadening your search or removing some filters.</p>
+                                <button 
+                                    onClick={() => { setSearchTerm(''); setSelectedCapabilities([]); setSelectedCertifications([]); }}
+                                    style={{ 
+                                        marginTop: '24px', background: 'none', border: `1px solid ${neon_cyan}`, 
+                                        color: neon_cyan, padding: '10px 24px', borderRadius: '12px', cursor: 'pointer' 
+                                    }}
+                                >
+                                    Clear all filters
+                                </button>
+                            </div>
+                        )}
+                    </main>
+                </div>
             </div>
+            <style>{`
+                .search-input-premium:focus {
+                    border-color: ${neon_cyan} !important;
+                    box-shadow: 0 0 15px rgba(10, 240, 240, 0.1);
+                    background: rgba(255,255,255,0.08) !important;
+                }
+                @media (max-width: 1024px) {
+                    .directory-grid { grid-template-columns: 1fr; }
+                }
+            `}</style>
         </div>
     );
 };

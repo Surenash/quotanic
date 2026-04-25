@@ -13,7 +13,6 @@ export const ManufacturerProfileView = ({ manufacturer }: { manufacturer: any })
     
     const getCapabilitiesByGroup = () => {
         if (!manufacturer?.capabilities) return [];
-        // Handle both flat array and categorized capabilities
         const caps = Array.isArray(manufacturer.capabilities) 
             ? manufacturer.capabilities 
             : manufacturer.capabilities.processes || [];
@@ -32,125 +31,185 @@ export const ManufacturerProfileView = ({ manufacturer }: { manufacturer: any })
     const materials = allCaps.filter(c => [...MATERIALS_METALS, ...MATERIALS_PLASTICS, ...MATERIALS_COMPOSITES, ...MATERIALS_OTHERS].includes(c));
     const certifications = manufacturer.certifications || [];
 
-    const profileHeaderStyle: React.CSSProperties = {
-        ...styles.profileHeader,
-        backgroundImage: `linear-gradient(rgba(var(--bg-deep-space-rgb), 0.7), rgba(var(--bg-deep-space-rgb), 0.7)), url(${manufacturer.backgroundUrl})`,
-    };
-
     return (
-        <div style={styles.profilePageContainer}>
-            <header style={profileHeaderStyle}>
+        <div style={{ background: 'var(--bg-deep-space)', minHeight: '100vh', color: 'var(--text-primary)' }}>
+            {/* Parallax-style Header */}
+            <div style={{ 
+                height: '400px', 
+                position: 'relative', 
+                overflow: 'hidden',
+                background: `linear-gradient(rgba(11, 12, 16, 0.4), rgba(11, 12, 16, 1)), url(${manufacturer.backgroundUrl || 'https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?auto=format&fit=crop&q=80&w=2070'})`,
+                backgroundSize: 'cover',
+                backgroundPosition: 'center',
+                display: 'flex',
+                alignItems: 'flex-end',
+                paddingBottom: '64px'
+            }}>
                 <div style={styles.container}>
-                    <button onClick={() => navigate('/directory')} style={styles.backButton}>
-                        <ArrowLeftIcon style={{ width: '20px', height: '20px', marginRight: '8px' }} />
+                    <button 
+                        onClick={() => navigate('/directory')} 
+                        style={{ 
+                            background: 'rgba(255,255,255,0.1)', 
+                            border: '1px solid rgba(255,255,255,0.2)', 
+                            borderRadius: '12px', 
+                            padding: '8px 16px', 
+                            color: '#fff', 
+                            display: 'flex', 
+                            alignItems: 'center', 
+                            gap: '8px', 
+                            cursor: 'pointer',
+                            backdropFilter: 'blur(10px)',
+                            marginBottom: '32px',
+                            fontWeight: 700,
+                            fontSize: '13px',
+                            textTransform: 'uppercase',
+                            letterSpacing: '1px'
+                        }}
+                    >
+                        <ArrowLeftIcon style={{ width: '16px', height: '16px' }} />
                         Back to Directory
                     </button>
-                    <div style={styles.profileHeaderContent}>
-                        <img src={manufacturer.logoUrl} alt={`${manufacturer.company_name || manufacturer.companyName} logo`} style={styles.profileHeaderLogo} />
-                        <div style={{ flex: 1 }}>
-                            <h1 style={styles.profileTitle}>{manufacturer.company_name || manufacturer.companyName}</h1>
-                            <p style={styles.profileLocation}>
-                                <LocationMarkerIcon style={{ width: '18px', height: '18px', marginRight: '6px' }} />
-                                {manufacturer.location}
-                            </p>
+                    
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '32px' }}>
+                        <div style={{ 
+                            width: '120px', height: '120px', borderRadius: '24px', background: '#fff', padding: '16px', 
+                            display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 20px 40px rgba(0,0,0,0.4)' 
+                        }}>
+                            <img src={manufacturer.logoUrl} alt="Logo" style={{ width: '100%', height: 'auto', objectFit: 'contain' }} />
                         </div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                            <StarIcon style={{ width: '28px', height: '28px', color: '#FFD700', filter: 'drop-shadow(0 0 5px #FFD700)' }} />
-                            <span style={{ fontSize: '28px', fontWeight: 'bold', color: 'var(--text-primary)', textShadow: '0 1px 3px rgba(0,0,0,0.5)' }}>{(parseFloat(manufacturer.rating) || 0).toFixed(1)}</span>
+                        <div style={{ flex: 1 }}>
+                            <h1 style={{ fontSize: 'clamp(2rem, 5vw, 3.5rem)', fontWeight: 900, margin: '0 0 12px 0', textShadow: '0 2px 10px rgba(0,0,0,0.5)' }}>{manufacturer.company_name || manufacturer.companyName}</h1>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'rgba(255,255,255,0.7)', fontSize: '16px' }}>
+                                    <LocationMarkerIcon style={{ width: '18px', height: '18px', color: neon_cyan }} />
+                                    {manufacturer.location}
+                                </div>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'rgba(255, 215, 0, 0.1)', padding: '6px 16px', borderRadius: '12px', border: '1px solid rgba(255, 215, 0, 0.2)' }}>
+                                    <StarIcon style={{ width: '18px', height: '18px', color: '#FFD700' }} />
+                                    <span style={{ fontWeight: 800, color: '#FFD700', fontSize: '18px' }}>{(parseFloat(manufacturer.rating) || 0).toFixed(1)}</span>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
-            </header>
-            <div style={styles.container}>
-                <div style={styles.profileContentGrid}>
-                    <main style={styles.profileMainContent}>
-                        <section style={styles.profileSection}>
-                            <h2 style={styles.profileSectionTitle}>About {manufacturer.company_name || manufacturer.companyName}</h2>
-                            <p style={styles.stepText}>{manufacturer.about}</p>
+            </div>
+
+            <div style={{ ...styles.container, marginTop: '64px', paddingBottom: '100px' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 380px', gap: '64px', alignItems: 'start' }} className="profile-layout">
+                    
+                    <main>
+                        <section style={{ marginBottom: '64px' }}>
+                            <h2 style={{ fontSize: '24px', fontWeight: 800, marginBottom: '24px', color: '#fff' }}>About the Manufacturer</h2>
+                            <p style={{ color: 'rgba(255,255,255,0.6)', lineHeight: 1.8, fontSize: '17px' }}>{manufacturer.about}</p>
                         </section>
-                        <section style={styles.profileSection}>
-                            <h2 style={styles.profileSectionTitle}>Project Portfolio</h2>
-                            <div style={styles.profilePortfolioGrid}>
-                                {(manufacturer.portfolio || []).map(item => (
-                                    <div key={item.id} style={styles.portfolioItem}>
+
+                        <section style={{ marginBottom: '64px' }}>
+                            <h2 style={{ fontSize: '24px', fontWeight: 800, marginBottom: '32px', color: '#fff' }}>Project Portfolio</h2>
+                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '24px' }}>
+                                {(manufacturer.portfolio || []).map((item, i) => (
+                                    <div key={i} style={{ 
+                                        position: 'relative', borderRadius: '24px', overflow: 'hidden', height: '240px',
+                                        border: `1px solid ${border_color}`, group: 'true'
+                                    }} className="portfolio-card">
                                         {item.type === 'video' ? (
-                                            <div style={styles.portfolioVideoPlaceholder}>
-                                                <VideoCameraIcon style={{ width: '48px', height: '48px', color: '#fff' }} />
+                                            <div style={{ height: '100%', background: '#1a1b23', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                                <VideoCameraIcon style={{ width: '48px', height: '48px', color: neon_cyan, opacity: 0.5 }} />
                                             </div>
                                         ) : (
-                                            <img src={item.url} alt={item.title} style={styles.profilePortfolioImage} />
+                                            <img src={item.url} alt={item.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                                         )}
-                                        <div style={styles.portfolioItemOverlay}>
-                                            <p style={styles.portfolioItemTitle}>{item.title}</p>
+                                        <div style={{ 
+                                            position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.8), transparent)', 
+                                            display: 'flex', alignItems: 'flex-end', padding: '24px', opacity: 0.9
+                                        }}>
+                                            <p style={{ fontWeight: 700, margin: 0, fontSize: '16px' }}>{item.title}</p>
                                         </div>
                                     </div>
                                 ))}
                             </div>
                         </section>
-                        <section style={styles.profileSection}>
-                            <h2 style={styles.profileSectionTitle}>Customer Reviews</h2>
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                                {(manufacturer.reviews || []).map(review => (
-                                    <div key={review.id} style={{ border: `1px solid var(--border-color)`, backgroundColor: 'rgba(var(--bg-deep-space-rgb), 0.5)', borderRadius: '8px', padding: '16px' }}>
-                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                                            <p style={{ fontWeight: 600, color: 'var(--text-primary)', margin: 0 }}>{review.author}</p>
-                                            <div style={{ display: 'flex', gap: '2px', color: '#FFD700' }}>
-                                                {[...Array(review.rating)].map((_, i) => <StarIcon key={i} style={{ width: '16px', height: '16px', filter: 'drop-shadow(0 0 2px #FFD700)' }} />)}
-                                                {[...Array(5 - review.rating)].map((_, i) => <StarIcon key={i} style={{ width: '16px', height: '16px', color: 'rgba(175, 200, 255, 0.2)' }} />)}
+
+                        <section>
+                            <h2 style={{ fontSize: '24px', fontWeight: 800, marginBottom: '32px', color: '#fff' }}>Verified Reviews</h2>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+                                {(manufacturer.reviews || []).map((review, i) => (
+                                    <div key={i} style={{ background: 'rgba(255,255,255,0.02)', border: `1px solid ${border_color}`, borderRadius: '24px', padding: '32px' }}>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '16px' }}>
+                                            <span style={{ fontWeight: 800, fontSize: '16px' }}>{review.author}</span>
+                                            <div style={{ display: 'flex', gap: '2px' }}>
+                                                {[...Array(5)].map((_, i) => (
+                                                    <StarIcon key={i} style={{ width: '16px', height: '16px', color: i < review.rating ? '#FFD700' : 'rgba(255,255,255,0.1)' }} />
+                                                ))}
                                             </div>
                                         </div>
-                                        <p style={{ ...styles.stepText, fontSize: '14px' }}>{review.comment}</p>
+                                        <p style={{ color: 'rgba(255,255,255,0.5)', lineHeight: 1.6, margin: 0 }}>{review.comment}</p>
                                     </div>
                                 ))}
                             </div>
                         </section>
                     </main>
-                    <aside style={styles.profileSidebar}>
-                        <div style={{ ...styles.profileSection, border: '1px solid var(--neon-cyan)', padding: '24px', background: 'rgba(var(--neon-cyan-rgb), 0.1)', textAlign: 'center', boxShadow: '0 0 15px rgba(var(--neon-cyan-rgb), 0.3)' }}>
-                            <CtaButton text="Request Quote" primary onClick={() => navigate(`/upload?manufacturer=${manufacturer.id}`)} className="button-full-width" />
+
+                    <aside style={{ position: 'sticky', top: '120px' }}>
+                        <div style={{ 
+                            background: 'rgba(10, 240, 240, 0.05)', border: `1px solid ${neon_cyan}`, borderRadius: '24px', padding: '32px', textAlign: 'center', marginBottom: '32px',
+                            boxShadow: `0 0 30px rgba(10, 240, 240, 0.1)`
+                        }}>
+                            <h3 style={{ fontSize: '18px', fontWeight: 800, marginBottom: '24px' }}>Ready to Manufacture?</h3>
+                            <CtaButton text="Request Custom Quote" primary onClick={() => navigate(`/upload?manufacturer=${manufacturer.id}`)} style={{ width: '100%', padding: '16px' }} />
+                            <p style={{ marginTop: '16px', fontSize: '12px', color: 'rgba(10, 240, 240, 0.6)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1px' }}>Avg. Response: &lt; 4 Hours</p>
                         </div>
-                        <div style={styles.profileSection}>
-                            <h2 style={styles.profileSectionTitle}>Capabilities</h2>
-                            {capabilityGroups.map(group => (
-                                <div key={group.title} style={{ marginBottom: '16px' }}>
-                                    <h3 style={styles.mfgCardSectionTitle}>{group.title}</h3>
-                                    <div style={styles.mfgCardTagContainer}>
-                                        {group.processes.map(p => <span key={p} style={styles.mfgCardTag}>{p}</span>)}
-                                    </div>
+
+                        <div style={{ background: 'rgba(255,255,255,0.02)', border: `1px solid ${border_color}`, borderRadius: '24px', padding: '32px' }}>
+                            <div style={{ marginBottom: '32px' }}>
+                                <h4 style={{ fontSize: '14px', fontWeight: 800, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '2px', marginBottom: '20px' }}>Core Capabilities</h4>
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+                                    {capabilityGroups.map(group => (
+                                        <div key={group.title}>
+                                            <p style={{ fontSize: '13px', fontWeight: 700, marginBottom: '12px', color: neon_cyan }}>{group.title}</p>
+                                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                                                {group.processes.map(p => (
+                                                    <span key={p} style={{ fontSize: '11px', fontWeight: 700, padding: '4px 10px', borderRadius: '6px', background: 'rgba(255,255,255,0.05)', color: 'rgba(255,255,255,0.6)' }}>{p}</span>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    ))}
                                 </div>
-                            ))}
-                        </div>
-                        <div style={styles.profileSection}>
-                            <h2 style={styles.profileSectionTitle}>Certifications</h2>
-                            <div style={styles.mfgCardTagContainer}>
-                                {certifications.length > 0 ?
-                                    certifications.map(c => <span key={c} style={{ ...styles.mfgCardTag, ...styles.mfgCardCertTag }}>{c}</span>)
-                                    : <p style={styles.stepText}>No certifications listed.</p>}
+                            </div>
+
+                            <div style={{ marginBottom: '32px' }}>
+                                <h4 style={{ fontSize: '14px', fontWeight: 800, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '2px', marginBottom: '20px' }}>Certifications</h4>
+                                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
+                                    {certifications.map(c => (
+                                        <div key={c} style={{ display: 'flex', alignItems: 'center', gap: '8px', color: neon_magenta, fontSize: '13px', fontWeight: 700 }}>
+                                            <ShieldCheckIcon style={{ width: '16px', height: '16px' }} />
+                                            {c}
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+
+                            <div>
+                                <h4 style={{ fontSize: '14px', fontWeight: 800, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '2px', marginBottom: '20px' }}>Equipment & QC</h4>
+                                <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                                    {(manufacturer.equipment || []).slice(0, 5).map(e => (
+                                        <li key={e} style={{ fontSize: '14px', color: 'rgba(255,255,255,0.6)', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                            <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: neon_orange }} />
+                                            {e}
+                                        </li>
+                                    ))}
+                                </ul>
                             </div>
                         </div>
-                        <div style={styles.profileSection}>
-                            <h2 style={styles.profileSectionTitle}>Materials</h2>
-                            <div style={styles.mfgCardTagContainer}>
-                                {materials.length > 0 ?
-                                    materials.map(m => <span key={m} style={{ ...styles.mfgCardTag, ...styles.mfgCardMaterialTag }}>{m}</span>)
-                                    : <p style={styles.stepText}>No materials specified.</p>}
-                            </div>
-                        </div>
-                        <div style={styles.profileSection}>
-                            <h2 style={styles.profileSectionTitle}>Equipment List</h2>
-                            <ul style={{ ...styles.featureList, listStyle: 'disc', paddingLeft: '20px', gap: '8px', margin: 0 }}>
-                                {(manufacturer.equipment || []).map(e => <li key={e}>{e}</li>)}
-                            </ul>
-                        </div>
-                        {manufacturer.qualityControl && (
-                            <div style={styles.profileSection}>
-                                <h2 style={styles.profileSectionTitle}>Quality Control</h2>
-                                <p style={styles.stepText}>{manufacturer.qualityControl}</p>
-                            </div>
-                        )}
                     </aside>
                 </div>
             </div>
+            <style>{`
+                @media (max-width: 1024px) {
+                    .profile-layout { grid-template-columns: 1fr !important; }
+                    aside { position: relative !important; top: 0 !important; }
+                }
+                .portfolio-card:hover img { transform: scale(1.05); transition: transform 0.4s ease; }
+            `}</style>
         </div>
     );
 };

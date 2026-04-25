@@ -13,6 +13,9 @@ const AboutUsPage = React.lazy(() => import('../pages/AboutUsPage').then(module 
 const ContactPage = React.lazy(() => import('../pages/ContactPage').then(module => ({ default: module.ContactPage })));
 const FAQPage = React.lazy(() => import('../pages/FAQPage').then(module => ({ default: module.FAQPage })));
 const LegalPage = React.lazy(() => import('../pages/LegalPage').then(module => ({ default: module.LegalPage })));
+const BlogPage = React.lazy(() => import('../pages/BlogPage').then(module => ({ default: module.BlogPage })));
+const ResourcesPage = React.lazy(() => import('../pages/ResourcesPage').then(module => ({ default: module.ResourcesPage })));
+const HelpCenterPage = React.lazy(() => import('../pages/HelpCenterPage').then(module => ({ default: module.HelpCenterPage })));
 
 const LoginRoleSelector = React.lazy(() => import('../pages/LoginPage/LoginRoleSelector').then(module => ({ default: module.LoginRoleSelector })));
 const LoginPage = React.lazy(() => import('../pages/LoginPage').then(module => ({ default: module.LoginPage })));
@@ -58,6 +61,9 @@ export const AppRoutes = () => {
                     <Route path="/about" element={<AboutUsPage />} />
                     <Route path="/contact" element={<ContactPage />} />
                     <Route path="/faq" element={<FAQPage />} />
+                    <Route path="/blog" element={<BlogPage />} />
+                    <Route path="/resources" element={<ResourcesPage />} />
+                    <Route path="/help-center" element={<HelpCenterPage />} />
                     <Route path="/privacy" element={
                         <LegalPage
                             title="Privacy Policy"

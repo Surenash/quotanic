@@ -329,105 +329,118 @@ type HeaderProps = { isAuthenticated: boolean; onLogout: () => void; navigate: (
 export const Header = () => {
     const { isAuthenticated, logout } = useAuth();
     const navigate = useNavigate();
+    const location = useLocation();
     const onLogout = logout;
 
     const [hoveredLink, setHoveredLink] = useState('');
     const { currency, setCurrency } = useCurrency();
-    const [theme, setTheme] = useState(() => {
-        return localStorage.getItem('theme') || 'dark';
-    });
+    const [scrolled, setScrolled] = useState(false);
 
     useEffect(() => {
-        document.documentElement.setAttribute('data-theme', theme);
-        localStorage.setItem('theme', theme);
-    }, [theme]);
-
-    const toggleTheme = () => {
-        setTheme(prev => prev === 'dark' ? 'light' : 'dark');
-    };
+        const handleScroll = () => setScrolled(window.scrollY > 20);
+        window.addEventListener('scroll', handleScroll);
+        return () => window.removeEventListener('scroll', handleScroll);
+    }, []);
 
     const currencies = [
-        { code: 'USD', symbol: '$', name: 'US Dollar' },
-        { code: 'EUR', symbol: '€', name: 'Euro' },
-        { code: 'GBP', symbol: '£', name: 'British Pound' },
-        { code: 'INR', symbol: '₹', name: 'Indian Rupee' },
-        { code: 'JPY', symbol: '¥', name: 'Japanese Yen' },
-        { code: 'CAD', symbol: 'C$', name: 'Canadian Dollar' },
-        { code: 'AUD', symbol: 'A$', name: 'Australian Dollar' },
+        { code: 'USD', symbol: '$' },
+        { code: 'EUR', symbol: '€' },
+        { code: 'GBP', symbol: '£' },
+        { code: 'INR', symbol: '₹' },
+        { code: 'JPY', symbol: '¥' },
+    ];
+
+    const navLinks = [
+        { id: 'how-it-works', text: 'How It Works', path: '/how-it-works' },
+        { id: 'directory', text: 'Manufacturers', path: '/directory' },
+        { id: 'trust', text: 'Trust & Security', path: '/trust-and-security' },
     ];
 
     return (
-        <header style={styles.header} role="banner">
+        <header style={{ 
+            ...styles.header, 
+            background: scrolled ? 'rgba(10, 12, 16, 0.85)' : 'transparent',
+            backdropFilter: scrolled ? 'blur(20px)' : 'none',
+            borderBottom: scrolled ? `1px solid ${border_color}` : '1px solid transparent',
+            transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+            padding: scrolled ? '16px 0' : '24px 0',
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            zIndex: 1000
+        }}>
             <div style={styles.container}>
                 <div style={styles.headerContent}>
-                    <a href="#" style={{ ...styles.logo, display: 'flex', alignItems: 'center', gap: '12px', textDecoration: 'none' }} onClick={(e) => { e.preventDefault(); navigate('/'); }}>
-                        <img src="/quotanic-logo.png" alt="Quotanic Logo" style={{ height: '32px', width: 'auto' }} />
-                        <span style={{ fontSize: '24px', fontWeight: 'bold', color: text_primary, letterSpacing: '2px' }}>
+                    <Link to="/" style={{ display: 'flex', alignItems: 'center', gap: '12px', textDecoration: 'none' }}>
+                        <div style={{ position: 'relative' }}>
+                            <img src="/quotanic-logo.png" alt="Quotanic Logo" style={{ height: '32px', width: 'auto', filter: `drop-shadow(0 0 10px ${neon_cyan})` }} />
+                            <div style={{ position: 'absolute', inset: -4, background: neon_cyan, borderRadius: '50%', filter: 'blur(15px)', opacity: 0.2 }}></div>
+                        </div>
+                        <span style={{ fontSize: '24px', fontWeight: 900, color: '#fff', letterSpacing: '2px', textTransform: 'uppercase' }}>
                             QUOTA<span style={{ color: neon_cyan }}>NIC</span>
                         </span>
-                    </a>
-                    <nav style={styles.nav} role="navigation" aria-label="Main Navigation">
-                        {[{ id: 'how-it-works', text: 'How It Works' }, { id: 'directory', text: 'Manufacturer Directory' }].map(page => (
-                            <a key={page.id} href="#" style={{ ...styles.navLink, ...(hoveredLink === page.id && styles.navLinkHover) }} onClick={(e) => { e.preventDefault(); navigate('/' + page.id); }} onMouseEnter={() => setHoveredLink(page.id)} onMouseLeave={() => setHoveredLink('')}>
-                                {page.text}
-                            </a>
+                    </Link>
+
+                    <nav style={{ ...styles.nav, gap: '32px' }}>
+                        {navLinks.map(link => (
+                            <Link 
+                                key={link.id} 
+                                to={link.path}
+                                style={{ 
+                                    ...styles.navLink, 
+                                    color: location.pathname === link.path ? neon_cyan : (hoveredLink === link.id ? '#fff' : 'rgba(255,255,255,0.6)'),
+                                    fontSize: '14px',
+                                    fontWeight: 700,
+                                    letterSpacing: '1px',
+                                    textTransform: 'uppercase',
+                                    position: 'relative'
+                                }} 
+                                onMouseEnter={() => setHoveredLink(link.id)} 
+                                onMouseLeave={() => setHoveredLink('')}
+                            >
+                                {link.text}
+                                {location.pathname === link.path && (
+                                    <div style={{ position: 'absolute', bottom: '-8px', left: 0, right: 0, height: '2px', background: neon_cyan, boxShadow: `0 0 10px ${neon_cyan}` }}></div>
+                                )}
+                            </Link>
                         ))}
                     </nav>
-                    <div style={{ ...styles.headerActions, gap: '20px' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                            <DollarSignIcon style={{ width: '16px', height: '16px', color: neon_cyan }} />
+
+                    <div style={{ ...styles.headerActions, gap: '24px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', background: 'rgba(255,255,255,0.05)', borderRadius: '12px', padding: '4px 12px', border: `1px solid ${border_color}` }}>
                             <select
                                 value={currency}
                                 onChange={(e) => setCurrency(e.target.value)}
                                 style={{
-                                    background: 'rgba(255,255,255,0.05)',
-                                    color: 'var(--text-primary)',
-                                    border: '1px solid var(--border-color)',
-                                    borderRadius: '4px',
-                                    padding: '4px 8px',
-                                    fontSize: '14px',
+                                    background: 'none',
+                                    color: '#fff',
+                                    border: 'none',
+                                    fontSize: '13px',
+                                    fontWeight: 700,
                                     cursor: 'pointer',
-                                    outline: 'none'
+                                    outline: 'none',
+                                    padding: '8px 0'
                                 }}
                             >
                                 {currencies.map(c => (
-                                    <option key={c.code} value={c.code} style={{ background: bg_deep_space }}>
-                                        {c.code} ({c.symbol})
+                                    <option key={c.code} value={c.code} style={{ background: '#0B0C10' }}>
+                                        {c.code} {c.symbol}
                                     </option>
                                 ))}
                             </select>
                         </div>
-                        <button
-                            onClick={toggleTheme}
-                            style={{
-                                background: 'transparent',
-                                border: 'none',
-                                cursor: 'pointer',
-                                padding: '8px',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                color: 'var(--text-primary)',
-                                transition: 'color 0.3s'
-                            }}
-                            title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
-                        >
-                            {theme === 'dark' ? (
-                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="5" /><line x1="12" y1="1" x2="12" y2="3" /><line x1="12" y1="21" x2="12" y2="23" /><line x1="4.22" y1="4.22" x2="5.64" y2="5.64" /><line x1="18.36" y1="18.36" x2="19.78" y2="19.78" /><line x1="1" y1="12" x2="3" y2="12" /><line x1="21" y1="12" x2="23" y2="12" /><line x1="4.22" y1="19.78" x2="5.64" y2="18.36" /><line x1="18.36" y1="5.64" x2="19.78" y2="4.22" /></svg>
-                            ) : (
-                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" /></svg>
-                            )}
-                        </button>
+                        
                         {isAuthenticated ? (
-                            <>
-                                <a href="#" style={{ ...styles.navLink, ...(hoveredLink === 'dashboard' && styles.navLinkHover) }} onMouseEnter={() => setHoveredLink('dashboard')} onMouseLeave={() => setHoveredLink('')} onClick={(e) => { e.preventDefault(); navigate('/dashboard'); }}>My Dashboard</a>
-                                <CtaButton text="Log Out" onClick={onLogout} />
-                            </>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                                <CtaButton text="Dashboard" onClick={() => navigate('/dashboard')} style={{ padding: '10px 20px', fontSize: '14px' }} />
+                                <button onClick={onLogout} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.5)', cursor: 'pointer', fontSize: '14px', fontWeight: 600 }}>Log Out</button>
+                            </div>
                         ) : (
-                            <>
-                                <a href="#" style={{ ...styles.navLink, ...(hoveredLink === 'login' && styles.navLinkHover) }} onMouseEnter={() => setHoveredLink('login')} onMouseLeave={() => setHoveredLink('')} onClick={(e) => { e.preventDefault(); navigate('/login'); }}>Log In</a>
-                                <CtaButton text="Get Started" primary onClick={() => navigate('/signup')} />
-                            </>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
+                                <Link to="/login" style={{ color: '#fff', textDecoration: 'none', fontSize: '14px', fontWeight: 700, letterSpacing: '1px' }}>LOG IN</Link>
+                                <CtaButton text="Get Started" primary onClick={() => navigate('/signup')} style={{ padding: '12px 24px', fontSize: '14px' }} />
+                            </div>
                         )}
                     </div>
                 </div>
@@ -437,59 +450,176 @@ export const Header = () => {
 };
 
 export const Hero = () => {
-  const navigate = useNavigate();
-  return (
-    <section style={styles.hero} className="animate-fade-in">
-        <div style={{ ...styles.container, position: 'relative', zIndex: 1 }}>
-            <div style={styles.heroContent}>
-                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: '40px' }} className="animate-slide-up">
-                    <img src="/quotanic-logo.png" alt="Quotanic Logo" style={{ height: '300px', width: 'auto', marginBottom: '1px', filter: `drop-shadow(0 0 20px ${neon_cyan})` }} className="animate-float" />
-                    <h1 style={{ fontSize: '76px', fontWeight: '900', margin: 0, background: `linear-gradient(to right, ${neon_cyan}, var(--logo-center, var(--text-primary)), ${neon_magenta})`, WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', textShadow: '0 0 30px rgba(var(--neon-cyan-rgb), 0.5)', letterSpacing: '-2px' }}>QUOTANIC</h1>
-                </div>
-                <h1 style={styles.heroTitle} className="animate-slide-up stagger-child-1">From Design to Production, Faster Than Ever.</h1>
-                <p style={styles.heroSubtitle} className="animate-slide-up stagger-child-2">Get instant quotes from a global network of vetted manufacturers. Upload your design and compare prices, lead times, and quality in one place.</p>
-                <div style={styles.heroActions} className="animate-slide-up stagger-child-3">
-                    <CtaButton text="Get an Instant Quote" primary onClick={() => navigate('/upload')} />
-                    <CtaButton text="Join as a Manufacturer" onClick={() => navigate('/signup/manufacturer')} />
-                </div>
-            </div>
-        </div>
-    </section>
-    );
-}
+    const navigate = useNavigate();
+    return (
+        <section style={{ ...styles.hero, position: 'relative', overflow: 'hidden', minHeight: '90vh', display: 'flex', alignItems: 'center' }}>
+            {/* Mesh Gradient Background */}
+            <div style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+                background: `radial-gradient(at 0% 0%, rgba(10, 240, 240, 0.15) 0px, transparent 50%),
+                             radial-gradient(at 100% 0%, rgba(255, 0, 255, 0.1) 0px, transparent 50%),
+                             radial-gradient(at 50% 100%, rgba(255, 165, 0, 0.05) 0px, transparent 50%)`,
+                zIndex: 0
+            }}></div>
 
-export const HowItWorks = () => (
-    <section style={styles.howItWorks}>
-        <div style={styles.container}>
-            <h2 style={styles.sectionTitle} className="animate-slide-up">Get Your Parts Made in 3 Simple Steps</h2>
-            <div style={styles.stepsGrid}>
-                <div style={styles.step} className="animate-slide-up stagger-child-1 hover-lift"><UploadIcon style={{ ...iconStyle, color: 'var(--neon-cyan)' }} /><h3 style={styles.stepTitle}>1. Upload Your Design</h3><p style={styles.stepText}>Securely upload your CAD files (STEP, IGES, STL, etc.) and specify your requirements.</p></div>
-                <div style={styles.step} className="animate-slide-up stagger-child-2 hover-lift"><QuoteIcon style={{ ...iconStyle, color: 'var(--neon-cyan)' }} /><h3 style={styles.stepTitle}>2. Compare Instant Quotes</h3><p style={styles.stepText}>Our AI engine provides instant pricing. Compare quotes from suppliers based on cost, lead time, and ratings.</p></div>
-                <div style={styles.step} className="animate-slide-up stagger-child-3 hover-lift"><ManufactureIcon style={{ ...iconStyle, color: 'var(--neon-cyan)' }} /><h3 style={styles.stepTitle}>3. Order and Manufacture</h3><p style={styles.stepText}>Accept your preferred quote to start production. Track your order until it's delivered to your door.</p></div>
+            <div style={{ ...styles.container, position: 'relative', zIndex: 1 }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 0.8fr', gap: '64px', alignItems: 'center' }} className="hero-grid">
+                    <div style={{ textAlign: 'left' }} className="animate-slide-up">
+                        <div style={{ display: 'inline-flex', alignItems: 'center', gap: '12px', padding: '8px 16px', background: 'rgba(10, 240, 240, 0.1)', border: `1px solid ${neon_cyan}`, borderRadius: '20px', marginBottom: '32px' }}>
+                            <ZapIcon style={{ width: '16px', height: '16px', color: neon_cyan }} />
+                            <span style={{ fontSize: '12px', fontWeight: 700, color: neon_cyan, letterSpacing: '1px', textTransform: 'uppercase' }}>Now in Beta: AI-Powered Sourcing</span>
+                        </div>
+                        <h1 style={{ ...styles.heroTitle, textAlign: 'left', fontSize: 'clamp(3rem, 6vw, 4.5rem)', lineHeight: 1.1, marginBottom: '24px' }}>
+                            From Design to Production, <span style={{ color: neon_cyan, textShadow: `0 0 20px rgba(10, 240, 240, 0.3)` }}>Faster</span> Than Ever.
+                        </h1>
+                        <p style={{ ...styles.heroSubtitle, textAlign: 'left', fontSize: '20px', color: 'rgba(255,255,255,0.7)', marginBottom: '48px', maxWidth: '600px' }}>
+                            Get instant quotes from a global network of vetted manufacturers. Upload your design and compare prices, lead times, and quality in one place.
+                        </p>
+                        <div style={{ display: 'flex', gap: '20px' }}>
+                            <CtaButton text="Get an Instant Quote" primary onClick={() => navigate('/upload')} style={{ padding: '18px 36px', fontSize: '18px' }} />
+                            <CtaButton text="Explore Directory" onClick={() => navigate('/directory')} style={{ padding: '18px 36px', fontSize: '18px' }} />
+                        </div>
+                    </div>
+
+                    {/* Platform Mockup Visual */}
+                    <div className="hero-mockup animate-fade-in" style={{ position: 'relative', display: 'none' }}> {/* Hidden on small screens via CSS */}
+                        <div style={{
+                            background: 'rgba(15, 23, 42, 0.8)',
+                            border: `1px solid ${border_color}`,
+                            borderRadius: '24px',
+                            padding: '24px',
+                            backdropFilter: 'blur(20px)',
+                            boxShadow: `0 20px 50px rgba(0,0,0,0.5), 0 0 30px rgba(10, 240, 240, 0.1)`,
+                            transform: 'perspective(1000px) rotateY(-15deg) rotateX(5deg)',
+                            position: 'relative'
+                        }}>
+                            <div style={{ display: 'flex', gap: '8px', marginBottom: '20px' }}>
+                                <div style={{ width: '12px', height: '12px', borderRadius: '50%', background: '#ff5f56' }}></div>
+                                <div style={{ width: '12px', height: '12px', borderRadius: '50%', background: '#ffbd2e' }}></div>
+                                <div style={{ width: '12px', height: '12px', borderRadius: '50%', background: '#27c93f' }}></div>
+                            </div>
+                            <div style={{ background: 'rgba(255,255,255,0.05)', borderRadius: '12px', height: '200px', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '20px' }}>
+                                <CubeIcon style={{ width: '60px', height: '60px', color: neon_cyan, animation: 'float 4s infinite' }} />
+                            </div>
+                            <div style={{ spaceY: '12px' }}>
+                                <div style={{ height: '8px', width: '60%', background: 'rgba(255,255,255,0.1)', borderRadius: '4px' }}></div>
+                                <div style={{ height: '8px', width: '40%', background: 'rgba(255,255,255,0.1)', borderRadius: '4px', marginTop: '12px' }}></div>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '24px' }}>
+                                    <div style={{ height: '32px', width: '80px', background: 'rgba(255, 0, 255, 0.2)', borderRadius: '8px' }}></div>
+                                    <div style={{ height: '32px', width: '80px', background: 'rgba(10, 240, 240, 0.2)', borderRadius: '8px' }}></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
-        </div>
-    </section>
-);
+            <style>{`
+                @media (min-width: 1024px) {
+                    .hero-mockup { display: block !important; }
+                }
+                @keyframes float {
+                    0%, 100% { transform: translateY(0) rotate(0deg); }
+                    50% { transform: translateY(-20px) rotate(5deg); }
+                }
+            `}</style>
+        </section>
+    );
+};
+
+export const HowItWorks = () => {
+    const navigate = useNavigate();
+    return (
+        <section style={{ ...styles.howItWorks, padding: '120px 0' }}>
+            <div style={styles.container}>
+                <div style={{ textAlign: 'center', marginBottom: '80px' }}>
+                    <h2 style={{ ...styles.sectionTitle, fontSize: '42px', marginBottom: '16px' }}>The Future of Procurement</h2>
+                    <p style={{ color: text_secondary, fontSize: '18px', maxWidth: '700px', margin: '0 auto' }}>Quotanic simplifies the entire manufacturing lifecycle into three streamlined phases.</p>
+                </div>
+                <div style={styles.stepsGrid}>
+                    {[
+                        { icon: <UploadIcon />, title: "Upload & Analyze", text: "Securely upload CAD files. Our FBM engine extracts geometric intent instantly.", color: neon_cyan },
+                        { icon: <QuoteIcon />, title: "Compare & Match", text: "AI matches your design with manufacturers' real-time capabilities.", color: neon_magenta },
+                        { icon: <ManufactureIcon />, title: "Launch Production", text: "Accept quotes and manage production end-to-end through our secure portal.", color: neon_orange }
+                    ].map((step, i) => (
+                        <div key={i} style={{ 
+                            ...styles.step, 
+                            padding: '48px', 
+                            background: 'rgba(255,255,255,0.02)', 
+                            border: `1px solid ${border_color}`, 
+                            borderRadius: '24px',
+                            transition: 'all 0.3s ease',
+                            cursor: 'pointer'
+                        }} 
+                        onClick={() => navigate('/how-it-works')}
+                        className="hover-glow"
+                        >
+                            <div style={{ 
+                                width: '64px', height: '64px', borderRadius: '16px', background: `rgba(${step.color === neon_cyan ? '10, 240, 240' : step.color === neon_magenta ? '255, 0, 255' : '255, 165, 0'}, 0.1)`,
+                                display: 'flex', alignItems: 'center', justifyContent: 'center', color: step.color, marginBottom: '32px'
+                            }}>
+                                {React.cloneElement(step.icon as React.ReactElement, { style: { width: '32px', height: '32px' } })}
+                            </div>
+                            <h3 style={{ ...styles.stepTitle, fontSize: '24px', marginBottom: '16px' }}>{step.title}</h3>
+                            <p style={{ ...styles.stepText, color: 'rgba(255,255,255,0.6)' }}>{step.text}</p>
+                        </div>
+                    ))}
+                </div>
+            </div>
+            <style>{`
+                .hover-glow:hover {
+                    background: rgba(255,255,255,0.05) !important;
+                    border-color: rgba(255,255,255,0.2) !important;
+                    transform: translateY(-10px);
+                    box-shadow: 0 10px 40px rgba(0,0,0,0.4);
+                }
+            `}</style>
+        </section>
+    );
+};
 
 export const ValueProposition = () => {
     const [hoveredCard, setHoveredCard] = useState<number | null>(null);
     const valueProps = [
-        { icon: <LightningBoltIcon />, title: "Instant Estimations", text: "Stop waiting. Our automated engine provides rapid cost estimates for your designs." },
-        { icon: <GlobeAltIcon />, title: "Global Network", text: "Access a diverse, global pool of vetted manufacturers for any process." },
-        { icon: <ScaleIcon />, title: "Informed Decisions", text: "Compare suppliers side-by-side on price, lead time, MOQ, and quality ratings." },
-        { icon: <ShieldCheckIcon />, title: "IP Protection", text: "Your designs are secure. We prioritize robust protection for your intellectual property." },
+        { icon: <LightningBoltIcon />, title: "Instant Estimations", text: "Stop waiting. Our automated engine provides rapid cost estimates for your designs.", color: neon_cyan },
+        { icon: <GlobeAltIcon />, title: "Global Network", text: "Access a diverse, global pool of vetted manufacturers for any process.", color: neon_magenta },
+        { icon: <ScaleIcon />, title: "Informed Decisions", text: "Compare suppliers side-by-side on price, lead time, MOQ, and quality ratings.", color: neon_orange },
+        { icon: <ShieldCheckIcon />, title: "IP Protection", text: "Your designs are secure. We prioritize robust protection for your intellectual property.", color: neon_cyan },
     ];
 
     return (
-        <section style={styles.features}>
+        <section style={{ ...styles.features, background: 'rgba(0,0,0,0.2)', padding: '120px 0' }}>
             <div style={styles.container}>
-                <h2 style={styles.sectionTitle} className="animate-slide-up">The Smartest Way to Manufacture</h2>
-                <div style={styles.valueGrid}>
+                <h2 style={{ ...styles.sectionTitle, textAlign: 'center', marginBottom: '80px' }}>Why Leading Companies Choose Quotanic</h2>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '32px' }}>
                     {valueProps.map((prop, index) => (
-                        <div key={index} style={{ ...styles.valueCard, ...(hoveredCard === index && styles.valueCardHover) }} onMouseEnter={() => setHoveredCard(index)} onMouseLeave={() => setHoveredCard(null)} className={`animate-slide-up stagger-child-${index + 1} hover-lift`}>
-                            {React.cloneElement(prop.icon as React.ReactElement, { style: { ...iconStyle, color: hoveredCard === index ? 'var(--neon-cyan)' : 'var(--neon-magenta)' } })}
-                            <h3 style={styles.stepTitle}>{prop.title}</h3>
-                            <p style={styles.stepText}>{prop.text}</p>
+                        <div 
+                            key={index} 
+                            style={{ 
+                                padding: '40px',
+                                borderRadius: '24px',
+                                background: hoveredCard === index ? 'rgba(255,255,255,0.05)' : 'transparent',
+                                border: `1px solid ${hoveredCard === index ? prop.color : 'rgba(255,255,255,0.05)'}`,
+                                transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+                                cursor: 'default',
+                                backdropFilter: 'blur(10px)'
+                            }} 
+                            onMouseEnter={() => setHoveredCard(index)} 
+                            onMouseLeave={() => setHoveredCard(null)}
+                        >
+                            <div style={{ 
+                                width: '56px', height: '56px', borderRadius: '50%', background: `rgba(${prop.color === neon_cyan ? '10, 240, 240' : prop.color === neon_magenta ? '255, 0, 255' : '255, 165, 0'}, 0.05)`,
+                                border: `1px solid rgba(${prop.color === neon_cyan ? '10, 240, 240' : prop.color === neon_magenta ? '255, 0, 255' : '255, 165, 0'}, 0.1)`,
+                                display: 'flex', alignItems: 'center', justifyContent: 'center', color: prop.color, marginBottom: '24px',
+                                boxShadow: hoveredCard === index ? `0 0 20px rgba(${prop.color === neon_cyan ? '10, 240, 240' : prop.color === neon_magenta ? '255, 0, 255' : '255, 165, 0'}, 0.2)` : 'none'
+                            }}>
+                                {React.cloneElement(prop.icon as React.ReactElement, { style: { width: '24px', height: '24px' } })}
+                            </div>
+                            <h3 style={{ ...styles.stepTitle, fontSize: '22px', marginBottom: '16px' }}>{prop.title}</h3>
+                            <p style={{ ...styles.stepText, fontSize: '16px', lineHeight: 1.6, color: 'rgba(255,255,255,0.5)' }}>{prop.text}</p>
                         </div>
                     ))}
                 </div>
@@ -499,43 +629,57 @@ export const ValueProposition = () => {
 };
 
 export const ForWhom = () => {
-  const navigate = useNavigate();
-  return (
-    <section style={styles.howItWorks}>
-        <div style={styles.container}>
-            <div style={styles.forWhomGrid}>
-                <div style={styles.forWhomCard} className="animate-slide-up hover-lift">
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}><CodeBracketIcon style={{ ...styles.forWhomIcon, color: 'var(--neon-cyan)' }} /><h3 style={styles.featureTitle}>For Engineers & Designers</h3></div>
-                    <p style={styles.forWhomText}>Tired of manual searches and slow quote turnaround? Streamline your procurement process, reduce time-to-market, and find the perfect manufacturing partner without the hassle.</p>
-                    <ul style={styles.featureList}><li>✓ Fast & Competitive Quotes</li><li>✓ Global Network of Suppliers</li><li>✓ Secure IP Protection</li><li>✓ Streamlined Ordering</li></ul>
-                    <CtaButton text="Get an Instant Quote" primary onClick={() => navigate('/upload')} />
-                </div>
-                <div style={styles.forWhomCard} className="animate-slide-up stagger-child-1 hover-lift">
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}><WrenchScrewdriverIcon style={{ ...styles.forWhomIcon, color: 'var(--neon-magenta)' }} /><h3 style={styles.featureTitle}>For Manufacturers</h3></div>
-                    <p style={styles.forWhomText}>Access a global customer base, streamline your quoting workflow, and fill your production capacity. Let us bring the jobs to you so you can focus on what you do best: making things.</p>
-                    <ul style={styles.featureList}><li>✓ Access a New Stream of Orders</li><li>✓ Automate Your Quoting Process</li><li>✓ Reduce Administrative Overhead</li><li>✓ Grow Your Business</li></ul>
-                    <CtaButton text="Join Our Network" onClick={() => navigate('/signup/manufacturer')} />
+    const navigate = useNavigate();
+    return (
+        <section style={{ padding: '120px 0' }}>
+            <div style={styles.container}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', gap: '48px' }}>
+                    <div style={{ 
+                        padding: '64px', borderRadius: '32px', background: 'linear-gradient(135deg, rgba(10, 240, 240, 0.05), transparent)', 
+                        border: `1px solid rgba(10, 240, 240, 0.1)`, position: 'relative', overflow: 'hidden' 
+                    }}>
+                        <div style={{ position: 'absolute', top: '-50px', right: '-50px', width: '200px', height: '200px', background: 'radial-gradient(circle, rgba(10, 240, 240, 0.1) 0%, transparent 70%)', filter: 'blur(40px)' }}></div>
+                        <CodeBracketIcon style={{ width: '48px', height: '48px', color: neon_cyan, marginBottom: '32px' }} />
+                        <h3 style={{ ...styles.featureTitle, fontSize: '32px', marginBottom: '24px' }}>For Engineers & Designers</h3>
+                        <p style={{ ...styles.forWhomText, fontSize: '18px', marginBottom: '40px', color: 'rgba(255,255,255,0.7)' }}>Streamline procurement, reduce time-to-market, and find the perfect manufacturing partner without the hassle of manual sourcing.</p>
+                        <CtaButton text="Start Project" primary onClick={() => navigate('/upload')} />
+                    </div>
+                    <div style={{ 
+                        padding: '64px', borderRadius: '32px', background: 'linear-gradient(135deg, rgba(255, 0, 255, 0.05), transparent)', 
+                        border: `1px solid rgba(255, 0, 255, 0.1)`, position: 'relative', overflow: 'hidden' 
+                    }}>
+                        <div style={{ position: 'absolute', top: '-50px', right: '-50px', width: '200px', height: '200px', background: 'radial-gradient(circle, rgba(255, 0, 255, 0.1) 0%, transparent 70%)', filter: 'blur(40px)' }}></div>
+                        <WrenchScrewdriverIcon style={{ width: '48px', height: '48px', color: neon_magenta, marginBottom: '32px' }} />
+                        <h3 style={{ ...styles.featureTitle, fontSize: '32px', marginBottom: '24px' }}>For Manufacturers</h3>
+                        <p style={{ ...styles.forWhomText, fontSize: '18px', marginBottom: '40px', color: 'rgba(255,255,255,0.7)' }}>Access a global customer base, automate your quoting workflow, and fill your production capacity with high-intent orders.</p>
+                        <CtaButton text="Join Network" onClick={() => navigate('/signup/manufacturer')} />
+                    </div>
                 </div>
             </div>
-        </div>
-    </section>
+        </section>
     );
-}
+};
 
 export const SocialProof = () => (
-    <section style={styles.features}>
+    <section style={{ padding: '120px 0', borderTop: `1px solid ${border_color}` }}>
         <div style={styles.container}>
-            <h2 style={styles.sectionTitle} className="animate-slide-up">Built for the Future of Manufacturing</h2>
-            <div style={styles.socialProofGrid}>
-                <div style={{ ...styles.testimonialCard, gridColumn: '1 / -1', maxWidth: '800px', margin: '0 auto' }} className="animate-slide-up hover-lift">
-                    <p style={styles.testimonialText}>"Quotanic was built to bridge the gap between complex engineering designs and efficient manufacturing. Our mission is to make custom part sourcing as instant and transparent as possible through intelligent matching and live conversion."</p>
-                    <p style={styles.testimonialAuthor}>- Surena, Creator of Quotanic</p>
-                </div>
+            <div style={{ textAlign: 'center', marginBottom: '80px' }}>
+                <h2 style={styles.sectionTitle}>Built for Scale</h2>
+                <p style={{ color: text_secondary, fontSize: '18px' }}>Empowering the next generation of hardware innovation.</p>
             </div>
-            <div style={styles.metricsContainer}>
-                <div style={styles.metricItem} className="animate-slide-up stagger-child-1"><span style={styles.metricValue}>50+</span><span style={styles.metricLabel}>Manufacturers on Platform</span></div>
-                <div style={styles.metricItem} className="animate-slide-up stagger-child-2"><span style={styles.metricValue}>1,000+</span><span style={styles.metricLabel}>Parts Quoted</span></div>
-                <div style={styles.metricItem} className="animate-slide-up stagger-child-3"><span style={styles.metricValue}>24/7</span><span style={styles.metricLabel}>AI Analysis</span></div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '48px', textAlign: 'center' }}>
+                <div className="metric-card">
+                    <div style={{ fontSize: '64px', fontWeight: 900, color: neon_cyan, textShadow: `0 0 30px rgba(10, 240, 240, 0.3)` }}>50+</div>
+                    <div style={{ fontSize: '16px', color: text_secondary, textTransform: 'uppercase', letterSpacing: '2px', marginTop: '12px' }}>Verified Manufacturers</div>
+                </div>
+                <div className="metric-card">
+                    <div style={{ fontSize: '64px', fontWeight: 900, color: neon_magenta, textShadow: `0 0 30px rgba(255, 0, 255, 0.3)` }}>1,000+</div>
+                    <div style={{ fontSize: '16px', color: text_secondary, textTransform: 'uppercase', letterSpacing: '2px', marginTop: '12px' }}>Parts Quoted</div>
+                </div>
+                <div className="metric-card">
+                    <div style={{ fontSize: '64px', fontWeight: 900, color: neon_orange, textShadow: `0 0 30px rgba(255, 165, 0, 0.3)` }}>24/7</div>
+                    <div style={{ fontSize: '16px', color: text_secondary, textTransform: 'uppercase', letterSpacing: '2px', marginTop: '12px' }}>Automated Analysis</div>
+                </div>
             </div>
         </div>
     </section>
@@ -559,22 +703,60 @@ type FooterProps = { navigate: (page: string, params?: any) => void; };
 export const Footer = () => {
     const navigate = useNavigate();
     return (
-    <footer style={styles.footer} role="contentinfo">
-        <div style={styles.container}>
-            <div style={styles.footerGrid}>
-                <div style={styles.footerColumn}><h3 style={styles.footerHeading}>Platform</h3><a href="#" style={styles.footerLink} onClick={(e) => { e.preventDefault(); navigate('/how-it-works'); }}>How It Works</a><a href="#" style={styles.footerLink} onClick={(e) => { e.preventDefault(); navigate('/directory'); }}>Manufacturer Directory</a><a href="#" style={styles.footerLink} onClick={(e) => { e.preventDefault(); navigate('/trust-and-security'); }}>Trust & Security</a></div>
-                <div style={styles.footerColumn}><h3 style={styles.footerHeading}>Company</h3><a href="#" style={styles.footerLink} onClick={(e) => { e.preventDefault(); navigate('/about'); }}>About Us</a><a href="#" style={styles.footerLink} onClick={(e) => { e.preventDefault(); navigate('/blog'); }}>Blog</a><a href="#" style={styles.footerLink} onClick={(e) => { e.preventDefault(); navigate('/contact'); }}>Contact Us</a></div>
-                <div style={styles.footerColumn}><h3 style={styles.footerHeading}>Resources</h3><a href="#" style={styles.footerLink} onClick={(e) => { e.preventDefault(); navigate('/faq'); }}>FAQ</a><a href="#" style={styles.footerLink}>Help Center</a></div>
-                <div style={styles.footerColumn}><h3 style={styles.footerHeading}>Legal</h3><a href="#" style={styles.footerLink} onClick={(e) => { e.preventDefault(); navigate('/privacy'); }}>Privacy Policy</a><a href="#" style={styles.footerLink} onClick={(e) => { e.preventDefault(); navigate('/terms'); }}>Terms of Service</a></div>
+        <footer style={{ ...styles.footer, background: 'rgba(0,0,0,0.4)', padding: '100px 0 40px', borderTop: `1px solid ${border_color}` }}>
+            <div style={styles.container}>
+                <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr 1fr 1.5fr', gap: '64px', marginBottom: '80px' }}>
+                    <div>
+                        <Link to="/" style={{ display: 'flex', alignItems: 'center', gap: '12px', textDecoration: 'none', marginBottom: '32px' }}>
+                            <span style={{ fontSize: '24px', fontWeight: 900, color: '#fff', letterSpacing: '2px' }}>QUOTA<span style={{ color: neon_cyan }}>NIC</span></span>
+                        </Link>
+                        <p style={{ color: 'rgba(255,255,255,0.5)', lineHeight: 1.8, fontSize: '15px' }}>
+                            Accelerating global hardware innovation through intelligent manufacturing orchestration and distributed resilience.
+                        </p>
+                    </div>
+                    <div>
+                        <h3 style={{ fontSize: '16px', fontWeight: 800, color: '#fff', marginBottom: '24px', textTransform: 'uppercase', letterSpacing: '1px' }}>Platform</h3>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                            {['How It Works', 'Directory', 'Trust & Security'].map(item => (
+                                <Link key={item} to={`/${item.toLowerCase().replace(/ & /g, '-and-').replace(/ /g, '-')}`} style={footerLinkStyle}>{item}</Link>
+                            ))}
+                        </div>
+                    </div>
+                    <div>
+                        <h3 style={{ fontSize: '16px', fontWeight: 800, color: '#fff', marginBottom: '24px', textTransform: 'uppercase', letterSpacing: '1px' }}>Company</h3>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                            {['About Us', 'Contact Us', 'Blog', 'Resources'].map(item => (
+                                <Link key={item} to={`/${item.toLowerCase().replace(/ /g, '-')}`} style={footerLinkStyle}>{item}</Link>
+                            ))}
+                        </div>
+                    </div>
+                    <div>
+                        <h3 style={{ fontSize: '16px', fontWeight: 800, color: '#fff', marginBottom: '24px', textTransform: 'uppercase', letterSpacing: '1px' }}>Newsletter</h3>
+                        <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '14px', marginBottom: '20px' }}>Join 5,000+ engineers for hardware insights.</p>
+                        <div style={{ display: 'flex', gap: '10px' }}>
+                            <input type="email" placeholder="Email address" style={{ flex: 1, background: 'rgba(255,255,255,0.05)', border: `1px solid ${border_color}`, borderRadius: '12px', padding: '12px 16px', color: '#fff', fontSize: '14px', outline: 'none' }} />
+                            <button style={{ background: neon_cyan, border: 'none', borderRadius: '12px', padding: '0 16px', color: '#000', fontWeight: 700, cursor: 'pointer' }}>Join</button>
+                        </div>
+                    </div>
+                </div>
+                <div style={{ paddingTop: '40px', borderTop: `1px solid ${border_color}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <p style={{ color: 'rgba(255,255,255,0.3)', fontSize: '14px' }}>© {new Date().getFullYear()} Quotanic. All rights reserved.</p>
+                    <div style={{ display: 'flex', gap: '24px' }}>
+                        <Link to="/privacy" style={footerLinkStyle}>Privacy</Link>
+                        <Link to="/terms" style={footerLinkStyle}>Terms</Link>
+                    </div>
+                </div>
             </div>
-            <div style={styles.footerBottom}>
-                <p style={styles.footerCopyright}>© {new Date().getFullYear()} Quotanic. All rights reserved.</p>
-                <div style={styles.footerSocials}><a href="#" style={styles.footerSocialLink} aria-label="Twitter"><TwitterIcon /></a><a href="#" style={styles.footerSocialLink} aria-label="GitHub"><GithubIcon /></a><a href="#" style={styles.footerSocialLink} aria-label="LinkedIn"><LinkedInIcon /></a></div>
-            </div>
-        </div>
-    </footer>
-);
-}
+        </footer>
+    );
+};
+
+const footerLinkStyle = {
+    color: 'rgba(255,255,255,0.5)',
+    textDecoration: 'none',
+    fontSize: '14px',
+    transition: 'color 0.3s'
+};
 
 // --- Login/Signup Pages ---
 
@@ -598,41 +780,70 @@ export const Footer = () => {
 export const ManufacturerCard = ({ manufacturer, navigate }) => {
     const [hover, setHover] = useState(false);
     return (
-        <div style={{ ...styles.mfgCard, ...(hover && styles.mfgCardHover) }} onMouseEnter={() => setHover(true)} onMouseLeave={() => setHover(false)} onClick={() => navigate(`/manufacturer/${manufacturer.id}`)} className="hover-lift">
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px' }}>
-                <img src={manufacturer.logoUrl} alt={`${manufacturer.company_name} logo`} style={styles.mfgCardLogo} />
-                <div style={{ flex: 1 }}>
-                    <h3 style={styles.mfgCardTitle}>{manufacturer.company_name}</h3>
-                    <p style={styles.mfgCardLocation}>
-                        <LocationMarkerIcon style={{ width: '16px', height: '16px', marginRight: '4px', color: 'var(--text-secondary)', flexShrink: 0 }} />
-                        {manufacturer.location}
-                    </p>
+        <div 
+            style={{ 
+                ...styles.mfgCard, 
+                background: 'rgba(255,255,255,0.02)',
+                border: `1px solid ${hover ? neon_cyan : border_color}`,
+                borderRadius: '24px',
+                padding: '32px',
+                transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+                cursor: 'pointer',
+                transform: hover ? 'translateY(-10px)' : 'translateY(0)',
+                boxShadow: hover ? `0 20px 40px rgba(0,0,0,0.4), 0 0 20px rgba(10, 240, 240, 0.1)` : 'none',
+                backdropFilter: 'blur(10px)'
+            }} 
+            onMouseEnter={() => setHover(true)} 
+            onMouseLeave={() => setHover(false)} 
+            onClick={() => navigate(`/manufacturer/${manufacturer.id}`)}
+        >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '20px', marginBottom: '24px' }}>
+                <div style={{ 
+                    width: '64px', height: '64px', borderRadius: '16px', background: '#fff', padding: '8px', 
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden',
+                    boxShadow: '0 4px 10px rgba(0,0,0,0.1)'
+                }}>
+                    <img src={manufacturer.logoUrl} alt={`${manufacturer.company_name} logo`} style={{ width: '100%', height: 'auto', objectFit: 'contain' }} />
                 </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '4px', color: '#FFD700' }}>
-                    <StarIcon style={{ width: '16px', height: '16px', filter: 'drop-shadow(0 0 3px #FFD700)' }} />
-                    <span style={{ fontWeight: 'bold', color: 'var(--text-primary)' }}>{(parseFloat(manufacturer.rating) || 0).toFixed(1)}</span>
+                <div style={{ flex: 1 }}>
+                    <h3 style={{ fontSize: '20px', fontWeight: 800, margin: '0 0 4px 0', color: '#fff' }}>{manufacturer.company_name}</h3>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'rgba(255,255,255,0.4)', fontSize: '13px' }}>
+                        <LocationMarkerIcon style={{ width: '14px', height: '14px' }} />
+                        {manufacturer.location}
+                    </div>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', background: 'rgba(255, 215, 0, 0.1)', padding: '6px 12px', borderRadius: '12px', border: '1px solid rgba(255, 215, 0, 0.2)' }}>
+                    <StarIcon style={{ width: '14px', height: '14px', color: '#FFD700' }} />
+                    <span style={{ fontWeight: 800, color: '#FFD700', fontSize: '14px' }}>{(parseFloat(manufacturer.rating) || 0).toFixed(1)}</span>
                 </div>
             </div>
 
-            <div style={{ marginTop: '16px' }}>
-                <h4 style={styles.mfgCardSectionTitle}>Key Capabilities</h4>
-                <div style={styles.mfgCardTagContainer}>
-                    {manufacturer.capabilities.slice(0, 3).map(cap => <span key={cap} style={styles.mfgCardTag}>{cap}</span>)}
-                    {manufacturer.capabilities.length > 3 && <span style={styles.mfgCardTag}>+{manufacturer.capabilities.length - 3} more</span>}
-                </div>
-            </div>
-            <div style={{ marginTop: '16px' }}>
-                <h4 style={styles.mfgCardSectionTitle}>Certifications</h4>
-                <div style={styles.mfgCardTagContainer}>
-                    {manufacturer.certifications.length > 0 ? (
-                        manufacturer.certifications.map(cert => <span key={cert} style={{ ...styles.mfgCardTag, ...styles.mfgCardCertTag }}>{cert}</span>)
-                    ) : (
-                        <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>None listed</span>
+            <div style={{ marginBottom: '24px' }}>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                    {manufacturer.capabilities.slice(0, 3).map(cap => (
+                        <span key={cap} style={{ 
+                            fontSize: '11px', fontWeight: 700, padding: '4px 10px', borderRadius: '6px', 
+                            background: 'rgba(255,255,255,0.05)', color: 'rgba(255,255,255,0.6)', border: `1px solid ${border_color}`
+                        }}>{cap}</span>
+                    ))}
+                    {manufacturer.capabilities.length > 3 && (
+                        <span style={{ fontSize: '11px', fontWeight: 700, padding: '4px 10px', color: neon_cyan }}>+{manufacturer.capabilities.length - 3} more</span>
                     )}
                 </div>
             </div>
-            <div style={{ marginTop: '24px', textAlign: 'center' }}>
-                <span style={{ ...styles.mfgCardViewProfileLink, ...(hover && styles.mfgCardViewProfileLinkHover) }}>View Profile →</span>
+
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: '20px', borderTop: `1px solid ${border_color}` }}>
+                <div style={{ display: 'flex', gap: '8px' }}>
+                    {manufacturer.certifications.slice(0, 2).map(cert => (
+                        <div key={cert} style={{ display: 'flex', alignItems: 'center', gap: '4px', color: neon_magenta, fontSize: '11px', fontWeight: 700 }}>
+                            <ShieldCheckIcon style={{ width: '12px', height: '12px' }} />
+                            {cert}
+                        </div>
+                    ))}
+                </div>
+                <span style={{ color: hover ? neon_cyan : 'rgba(255,255,255,0.4)', fontSize: '13px', fontWeight: 700, transition: 'all 0.3s' }}>
+                    View Profile →
+                </span>
             </div>
         </div>
     );
