@@ -43,22 +43,11 @@ const applyMaterialSettings = (obj: any, mode: string, override: any, activeFeat
       if (override.isOverride) {
         child.material.color.set(override.color);
       } else if (activeFeatureIndex !== undefined && activeFeatureIndex !== null) {
-        const isBase = child.name.toLowerCase().includes('base');
-        
-        const typeMatch = activeFeatureType ? (
-            (activeFeatureType.toLowerCase().includes('hole') && child.name.includes('Holes')) ||
-            (activeFeatureType.toLowerCase().includes('pocket') && child.name.includes('Pockets'))
-        ) : false;
-
-        const isSelected = 
-          (!isBase && (child.name === `Feature_${activeFeatureIndex}` || child.name === `Feature ${activeFeatureIndex}`)) || 
-          (!isBase && child.userData.featureIndex === activeFeatureIndex) ||
-          (!isBase && typeMatch);
+        const isBase = child.userData.isBase;
+        const isSelected = !isBase && child.userData.featureIndex === activeFeatureIndex;
 
         if (isSelected) {
-          if (idx < 5 || idx === activeFeatureIndex) {
-             console.log(`[Viewer Debug] Highlighting Mesh: idx=${idx}, name="${child.name}", isSelected=${isSelected}`);
-          }
+          console.log(`[Viewer Debug] Highlighting Mesh: idx=${idx}, featureIndex=${child.userData.featureIndex}, name="${child.name}"`);
           child.material.color.set('#facc15'); 
           child.material.emissive?.set('#332200');
         } else {
@@ -136,14 +125,28 @@ const GLTFModel: React.FC<ModelComponentProps> = ({ url, viewportMode, materialO
     loader.setCrossOrigin('anonymous');
   });
 
-  // Assign indices to meshes for identification
+  // Assign indices and parse names from hierarchy
   let mIdx = 0;
   scene.traverse((child: any) => {
       if (child.isMesh) {
           child.userData.index = mIdx++;
-          const match = child.name.match(/Feature_(\d+)/i);
-          if (match) {
-              child.userData.featureIndex = parseInt(match[1], 10);
+          
+          // Walk up parents to find Feature_X or BaseModel name
+          let current: any = child;
+          while (current) {
+              if (current.name) {
+                const match = current.name.match(/Feature_(\d+)/i);
+                if (match) {
+                    child.userData.featureIndex = parseInt(match[1], 10);
+                    child.userData.isFeature = true;
+                    break;
+                }
+                if (current.name.toLowerCase().includes('base')) {
+                    child.userData.isBase = true;
+                    break;
+                }
+              }
+              current = current.parent;
           }
       }
   });
@@ -156,17 +159,20 @@ const GLTFModel: React.FC<ModelComponentProps> = ({ url, viewportMode, materialO
       object={scene}
       onClick={(e: any) => { 
           e.stopPropagation(); 
-          const clickedObj = e.intersections?.[0]?.object || e.object;
-          if (!clickedObj) return;
+          // Find the intersected mesh
+          const mesh = e.intersections?.[0]?.object || e.object;
+          if (!mesh) return;
 
-          const isBase = clickedObj.name?.toLowerCase().includes('base');
-          if (isBase) return; // Ignore clicks on the base model
+          console.log(`[Viewer Debug] Clicked Mesh: name="${mesh.name}", featureIndex=${mesh.userData?.featureIndex}`);
 
-          let featureIdx = clickedObj.userData?.featureIndex;
-          if (featureIdx === undefined) {
-              featureIdx = clickedObj.userData?.index || 0;
+          if (mesh.userData?.isBase) {
+              console.log("[Viewer Debug] Clicked base model, ignoring.");
+              return;
           }
-          if (onFeatureClick) onFeatureClick(featureIdx);
+
+          if (mesh.userData?.featureIndex !== undefined) {
+              if (onFeatureClick) onFeatureClick(mesh.userData.featureIndex);
+          }
       }}
       onPointerOver={() => { document.body.style.cursor = 'pointer'; }}
       onPointerOut={() => { document.body.style.cursor = 'auto'; }}

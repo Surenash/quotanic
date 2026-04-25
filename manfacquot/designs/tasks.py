@@ -580,6 +580,13 @@ def generate_feature_aware_glb(file_path, raw_features=None):
         shape_tool = XCAFDoc_DocumentTool.ShapeTool(doc.Main())
         color_tool = XCAFDoc_DocumentTool.ColorTool(doc.Main())
         
+        # Create an assembly root
+        root_label = shape_tool.NewShape()
+        try:
+            TDataStd_Name.Set(root_label, TCollection_ExtendedString("AssemblyRoot"))
+        except:
+            pass
+        
         # 2. Load the base shape
         file_ext = os.path.splitext(file_path)[1].lower()
         shape = None
@@ -615,10 +622,20 @@ def generate_feature_aware_glb(file_path, raw_features=None):
                     BRepMesh_IncrementalMesh(comp, 0.1, False, 0.5, True)
                     feat_label = shape_tool.NewShape()
                     shape_tool.SetShape(feat_label, comp)
+                    
+                    # Add to assembly
+                    from OCC.Core.TopLoc import TopLoc_Location
+                    try:
+                        instance_label = shape_tool.AddComponent(root_label, feat_label, TopLoc_Location())
+                    except:
+                        instance_label = feat_label
+
                     # Use both component name and TDataStd_Name for safety
                     shape_tool.SetComponentName(feat_label, TCollection_AsciiString(f"Feature_{i}"))
                     try:
                         TDataStd_Name.Set(feat_label, TCollection_ExtendedString(f"Feature_{i}"))
+                        if instance_label != feat_label:
+                            TDataStd_Name.Set(instance_label, TCollection_ExtendedString(f"Feature_{i}_Instance"))
                     except Exception as name_err:
                         pass # Ignore if TDataStd_Name isn't supported in this OCC version
 
@@ -648,9 +665,19 @@ def generate_feature_aware_glb(file_path, raw_features=None):
             BRepMesh_IncrementalMesh(base_comp, 0.1, False, 0.5, True)
             base_label = shape_tool.NewShape()
             shape_tool.SetShape(base_label, base_comp)
+            
+            # Add to assembly
+            from OCC.Core.TopLoc import TopLoc_Location
+            try:
+                instance_label = shape_tool.AddComponent(root_label, base_label, TopLoc_Location())
+            except:
+                instance_label = base_label
+
             shape_tool.SetComponentName(base_label, TCollection_AsciiString("BaseModel"))
             try:
                 TDataStd_Name.Set(base_label, TCollection_ExtendedString("BaseModel"))
+                if instance_label != base_label:
+                    TDataStd_Name.Set(instance_label, TCollection_ExtendedString("BaseModel_Instance"))
             except Exception as name_err:
                 pass
 
