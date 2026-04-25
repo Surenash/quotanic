@@ -133,20 +133,27 @@ const GLTFModel: React.FC<ModelComponentProps> = ({ url, viewportMode, materialO
           
           // Walk up parents to find Feature_X or BaseModel name
           let current: any = child;
+          let foundName = null;
           while (current) {
               if (current.name) {
+                console.log(`[Viewer Debug] Traversal: Mesh="${child.name}", checking ancestor="${current.name}"`);
                 const match = current.name.match(/Feature_(\d+)/i);
                 if (match) {
                     child.userData.featureIndex = parseInt(match[1], 10);
                     child.userData.isFeature = true;
+                    foundName = current.name;
                     break;
                 }
                 if (current.name.toLowerCase().includes('base')) {
                     child.userData.isBase = true;
+                    foundName = current.name;
                     break;
                 }
               }
               current = current.parent;
+          }
+          if (foundName) {
+            console.log(`[Viewer Debug] Mapping Result: Mesh="${child.name}" -> Resolved Name="${foundName}", Index=${child.userData.featureIndex}`);
           }
       }
   });
