@@ -566,10 +566,11 @@ def generate_feature_aware_glb(file_path, raw_features=None):
     
     try:
         from OCC.Core.Quantity import Quantity_Color, Quantity_TOC_RGB
-        from OCC.Core.TCollection import TCollection_AsciiString
+        from OCC.Core.TCollection import TCollection_AsciiString, TCollection_ExtendedString
         from OCC.Core.TopoDS import TopoDS_Compound, TopoDS_Shape
         from OCC.Core.BRep import BRep_Builder
         from OCC.Core.BRepMesh import BRepMesh_IncrementalMesh
+        from OCC.Core.TDataStd import TDataStd_Name
         
         # 1. Initialize XCAF Document
         app = XCAFApp_Application.GetApplication()
@@ -597,7 +598,6 @@ def generate_feature_aware_glb(file_path, raw_features=None):
         
         if raw_features and isinstance(raw_features, list):
             for i, feature in enumerate(raw_features):
-                # raw_features are the actual objects with .faces attribute
                 faces = getattr(feature, 'faces', [])
                 if not faces: continue
                 
@@ -607,29 +607,23 @@ def generate_feature_aware_glb(file_path, raw_features=None):
                 
                 valid_feature = False
                 for f in faces:
-                    # In OpenCASCADE Python, we use .TShape().GetHandle() or similar for identity if needed,
-                    # but usually storing the face object in a set works if it's the same handle.
                     builder.Add(comp, f)
                     feature_face_set.add(f)
                     valid_feature = True
                 
                 if valid_feature:
-                    # Tessellate individual feature BEFORE adding to doc
                     BRepMesh_IncrementalMesh(comp, 0.1, False, 0.5, True)
-                    
-                    # Add as a NEW component (label) to the assembly
                     feat_label = shape_tool.NewShape()
                     shape_tool.SetShape(feat_label, comp)
+                    # Use both component name and TDataStd_Name for safety
                     shape_tool.SetComponentName(feat_label, TCollection_AsciiString(f"Feature_{i}"))
+                    TDataStd_Name.Set(feat_label, TCollection_ExtendedString(f"Feature_{i}"))
                     
-                    # Color it yellow-ish so it's ready for highlighting
                     yellow = Quantity_Color(1.0, 0.8, 0.0, Quantity_TOC_RGB)
                     color_tool.SetColor(feat_label, yellow, XCAFDoc_ColorGen)
 
         # 4. Create the Base Model from remaining faces
         all_faces = list(TopologyExplorer(shape).faces())
-        # We need a way to filter out faces already used in features.
-        # OpenCASCADE faces can be compared using .IsSame()
         base_faces = []
         for f in all_faces:
             is_feature_face = False
@@ -651,27 +645,26 @@ def generate_feature_aware_glb(file_path, raw_features=None):
             base_label = shape_tool.NewShape()
             shape_tool.SetShape(base_label, base_comp)
             shape_tool.SetComponentName(base_label, TCollection_AsciiString("BaseModel"))
+            TDataStd_Name.Set(base_label, TCollection_ExtendedString("BaseModel"))
             
-            # Default blue color
             blue = Quantity_Color(0.23, 0.51, 0.96, Quantity_TOC_RGB)
             color_tool.SetColor(base_label, blue, XCAFDoc_ColorGen)
 
         # 5. Export to GLB
         output_path = file_path.rsplit('.', 1)[0] + '_view.glb'
         writer = RWGltf_CafWriter(TCollection_AsciiString(output_path), True)
-        # Use Gltf transformation to preserve structure
         writer.SetTransformationFormat(RWGltf_CafWriter.RWGltf_Tf_Gltf)
         
         status = writer.Perform(doc, gp_Trsf(), None)
         
         if status and os.path.exists(output_path):
-            logger.info(f"GLB Overhaul Success: {len(raw_features) if raw_features else 0} features isolated.")
+            logger.info(f"GLB Node Isolation Success: {len(raw_features) if raw_features else 0} features isolated.")
             return output_path
             
         return generate_glb_from_step(file_path)
 
     except Exception as e:
-        logger.error(f"GLB Overhaul Failed: {e}", exc_info=True)
+        logger.error(f"GLB Node Isolation Failed: {e}", exc_info=True)
         return generate_glb_from_step(file_path)
 
 
