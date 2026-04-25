@@ -17,26 +17,32 @@ interface ModelComponentProps {
 
 
 const applyMaterialSettings = (obj: any, mode: string, override: any, activeFeatureIndex?: number | null, activeFeatureType?: string) => {
-  let meshIndex = 0;
   const meshes: any[] = [];
-  obj.traverse((child: any) => { if (child.isMesh) meshes.push(child); });
+  obj.traverse((child: any) => { 
+    if (child.isMesh) {
+      meshes.push(child);
+      // IMPORTANT: Clone material if shared to prevent cross-highlighting
+      if (child.material && !child.userData.materialCloned) {
+        child.material = child.material.clone();
+        child.userData.materialCloned = true;
+      }
+    }
+  });
+  
   const totalMeshes = meshes.length;
 
   meshes.forEach((child, idx) => {
     child.castShadow = true;
     child.receiveShadow = true;
+    
     if (child.material) {
       child.material.wireframe = mode === 'wireframe';
+      
       if (override.isOverride) {
         child.material.color.set(override.color);
       } else if (activeFeatureIndex !== undefined && activeFeatureIndex !== null) {
         // Highlighting Logic:
-        // 1. Try name match (e.g., Feature_0)
-        // 2. Try category match from GLB sub-meshes (e.g., Features_Holes)
-        // 3. Try index match if multiple meshes exist
-        // 4. Fallback to whole model if only 1 mesh exists
-        
-        const isBase = child.name.includes('BaseModel');
+        const isBase = child.name.toLowerCase().includes('base');
         
         const typeMatch = activeFeatureType ? (
             (activeFeatureType.toLowerCase().includes('hole') && child.name.includes('Holes')) ||
@@ -44,17 +50,20 @@ const applyMaterialSettings = (obj: any, mode: string, override: any, activeFeat
         ) : false;
 
         const isSelected = 
-          (!isBase && child.name === `Feature_${activeFeatureIndex}`) || 
+          (!isBase && (child.name === `Feature_${activeFeatureIndex}` || child.name === `Feature ${activeFeatureIndex}`)) || 
           (!isBase && typeMatch) ||
           (!isBase && totalMeshes > 1 && idx === activeFeatureIndex);
 
         if (isSelected) {
           child.material.color.set('#facc15'); // Yellow highlight
+          child.material.emissive?.set('#332200');
         } else {
           child.material.color.set('#3b82f6'); // Default Blue
+          child.material.emissive?.set('#000000');
         }
       } else {
          child.material.color.set('#3b82f6');
+         child.material.emissive?.set('#000000');
       }
     }
   });

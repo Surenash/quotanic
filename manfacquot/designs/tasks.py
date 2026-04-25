@@ -553,16 +553,16 @@ def generate_snapshot(file_path, output_path):
         return False
 
 
-def generate_feature_aware_glb(file_path, features_data=None):
+def generate_feature_aware_glb(file_path, raw_features=None):
     """
     Converts a STEP/IGES file to a GLB file with separate sub-meshes for EVERY feature.
-    This enables precise 1:1 highlighting in the 3D viewer.
+    Uses direct XCAF component addition for maximum node isolation.
     """
     if not PYTHONOCC_AVAILABLE:
         logger.error("pythonocc-core not available for 3D conversion.")
         return None
 
-    logger.info(f"Feature-Aware GLB Conversion: Starting for {file_path}...")
+    logger.info(f"Feature-Aware GLB Overhaul: Starting for {file_path}...")
     
     try:
         from OCC.Core.Quantity import Quantity_Color, Quantity_TOC_RGB
@@ -570,7 +570,6 @@ def generate_feature_aware_glb(file_path, features_data=None):
         from OCC.Core.TopoDS import TopoDS_Compound, TopoDS_Shape
         from OCC.Core.BRep import BRep_Builder
         from OCC.Core.BRepMesh import BRepMesh_IncrementalMesh
-        from OCC.Core.BRepBuilderAPI import BRepBuilderAPI_MakeCompound
         
         # 1. Initialize XCAF Document
         app = XCAFApp_Application.GetApplication()
@@ -593,38 +592,53 @@ def generate_feature_aware_glb(file_path, features_data=None):
         if not shape or shape.IsNull():
             return None
 
-        # 3. Process individual sub-meshes
-        feature_faces_all = []
+        # 3. Process individual features
+        feature_face_set = set()
         
-        if features_data and isinstance(features_data, list):
-            for i, feature in enumerate(features_data):
-                # Retrieve the actual face objects we stored in FBM engine
-                # Note: features_data here is the list of objects from planner.process()
+        if raw_features and isinstance(raw_features, list):
+            for i, feature in enumerate(raw_features):
+                # raw_features are the actual objects with .faces attribute
                 faces = getattr(feature, 'faces', [])
                 if not faces: continue
                 
                 builder = BRep_Builder()
                 comp = TopoDS_Compound()
                 builder.MakeCompound(comp)
+                
+                valid_feature = False
                 for f in faces:
+                    # In OpenCASCADE Python, we use .TShape().GetHandle() or similar for identity if needed,
+                    # but usually storing the face object in a set works if it's the same handle.
                     builder.Add(comp, f)
-                    feature_faces_all.append(f)
+                    feature_face_set.add(f)
+                    valid_feature = True
                 
-                # Tessellate individual feature
-                BRepMesh_IncrementalMesh(comp, 0.1, False, 0.5, True)
-                
-                # Add to XCAF as distinct node
-                label = shape_tool.NewShape()
-                shape_tool.SetShape(label, comp)
-                shape_tool.SetComponentName(label, TCollection_AsciiString(f"Feature_{i}"))
-                
-                # Highlight color for features (Reddish/Yellow)
-                color = Quantity_Color(1.0, 0.8, 0.0, Quantity_TOC_RGB)
-                color_tool.SetColor(label, color, XCAFDoc_ColorGen)
+                if valid_feature:
+                    # Tessellate individual feature BEFORE adding to doc
+                    BRepMesh_IncrementalMesh(comp, 0.1, False, 0.5, True)
+                    
+                    # Add as a NEW component (label) to the assembly
+                    feat_label = shape_tool.NewShape()
+                    shape_tool.SetShape(feat_label, comp)
+                    shape_tool.SetComponentName(feat_label, TCollection_AsciiString(f"Feature_{i}"))
+                    
+                    # Color it yellow-ish so it's ready for highlighting
+                    yellow = Quantity_Color(1.0, 0.8, 0.0, Quantity_TOC_RGB)
+                    color_tool.SetColor(feat_label, yellow, XCAFDoc_ColorGen)
 
-        # 4. Create the Base Model (remaining faces)
+        # 4. Create the Base Model from remaining faces
         all_faces = list(TopologyExplorer(shape).faces())
-        base_faces = [f for f in all_faces if f not in feature_faces_all]
+        # We need a way to filter out faces already used in features.
+        # OpenCASCADE faces can be compared using .IsSame()
+        base_faces = []
+        for f in all_faces:
+            is_feature_face = False
+            for ff in feature_face_set:
+                if f.IsSame(ff):
+                    is_feature_face = True
+                    break
+            if not is_feature_face:
+                base_faces.append(f)
         
         if base_faces:
             builder = BRep_Builder()
@@ -638,24 +652,26 @@ def generate_feature_aware_glb(file_path, features_data=None):
             shape_tool.SetShape(base_label, base_comp)
             shape_tool.SetComponentName(base_label, TCollection_AsciiString("BaseModel"))
             
-            # Standard Blue color
+            # Default blue color
             blue = Quantity_Color(0.23, 0.51, 0.96, Quantity_TOC_RGB)
             color_tool.SetColor(base_label, blue, XCAFDoc_ColorGen)
 
         # 5. Export to GLB
         output_path = file_path.rsplit('.', 1)[0] + '_view.glb'
         writer = RWGltf_CafWriter(TCollection_AsciiString(output_path), True)
+        # Use Gltf transformation to preserve structure
         writer.SetTransformationFormat(RWGltf_CafWriter.RWGltf_Tf_Gltf)
+        
         status = writer.Perform(doc, gp_Trsf(), None)
         
         if status and os.path.exists(output_path):
-            logger.info(f"Individual Feature GLB: Successfully saved with {len(features_data) if features_data else 0} features to {output_path}")
+            logger.info(f"GLB Overhaul Success: {len(raw_features) if raw_features else 0} features isolated.")
             return output_path
             
         return generate_glb_from_step(file_path)
 
     except Exception as e:
-        logger.error(f"Individual GLB Conversion Failed: {e}", exc_info=True)
+        logger.error(f"GLB Overhaul Failed: {e}", exc_info=True)
         return generate_glb_from_step(file_path)
 
 
