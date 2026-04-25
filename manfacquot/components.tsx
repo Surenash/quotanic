@@ -11,6 +11,7 @@ import CheckboxGroup from './components/CheckboxGroup';
 import ManufacturerSettingsPage from './components/ManufacturerSettings';
 import Viewer, { ErrorBoundary } from './components/Viewer';
 import { ViewPreset } from './types/types';
+import { ManufacturerProfileView } from './pages/ManufacturerProfilePage';
 import {
     ArrowLeftIcon, UploadIcon, QuoteIcon, ManufactureIcon, FileIcon, ShieldCheckIcon,
     GlobeAltIcon, ScaleIcon, LightningBoltIcon, SparklesIcon, CodeBracketIcon,
@@ -1288,49 +1289,127 @@ export const ManufacturerProfileManagementPage = ({ user: initialUser }: { user?
         }
     };
 
+    const [isPreviewMode, setIsPreviewMode] = useState(false);
+
+    // ... (keep all existing useEffects and handlers)
+
     if (loading) return <div>Loading profile...</div>;
     if (error) return <p style={styles.loginError}>{error}</p>;
     if (!formData) return <p>Could not load profile data.</p>;
 
+    // Prepare preview data by aggregating processes
+    const previewData = {
+        ...formData,
+        company_name: formData.companyName,
+        capabilities: [
+            ...(formData.machining || []),
+            ...(formData.sheetmetal || []),
+            ...(formData.casting || []),
+            ...(formData.forging || []),
+            ...(formData.injectionmolding || []),
+            ...(formData['3dprinting'] || []),
+            ...(formData.weldingandjoining || []),
+            ...(formData.supportedMaterials || []),
+        ],
+        rating: "5.0", // Mock rating for preview
+        reviews: [],    // Mock empty reviews for preview
+    };
+
     return (
-        <div>
-            <h2 style={styles.dashboardPageTitle}>Profile Management</h2>
-            <p style={styles.dashboardPageSubtitle}>Keep your company profile and capabilities up to date to attract the right customers.</p>
+        <div style={{ position: 'relative' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+                <div>
+                    <h2 style={styles.dashboardPageTitle}>Profile Management</h2>
+                    <p style={styles.dashboardPageSubtitle}>Keep your company profile and capabilities up to date to attract the right customers.</p>
+                </div>
+                <div style={{ display: 'flex', gap: '12px' }}>
+                    <CtaButton 
+                        text={isPreviewMode ? "Edit Profile" : "Live Public Preview"} 
+                        onClick={() => setIsPreviewMode(!isPreviewMode)}
+                        primary={!isPreviewMode}
+                    />
+                </div>
+            </div>
+
             {notification.show && <Notification message={notification.message} type={notification.type} onDismiss={() => setNotification({ show: false, message: '', type: 'success' })} />}
-            <form onSubmit={handleSubmit}>
-                <fieldset style={{ ...styles.fieldset, marginTop: 0 }}><legend style={styles.legend}>Company Information</legend><div style={styles.formRow}><div style={styles.formGroup}><label htmlFor="companyName" style={styles.label}>Company Name</label><div style={{ ...styles.input, backgroundColor: 'rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center' }}>{formData.companyName}</div></div><div style={styles.formGroup}><label htmlFor="email" style={styles.label}>Public Email Address</label><input type="email" name="email" value={formData.email} onChange={handleInputChange} style={styles.input} required /></div></div><div style={styles.formRow}><div style={styles.formGroup}><label htmlFor="location" style={styles.label}>Location (City, Country)</label><input type="text" name="location" value={formData.location} onChange={handleInputChange} style={styles.input} required /></div><div style={styles.formGroup}><label htmlFor="website" style={styles.label}>Website URL</label><input type="url" name="website" value={formData.website} onChange={handleInputChange} style={styles.input} placeholder="https://yourcompany.com" /></div></div><div style={styles.formGroup}><label htmlFor="about" style={styles.label}>About Us</label><textarea name="about" value={formData.about || ''} onChange={handleInputChange} style={{ ...styles.input, height: '100px' }} placeholder="Tell customers about your company, history, and specialization..." /></div></fieldset>
+            
+            <div style={{ 
+                display: 'grid', 
+                gridTemplateColumns: isPreviewMode ? '1fr 1fr' : '1fr', 
+                gap: '32px',
+                transition: 'all 0.3s ease'
+            }}>
+                {/* Editor Column */}
+                <div style={{ 
+                    maxHeight: isPreviewMode ? 'calc(100vh - 200px)' : 'none', 
+                    overflowY: isPreviewMode ? 'auto' : 'visible',
+                    paddingRight: isPreviewMode ? '16px' : '0'
+                }}>
+                    <form onSubmit={handleSubmit}>
+                        <fieldset style={{ ...styles.fieldset, marginTop: 0 }}><legend style={styles.legend}>Company Information</legend><div style={styles.formRow}><div style={styles.formGroup}><label htmlFor="companyName" style={styles.label}>Company Name</label><div style={{ ...styles.input, backgroundColor: 'rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center' }}>{formData.companyName}</div></div><div style={styles.formGroup}><label htmlFor="email" style={styles.label}>Public Email Address</label><input type="email" name="email" value={formData.email} onChange={handleInputChange} style={styles.input} required /></div></div><div style={styles.formRow}><div style={styles.formGroup}><label htmlFor="location" style={styles.label}>Location (City, Country)</label><input type="text" name="location" value={formData.location} onChange={handleInputChange} style={styles.input} required /></div><div style={styles.formGroup}><label htmlFor="website" style={styles.label}>Website URL</label><input type="url" name="website" value={formData.website} onChange={handleInputChange} style={styles.input} placeholder="https://yourcompany.com" /></div></div><div style={styles.formGroup}><label htmlFor="about" style={styles.label}>About Us</label><textarea name="about" value={formData.about || ''} onChange={handleInputChange} style={{ ...styles.input, height: '100px' }} placeholder="Tell customers about your company, history, and specialization..." /></div></fieldset>
 
-                <fieldset style={styles.fieldset}><legend style={styles.legend}>Branding & Appearance</legend><div style={styles.formRow}><ImageUpload label="Company Logo" currentImageUrl={formData.logoUrl} onImageSelected={(file) => handleImageChange('logoUrl', file)} onImageRemoved={() => handleImageChange('logoUrl', null)} /><ImageUpload label="Profile Background Image" currentImageUrl={formData.backgroundUrl} onImageSelected={(file) => handleImageChange('backgroundUrl', file)} onImageRemoved={() => handleImageChange('backgroundUrl', null)} /></div></fieldset>
+                        <fieldset style={styles.fieldset}><legend style={styles.legend}>Branding & Appearance</legend><div style={styles.formRow}><ImageUpload label="Company Logo" currentImageUrl={formData.logoUrl} onImageSelected={(file) => handleImageChange('logoUrl', file)} onImageRemoved={() => handleImageChange('logoUrl', null)} /><ImageUpload label="Profile Background Image" currentImageUrl={formData.backgroundUrl} onImageSelected={(file) => handleImageChange('backgroundUrl', file)} onImageRemoved={() => handleImageChange('backgroundUrl', null)} /></div></fieldset>
 
-                <fieldset style={styles.fieldset}>
-                    <legend style={styles.legend}>Portfolio Management</legend>
-                    <div style={styles.formGroup}>
-                        <label style={styles.label}>Portfolio Items</label>
-                        <p style={styles.fieldsetDescription}>Upload images or videos of your best work. Add a title for each item.</p>
-                        <input type="file" multiple accept="image/*,video/*" ref={portfolioFileInputRef} onChange={handlePortfolioFilesChange} style={{ display: 'none' }} />
-                        <CtaButton text="Upload New Items" onClick={() => portfolioFileInputRef.current?.click()} type="button" />
+                        <fieldset style={styles.fieldset}>
+                            <legend style={styles.legend}>Portfolio Management</legend>
+                            <div style={styles.formGroup}>
+                                <label style={styles.label}>Portfolio Items</label>
+                                <p style={styles.fieldsetDescription}>Upload images or videos of your best work. Add a title for each item.</p>
+                                <input type="file" multiple accept="image/*,video/*" ref={portfolioFileInputRef} onChange={handlePortfolioFilesChange} style={{ display: 'none' }} />
+                                <CtaButton text="Upload New Items" onClick={() => portfolioFileInputRef.current?.click()} type="button" />
 
-                        <div style={styles.portfolioManagementGrid}>
-                            {(formData.portfolio || []).map(item => (
-                                <div key={item.id} style={styles.portfolioManagementItem}>
-                                    {item.type === 'video' ? (
-                                        <div style={styles.portfolioVideoPlaceholder}><VideoCameraIcon style={{ width: '32px', height: '32px', color: '#fff' }} /></div>
-                                    ) : (
-                                        <img src={item.url} alt={item.title} style={styles.portfolioManagementImage} />
-                                    )}
-                                    <button type="button" onClick={() => removePortfolioItem(item.id)} style={styles.imageUploadRemoveBtn} aria-label={`Remove ${item.title}`}><XMarkIcon style={{ width: '16px', height: '16px' }} /></button>
-                                    <input type="text" value={item.title} onChange={(e) => handlePortfolioTitleChange(item.id, e.target.value)} style={styles.portfolioManagementTitleInput} placeholder="Enter title..." />
+                                <div style={styles.portfolioManagementGrid}>
+                                    {(formData.portfolio || []).map(item => (
+                                        <div key={item.id} style={styles.portfolioManagementItem}>
+                                            {item.type === 'video' ? (
+                                                <div style={styles.portfolioVideoPlaceholder}><VideoCameraIcon style={{ width: '32px', height: '32px', color: '#fff' }} /></div>
+                                            ) : (
+                                                <img src={item.url} alt={item.title} style={styles.portfolioManagementImage} />
+                                            )}
+                                            <button type="button" onClick={() => removePortfolioItem(item.id)} style={styles.imageUploadRemoveBtn} aria-label={`Remove ${item.title}`}><XMarkIcon style={{ width: '16px', height: '16px' }} /></button>
+                                            <input type="text" value={item.title} onChange={(e) => handlePortfolioTitleChange(item.id, e.target.value)} style={styles.portfolioManagementTitleInput} placeholder="Enter title..." />
+                                        </div>
+                                    ))}
                                 </div>
-                            ))}
+                            </div>
+                        </fieldset>
+
+                        <fieldset style={styles.fieldset}><legend style={styles.legend}>General Capabilities</legend><div style={styles.formRow}><div style={styles.formGroup}><label htmlFor="productionVolume" style={styles.label}>Production Volume Capacity</label><select name="productionVolume" value={formData.productionVolume} onChange={handleInputChange} style={styles.input} required><option value="">Select volume...</option>{PRODUCTION_VOLUMES.map(v => <option key={v} value={v}>{v}</option>)}</select></div><div style={styles.formGroup}><label htmlFor="leadTimeRange" style={styles.label}>Typical Lead Time Range</label><input type="text" name="leadTimeRange" value={formData.leadTimeRange} onChange={handleInputChange} style={styles.input} required placeholder="e.g., 5-10 days" /></div></div><div style={styles.formRow}><div style={styles.formGroup}><label htmlFor="moq" style={styles.label}>Minimum Order Quantity (MOQ)</label><input type="number" name="moq" value={formData.moq} onChange={handleInputChange} style={styles.input} required min="0" /></div><div style={styles.formGroup}><label htmlFor="otherCertifications" style={styles.label}>Other Certs (comma-separated)</label><input type="text" name="otherCertifications" value={formData.otherCertifications} onChange={handleInputChange} style={styles.input} /></div></div><CheckboxGroup title="Certifications" options={CERTIFICATIONS} selected={formData.certifications || []} onChange={(v) => handleCheckboxGroupChange('certifications', v)} /><div style={styles.formGroup}><label htmlFor="qualityControlProcesses" style={styles.label}>Quality Control Processes</label><textarea name="qualityControlProcesses" value={formData.qualityControlProcesses} onChange={handleInputChange} style={styles.input} rows={3}></textarea></div><div style={styles.formGroup}><label htmlFor="materialTesting" style={styles.label}>Material Testing / Inspection Equipment</label><textarea name="materialTesting" value={formData.materialTesting} onChange={handleInputChange} style={styles.input} rows={3}></textarea></div></fieldset>
+                        <fieldset style={styles.fieldset}><legend style={styles.legend}>Manufacturing Processes Supported</legend>{ALL_CAPABILITIES_GROUPS.map(group => <CheckboxGroup key={group.title} title={group.title} options={group.processes} selected={formData[group.title.toLowerCase().replace(/ & /g, 'and').replace(/ /g, '')] || []} onChange={(v) => handleCheckboxGroupChange(group.title.toLowerCase().replace(/ & /g, 'and').replace(/ /g, ''), v)} />)}</fieldset>
+                        <fieldset style={styles.fieldset}><legend style={styles.legend}>Material Capabilities</legend><CheckboxGroup title="Metals" options={MATERIALS_METALS} selected={formData.supportedMaterials || []} onChange={(v) => handleCheckboxGroupChange('supportedMaterials', v)} /><CheckboxGroup title="Plastics" options={MATERIALS_PLASTICS} selected={formData.supportedMaterials || []} onChange={(v) => handleCheckboxGroupChange('supportedMaterials', v)} /><CheckboxGroup title="Composites" options={MATERIALS_COMPOSITES} selected={formData.supportedMaterials || []} onChange={(v) => handleCheckboxGroupChange('supportedMaterials', v)} /><CheckboxGroup title="Others" options={MATERIALS_OTHERS} selected={formData.supportedMaterials || []} onChange={(v) => handleCheckboxGroupChange('supportedMaterials', v)} /></fieldset>
+                        <div style={{ marginTop: '24px' }}><CtaButton text={loading ? "Saving..." : "Save Changes"} primary type="submit" disabled={loading} /></div>
+                    </form>
+                </div>
+
+                {/* Preview Column */}
+                {isPreviewMode && (
+                    <div style={{ 
+                        borderLeft: `1px solid ${border_color}`, 
+                        paddingLeft: '32px',
+                        maxHeight: 'calc(100vh - 200px)',
+                        overflowY: 'auto',
+                        position: 'sticky',
+                        top: '0'
+                    }}>
+                        <div style={{ 
+                            marginBottom: '16px', 
+                            padding: '12px', 
+                            backgroundColor: 'rgba(var(--neon-cyan-rgb), 0.1)', 
+                            border: `1px solid ${neon_cyan}`,
+                            borderRadius: '8px',
+                            color: neon_cyan,
+                            fontSize: '14px',
+                            fontWeight: 600,
+                            textAlign: 'center'
+                        }}>
+                            LIVE PUBLIC PREVIEW
+                        </div>
+                        <div style={{ transform: 'scale(0.9)', transformOrigin: 'top center', pointerEvents: 'none' }}>
+                            <ManufacturerProfileView manufacturer={previewData} />
                         </div>
                     </div>
-                </fieldset>
-
-                <fieldset style={styles.fieldset}><legend style={styles.legend}>General Capabilities</legend><div style={styles.formRow}><div style={styles.formGroup}><label htmlFor="productionVolume" style={styles.label}>Production Volume Capacity</label><select name="productionVolume" value={formData.productionVolume} onChange={handleInputChange} style={styles.input} required><option value="">Select volume...</option>{PRODUCTION_VOLUMES.map(v => <option key={v} value={v}>{v}</option>)}</select></div><div style={styles.formGroup}><label htmlFor="leadTimeRange" style={styles.label}>Typical Lead Time Range</label><input type="text" name="leadTimeRange" value={formData.leadTimeRange} onChange={handleInputChange} style={styles.input} required placeholder="e.g., 5-10 days" /></div></div><div style={styles.formRow}><div style={styles.formGroup}><label htmlFor="moq" style={styles.label}>Minimum Order Quantity (MOQ)</label><input type="number" name="moq" value={formData.moq} onChange={handleInputChange} style={styles.input} required min="0" /></div><div style={styles.formGroup}><label htmlFor="otherCertifications" style={styles.label}>Other Certs (comma-separated)</label><input type="text" name="otherCertifications" value={formData.otherCertifications} onChange={handleInputChange} style={styles.input} /></div></div><CheckboxGroup title="Certifications" options={CERTIFICATIONS} selected={formData.certifications || []} onChange={(v) => handleCheckboxGroupChange('certifications', v)} /><div style={styles.formGroup}><label htmlFor="qualityControlProcesses" style={styles.label}>Quality Control Processes</label><textarea name="qualityControlProcesses" value={formData.qualityControlProcesses} onChange={handleInputChange} style={styles.input} rows={3}></textarea></div><div style={styles.formGroup}><label htmlFor="materialTesting" style={styles.label}>Material Testing / Inspection Equipment</label><textarea name="materialTesting" value={formData.materialTesting} onChange={handleInputChange} style={styles.input} rows={3}></textarea></div></fieldset>
-                <fieldset style={styles.fieldset}><legend style={styles.legend}>Manufacturing Processes Supported</legend>{ALL_CAPABILITIES_GROUPS.map(group => <CheckboxGroup key={group.title} title={group.title} options={group.processes} selected={formData[group.title.toLowerCase().replace(/ & /g, 'and').replace(/ /g, '')] || []} onChange={(v) => handleCheckboxGroupChange(group.title.toLowerCase().replace(/ & /g, 'and').replace(/ /g, ''), v)} />)}</fieldset>
-                <fieldset style={styles.fieldset}><legend style={styles.legend}>Material Capabilities</legend><CheckboxGroup title="Metals" options={MATERIALS_METALS} selected={formData.supportedMaterials || []} onChange={(v) => handleCheckboxGroupChange('supportedMaterials', v)} /><CheckboxGroup title="Plastics" options={MATERIALS_PLASTICS} selected={formData.supportedMaterials || []} onChange={(v) => handleCheckboxGroupChange('supportedMaterials', v)} /><CheckboxGroup title="Composites" options={MATERIALS_COMPOSITES} selected={formData.supportedMaterials || []} onChange={(v) => handleCheckboxGroupChange('supportedMaterials', v)} /><CheckboxGroup title="Others" options={MATERIALS_OTHERS} selected={formData.supportedMaterials || []} onChange={(v) => handleCheckboxGroupChange('supportedMaterials', v)} /></fieldset>
-                <div style={{ marginTop: '24px' }}><CtaButton text={loading ? "Saving..." : "Save Changes"} primary type="submit" disabled={loading} /></div>
-            </form>
+                )}
+            </div>
         </div>
     );
 };

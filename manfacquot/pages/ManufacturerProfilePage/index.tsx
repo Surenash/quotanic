@@ -8,51 +8,28 @@ import {
 } from "../../components/icons";
 import { ALL_CAPABILITIES_GROUPS, MATERIALS_METALS, MATERIALS_PLASTICS, MATERIALS_COMPOSITES, MATERIALS_OTHERS } from '../../utils/constants';
 
-export const ManufacturerProfilePage = () => {
-    const { id: manufacturerId } = useParams<{ id: string }>();
+export const ManufacturerProfileView = ({ manufacturer }: { manufacturer: any }) => {
     const navigate = useNavigate();
-    const [manufacturer, setManufacturer] = useState(null);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState('');
-
-    useEffect(() => {
-        if (!manufacturerId) {
-            setError('No manufacturer ID provided.');
-            setLoading(false);
-            return;
-        }
-        const fetchManufacturer = async () => {
-            setLoading(true);
-            try {
-                const data = await api.getManufacturerById(manufacturerId);
-                if (data) {
-                    setManufacturer(data);
-                } else {
-                    setError('Manufacturer not found.');
-                }
-            } catch (err) {
-                setError('Failed to load manufacturer details.');
-            } finally {
-                setLoading(false);
-            }
-        };
-        fetchManufacturer();
-    }, [manufacturerId]);
-
+    
     const getCapabilitiesByGroup = () => {
         if (!manufacturer?.capabilities) return [];
+        // Handle both flat array and categorized capabilities
+        const caps = Array.isArray(manufacturer.capabilities) 
+            ? manufacturer.capabilities 
+            : manufacturer.capabilities.processes || [];
+
         return ALL_CAPABILITIES_GROUPS.map(group => ({
             title: group.title,
-            processes: group.processes.filter(p => manufacturer.capabilities.includes(p))
+            processes: group.processes.filter(p => caps.includes(p))
         })).filter(g => g.processes.length > 0);
     };
 
-    if (loading) return <div style={{ ...styles.container, padding: '64px 24px', textAlign: 'center' }}>Loading profile...</div>;
-    if (error) return <div style={{ ...styles.container, padding: '64px 24px', textAlign: 'center', color: 'red' }}>{error}</div>;
-    if (!manufacturer) return <div style={{ ...styles.container, padding: '64px 24px', textAlign: 'center' }}>Manufacturer profile could not be loaded.</div>;
-
     const capabilityGroups = getCapabilitiesByGroup();
-    const materials = manufacturer.capabilities.filter(c => [...MATERIALS_METALS, ...MATERIALS_PLASTICS, ...MATERIALS_COMPOSITES, ...MATERIALS_OTHERS].includes(c));
+    const allCaps = Array.isArray(manufacturer.capabilities) 
+        ? manufacturer.capabilities 
+        : manufacturer.capabilities.processes || [];
+        
+    const materials = allCaps.filter(c => [...MATERIALS_METALS, ...MATERIALS_PLASTICS, ...MATERIALS_COMPOSITES, ...MATERIALS_OTHERS].includes(c));
     const certifications = manufacturer.certifications || [];
 
     const profileHeaderStyle: React.CSSProperties = {
@@ -69,9 +46,9 @@ export const ManufacturerProfilePage = () => {
                         Back to Directory
                     </button>
                     <div style={styles.profileHeaderContent}>
-                        <img src={manufacturer.logoUrl} alt={`${manufacturer.company_name} logo`} style={styles.profileHeaderLogo} />
+                        <img src={manufacturer.logoUrl} alt={`${manufacturer.company_name || manufacturer.companyName} logo`} style={styles.profileHeaderLogo} />
                         <div style={{ flex: 1 }}>
-                            <h1 style={styles.profileTitle}>{manufacturer.company_name}</h1>
+                            <h1 style={styles.profileTitle}>{manufacturer.company_name || manufacturer.companyName}</h1>
                             <p style={styles.profileLocation}>
                                 <LocationMarkerIcon style={{ width: '18px', height: '18px', marginRight: '6px' }} />
                                 {manufacturer.location}
@@ -88,7 +65,7 @@ export const ManufacturerProfilePage = () => {
                 <div style={styles.profileContentGrid}>
                     <main style={styles.profileMainContent}>
                         <section style={styles.profileSection}>
-                            <h2 style={styles.profileSectionTitle}>About {manufacturer.company_name}</h2>
+                            <h2 style={styles.profileSectionTitle}>About {manufacturer.company_name || manufacturer.companyName}</h2>
                             <p style={styles.stepText}>{manufacturer.about}</p>
                         </section>
                         <section style={styles.profileSection}>
@@ -176,4 +153,41 @@ export const ManufacturerProfilePage = () => {
             </div>
         </div>
     );
+};
+
+export const ManufacturerProfilePage = () => {
+    const { id: manufacturerId } = useParams<{ id: string }>();
+    const [manufacturer, setManufacturer] = useState(null);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState('');
+
+    useEffect(() => {
+        if (!manufacturerId) {
+            setError('No manufacturer ID provided.');
+            setLoading(false);
+            return;
+        }
+        const fetchManufacturer = async () => {
+            setLoading(true);
+            try {
+                const data = await api.getManufacturerById(manufacturerId);
+                if (data) {
+                    setManufacturer(data);
+                } else {
+                    setError('Manufacturer not found.');
+                }
+            } catch (err) {
+                setError('Failed to load manufacturer details.');
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchManufacturer();
+    }, [manufacturerId]);
+
+    if (loading) return <div style={{ ...styles.container, padding: '64px 24px', textAlign: 'center' }}>Loading profile...</div>;
+    if (error) return <div style={{ ...styles.container, padding: '64px 24px', textAlign: 'center', color: 'red' }}>{error}</div>;
+    if (!manufacturer) return <div style={{ ...styles.container, padding: '64px 24px', textAlign: 'center' }}>Manufacturer profile could not be loaded.</div>;
+
+    return <ManufacturerProfileView manufacturer={manufacturer} />;
 };
