@@ -52,8 +52,8 @@ const applyMaterialSettings = (obj: any, mode: string, override: any, activeFeat
 
         const isSelected = 
           (!isBase && (child.name === `Feature_${activeFeatureIndex}` || child.name === `Feature ${activeFeatureIndex}`)) || 
-          (!isBase && typeMatch) ||
-          (!isBase && totalMeshes > 1 && idx === activeFeatureIndex);
+          (!isBase && child.userData.featureIndex === activeFeatureIndex) ||
+          (!isBase && typeMatch);
 
         if (isSelected) {
           if (idx < 5 || idx === activeFeatureIndex) {
@@ -137,8 +137,15 @@ const GLTFModel: React.FC<ModelComponentProps> = ({ url, viewportMode, materialO
   });
 
   // Assign indices to meshes for identification
-  scene.traverse((child: any, idx: number) => {
-      if (child.isMesh) child.userData.index = idx;
+  let mIdx = 0;
+  scene.traverse((child: any) => {
+      if (child.isMesh) {
+          child.userData.index = mIdx++;
+          const match = child.name.match(/Feature_(\d+)/i);
+          if (match) {
+              child.userData.featureIndex = parseInt(match[1], 10);
+          }
+      }
   });
 
   useFrame(() => {
@@ -149,9 +156,17 @@ const GLTFModel: React.FC<ModelComponentProps> = ({ url, viewportMode, materialO
       object={scene}
       onClick={(e: any) => { 
           e.stopPropagation(); 
-          // Get the index of the clicked mesh
-          const meshIdx = e.object?.userData?.index || 0;
-          if (onFeatureClick) onFeatureClick(meshIdx);
+          const clickedObj = e.intersections?.[0]?.object || e.object;
+          if (!clickedObj) return;
+
+          const isBase = clickedObj.name?.toLowerCase().includes('base');
+          if (isBase) return; // Ignore clicks on the base model
+
+          let featureIdx = clickedObj.userData?.featureIndex;
+          if (featureIdx === undefined) {
+              featureIdx = clickedObj.userData?.index || 0;
+          }
+          if (onFeatureClick) onFeatureClick(featureIdx);
       }}
       onPointerOver={() => { document.body.style.cursor = 'pointer'; }}
       onPointerOut={() => { document.body.style.cursor = 'auto'; }}
