@@ -46,8 +46,7 @@ const applyMaterialSettings = (obj: any, mode: string, override: any, activeFeat
         const isSelected = 
           (!isBase && child.name === `Feature_${activeFeatureIndex}`) || 
           (!isBase && typeMatch) ||
-          (!isBase && totalMeshes > 1 && idx === activeFeatureIndex) ||
-          (totalMeshes === 1);
+          (!isBase && totalMeshes > 1 && idx === activeFeatureIndex);
 
         if (isSelected) {
           child.material.color.set('#facc15'); // Yellow highlight
