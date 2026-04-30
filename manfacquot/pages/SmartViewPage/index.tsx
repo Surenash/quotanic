@@ -278,7 +278,7 @@ const SmartViewPage = ({ designId, onNavigate }: { designId: string, onNavigate:
                                     </div>
                                     {expandedFolders['requests'] && (
                                         <div style={{ paddingLeft: '16px', display: 'flex', flexDirection: 'column' }}>
-                                            {quoteRequests.map((quote: any) => (
+                                            {quoteRequests.filter((quote: any) => !quote.is_internal).map((quote: any) => (
                                                 <div key={quote.id}>
                                                     <div onClick={() => toggleFolder(`req-${quote.id}`)} style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', padding: '4px 8px', fontSize: '11px', color: '#94a3b8' }}>
                                                         {expandedFolders[`req-${quote.id}`] ? <LucideChevronDown size={12} /> : <LucideChevronRight size={12} />}
@@ -356,7 +356,7 @@ const SmartViewPage = ({ designId, onNavigate }: { designId: string, onNavigate:
                                     </div>
                                     {expandedFolders['internal'] && (
                                         <div style={{ paddingLeft: '16px', display: 'flex', flexDirection: 'column' }}>
-                                            {internalDesigns.map((d: any) => (
+                                            {internalDesigns.filter((d: any) => d.is_internal).map((d: any) => (
                                                 <div key={d.id}>
                                                     <div onClick={() => toggleFolder(`int-${d.id}`)} style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', padding: '4px 8px', fontSize: '11px', color: '#94a3b8' }}>
                                                         {expandedFolders[`int-${d.id}`] ? <LucideChevronDown size={12} /> : <LucideChevronRight size={12} />}

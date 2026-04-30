@@ -8,7 +8,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
-# from accounts.models import UserRole # If needed for role checks, though IsAuthenticated is primary here
+from accounts.models import UserRole # Required for role-based permissions
 
 logger = logging.getLogger(__name__)
 
@@ -173,7 +173,7 @@ class IsCustomerUser(IsAuthenticated):
     def has_permission(self, request, view):
         if not super().has_permission(request, view):
             return False
-        return request.user.role in [UserRole.CUSTOMER, 'manufacturer']
+        return request.user.role in [UserRole.CUSTOMER, UserRole.MANUFACTURER]
 
 class DesignListCreateView(generics.ListCreateAPIView):
     """
