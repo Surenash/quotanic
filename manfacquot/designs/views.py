@@ -124,9 +124,10 @@ class LocalUploadView(APIView):
             return Response({"error": "Invalid key: must be a relative path."}, status=status.HTTP_400_BAD_REQUEST)
 
         # Ensure the key begins with the user's prefix
-        user_prefix = f"{request.user.id}/"
-        if not normalized_key.startswith(user_prefix):
-            return Response({"error": f"Invalid key: must start with user prefix {user_prefix}."}, status=status.HTTP_403_FORBIDDEN)
+        # Keys look like: uploads/designs/{user.id}/...
+        expected_prefix = f"{settings.AWS_S3_DESIGNS_UPLOAD_PREFIX.strip('/')}/{request.user.id}/"
+        if not normalized_key.startswith(expected_prefix):
+            return Response({"error": f"Invalid key: must start with prefix {expected_prefix}."}, status=status.HTTP_403_FORBIDDEN)
 
         # Build and validate file path
         media_root = Path(settings.MEDIA_ROOT).resolve()

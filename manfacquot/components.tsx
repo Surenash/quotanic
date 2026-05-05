@@ -2757,23 +2757,23 @@ export const InternalQuotationsPage = () => {
     const fetchRequests = async () => {
         setLoading(true);
         try {
-            const data = await api.getDesigns();
+            const data = await api.getQuoteRequests();
             console.log('[InternalQuotationsPage] Raw API Data:', data);
             const mappedData = data
-                .filter(design => design.is_internal)
-                .map(design => ({
-                    id: design.id,
-                    designId: design.id,
-                    designName: design.design_name || 'Unnamed Part',
-                    designViewUrl: resolveMediaUrl(design.view_url),
-                    designThumbnailUrl: resolveMediaUrl(design.thumbnail_url),
-                    material: design.material || 'N/A',
-                    quantity: design.quantity || 0,
-                    dateReceived: design.created_at,
-                    status: design.status_display || design.status || 'Pending Analysis',
-                    price: 0, // Design doesn't have price directly
-                    leadTime: 0,
-                    notes: design.additional_instructions || '',
+                .filter(quote => quote.is_internal)
+                .map(quote => ({
+                    id: quote.id,
+                    designId: quote.design,
+                    designName: quote.design_name || 'Unnamed Part',
+                    designViewUrl: resolveMediaUrl((quote as any).design_view_url),
+                    designThumbnailUrl: resolveMediaUrl((quote as any).design_thumbnail_url),
+                    material: quote.design_material || 'N/A',
+                    quantity: quote.design_quantity || 0,
+                    dateReceived: quote.created_at,
+                    status: quote.status === 'pending' ? 'Pending' : 'Quoted',
+                    price: quote.price_usd,
+                    leadTime: quote.estimated_lead_time_days,
+                    notes: quote.notes || '',
                 }));
             setRequests(mappedData);
         } catch (err) {
