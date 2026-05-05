@@ -807,9 +807,23 @@ def analyze_cad_file(self, design_id):
                             if not view_file_path or not os.path.exists(view_file_path):
                                 logger.warning("Advanced GLB generation failed or crashed, falling back to simple STL view.")
                                 from OCC.Core.StlAPI import StlAPI_Writer
-                                view_file_path = local_file_path.rsplit('.', 1)[0] + '_fallback_view.stl'
-                                stl_writer = StlAPI_Writer()
-                                stl_writer.Write(shape, view_file_path)
+                                from OCC.Extend.DataExchange import read_step_file, read_iges_file
+                                from OCC.Core.BRepMesh import BRepMesh_IncrementalMesh
+                                
+                                # Re-load shape since it was isolated in subprocess
+                                if file_extension in ['.step', '.stp']:
+                                    fallback_shape = read_step_file(local_file_path)
+                                else:
+                                    fallback_shape = read_iges_file(local_file_path)
+                                
+                                if fallback_shape and not fallback_shape.IsNull():
+                                    view_file_path = local_file_path.rsplit('.', 1)[0] + '_fallback_view.stl'
+                                    # Ensure it's meshed for STL output
+                                    BRepMesh_IncrementalMesh(fallback_shape, 0.1, False, 0.5, True)
+                                    stl_writer = StlAPI_Writer()
+                                    stl_writer.Write(fallback_shape, view_file_path)
+                                else:
+                                    view_file_path = None
                             
                             if view_file_path and os.path.exists(view_file_path):
                                 # Determine correct extension (could be .glb or .stl)

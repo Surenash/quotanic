@@ -13,16 +13,13 @@ def run_conversion(file_path, design_id, task_type):
     os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'gmqp_project.settings')
     django.setup()
 
-    from designs.tasks import generate_feature_aware_glb, perform_fbm_analysis, generate_snapshot
+    from designs.tasks import generate_feature_aware_glb, generate_snapshot
 
     try:
         if task_type == 'glb':
-            file_ext = os.path.splitext(file_path)[1].lower()
-            # We need the features to do feature-aware GLB
-            fbm_res = perform_fbm_analysis(file_path, file_ext)
-            raw_features = fbm_res["raw_features"]
-            
-            output_path = generate_feature_aware_glb(file_path, raw_features)
+            # Do NOT run perform_fbm_analysis again, it causes redundant work and crashes
+            # We generate a standard GLB view of the base shape
+            output_path = generate_feature_aware_glb(file_path, raw_features=None)
             if output_path and os.path.exists(output_path):
                 print(f"SUCCESS:{output_path}")
                 return True
