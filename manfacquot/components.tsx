@@ -20,6 +20,7 @@ import {
     ChartPieIcon, UserCircleIcon, CogIcon, ArchiveBoxIcon, DocumentTextIcon,
     VideoCameraIcon, DownloadIcon, EyeIcon, TrendingUpIcon, AlertTriangleIcon,
     NutIcon, DrillIcon, CircleDotIcon, CylinderIcon, CogWheelIcon, DollarSignIcon,
+    MoonIcon, SunIcon,
     iconStyle
 } from "./components/icons";
 
@@ -335,6 +336,17 @@ export const Header = () => {
     const [hoveredLink, setHoveredLink] = useState('');
     const { currency, setCurrency } = useCurrency();
     const [scrolled, setScrolled] = useState(false);
+    
+    const [theme, setTheme] = useState(() => localStorage.getItem('theme') || 'dark');
+
+    useEffect(() => {
+        document.documentElement.setAttribute('data-theme', theme);
+        localStorage.setItem('theme', theme);
+    }, [theme]);
+
+    const toggleTheme = () => {
+        setTheme(prev => prev === 'light' ? 'dark' : 'light');
+    };
 
     useEffect(() => {
         const handleScroll = () => setScrolled(window.scrollY > 20);
@@ -408,6 +420,24 @@ export const Header = () => {
                     </nav>
 
                     <div style={{ ...styles.headerActions, gap: '24px' }}>
+                        <button
+                            onClick={toggleTheme}
+                            style={{
+                                background: 'rgba(255,255,255,0.05)',
+                                border: `1px solid ${border_color}`,
+                                borderRadius: '12px',
+                                padding: '8px',
+                                cursor: 'pointer',
+                                color: '#fff',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                transition: 'all 0.2s ease'
+                            }}
+                            aria-label="Toggle Theme"
+                        >
+                            {theme === 'light' ? <MoonIcon style={{ width: '20px', height: '20px' }} /> : <SunIcon style={{ width: '20px', height: '20px' }} />}
+                        </button>
                         <div style={{ display: 'flex', alignItems: 'center', background: 'rgba(255,255,255,0.05)', borderRadius: '12px', padding: '4px 12px', border: `1px solid ${border_color}` }}>
                             <select
                                 value={currency}

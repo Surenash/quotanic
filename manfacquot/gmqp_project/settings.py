@@ -262,10 +262,10 @@ AWS_S3_DESIGNS_UPLOAD_PREFIX = os.environ.get('AWS_S3_DESIGNS_UPLOAD_PREFIX', 'u
 # Using Redis as the broker, as per specification.
 # Ensure Redis server is running.
 # Example: redis://localhost:6379/0 (0 is the database number)
-CELERY_BROKER_URL = os.environ.get('CELERY_BROKER_URL', 'redis://localhost:6379/0')
+CELERY_BROKER_URL = os.environ.get('CELERY_BROKER_URL', 'redis://redis:6379/0')
 
 # If you want to store task results in Redis (optional for this specific task, but good practice)
-CELERY_RESULT_BACKEND = os.environ.get('CELERY_RESULT_BACKEND', 'redis://localhost:6379/0')
+CELERY_RESULT_BACKEND = os.environ.get('CELERY_RESULT_BACKEND', 'redis://redis:6379/0')
 
 # Other Celery settings (can be customized as needed)
 CELERY_ACCEPT_CONTENT = ['json']

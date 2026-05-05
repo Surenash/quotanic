@@ -162,7 +162,15 @@ const SmartViewPage = ({ designId, onNavigate }: { designId: string, onNavigate:
         );
     }
 
-    const modelUrl = resolveMediaUrl(design?.view_url || design?.s3_file_key);
+    const modelUrlFallback = (() => {
+        const ext = design?.s3_file_key?.split('.').pop()?.toLowerCase();
+        if (ext === 'stl' || ext === 'obj' || ext === 'gltf' || ext === 'glb') {
+            return design?.s3_file_key;
+        }
+        return null;
+    })();
+
+    const modelUrl = resolveMediaUrl(design?.view_url || modelUrlFallback);
     const fileExt: SupportedExtensions = (() => {
         if (!modelUrl) return 'stl';
         const ext = modelUrl.split('.').pop()?.split(/[?#]/)[0]?.toLowerCase();
@@ -472,8 +480,16 @@ const SmartViewPage = ({ designId, onNavigate }: { designId: string, onNavigate:
                                 onFeatureClick={(index) => setActiveFeatureIndex(index)}
                             />
                         ) : (
-                            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%', color: '#475569' }}>
-                                <LucideBox size={48} style={{ opacity: 0.1 }} />
+                            <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', height: '100%', color: '#475569', gap: '16px' }}>
+                                <LucideBox size={64} style={{ opacity: 0.2 }} />
+                                <div style={{ textAlign: 'center' }}>
+                                    <p style={{ margin: 0, fontWeight: 600, color: '#94a3b8' }}>
+                                        {design?.status === 'pending_analysis' ? 'Analyzing Geometry...' : '3D Preview Not Available'}
+                                    </p>
+                                    <p style={{ margin: '4px 0 0 0', fontSize: '12px', opacity: 0.6 }}>
+                                        {design?.status === 'pending_analysis' ? 'Generating 3D interactive view' : 'Original file format is not browser-supported'}
+                                    </p>
+                                </div>
                             </div>
                         )}
 
