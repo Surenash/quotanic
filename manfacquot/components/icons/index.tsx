@@ -36,7 +36,9 @@ import {
     Sparkles as LucideSparkles,
     TrendingUp as LucideTrendingUp,
     AlertTriangle as LucideAlertTriangle,
-    Lock as LucideLock
+    Lock as LucideLock,
+    Moon as LucideMoon,
+    Sun as LucideSun
 } from 'lucide-react';
 
 // Wrapper components maintain backward compatibility with existing code
@@ -196,5 +198,13 @@ export const LockIcon = ({ style }: { style?: React.CSSProperties }) => (
     <LucideLock style={style} />
 );
 
+export const MoonIcon = ({ style }: { style?: React.CSSProperties }) => (
+    <LucideMoon style={style} />
+);
+
+export const SunIcon = ({ style }: { style?: React.CSSProperties }) => (
+    <LucideSun style={style} />
+);
+
 // Default icon style for components that use iconStyle
-export const iconStyle = { width: '48px', height: '48px', color: 'currentColor', marginBottom: '16px' };
+export const iconStyle = { width: '48px', height: '48px', color: 'currentColor', marginBotton: '16px' };

@@ -135,29 +135,18 @@ export const UploadPage = ({ isInternal = false }: { isInternal?: boolean }) => 
             const { upload_url, s3_file_key, use_local } = uploadUrlResponse;
 
             if (use_local) {
-                // Local storage fallback for dev
-                const reader = new FileReader();
-                const fileData = await new Promise((resolve, reject) => {
-                    reader.onload = () => resolve(reader.result);
-                    reader.onerror = reject;
-                    reader.readAsDataURL(file);
-                });
+                // Upload primary file to local storage endpoint
+                await api.uploadFileToS3(upload_url, file);
 
-                // Prepare supporting files for local storage
-                const supportingFilesData = await Promise.all(supportingFiles.map(async (f) => {
-                    const r = new FileReader();
-                    const d = await new Promise((res, rej) => {
-                        r.onload = () => res(r.result);
-                        r.onerror = rej;
-                        r.readAsDataURL(f);
-                    });
-                    return { name: f.name, data: d, type: f.type };
-                }));
+                // Upload supporting files to local storage endpoint
+                for (const sFile of supportingFiles) {
+                    const sUrlResp = await api.getUploadUrl(sFile.name, sFile.type);
+                    await api.uploadFileToS3(sUrlResp.upload_url, sFile);
+                }
 
                 const designData = {
                     design_name: formData.designName,
                     s3_file_key,
-                    file_data: fileData,
                     file_name: file.name,
                     material: formData.material,
                     quantity: parseInt(formData.quantity) || 1,
@@ -174,8 +163,7 @@ export const UploadPage = ({ isInternal = false }: { isInternal?: boolean }) => 
                     inspection_requirements: formData.inspectionRequirements,
                     requires_engineering_review: formData.requiresEngineeringReview,
                     is_internal: isInternal,
-                    use_local_storage: true,
-                    supporting_files_data: supportingFilesData
+                    use_local_storage: true
                 };
 
                 await api.createDesign(designData);
