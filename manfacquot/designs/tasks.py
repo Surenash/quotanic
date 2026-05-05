@@ -788,12 +788,24 @@ def analyze_cad_file(self, design_id):
                             logger.error(error_message)
                             raw_features = None
 
-                        # Generate view file (GLB with STL fallback)
+                        # Generate view file (Isolated via Subprocess to prevent SIGABRT from killing worker)
                         try:
-                            logger.info("Starting view file generation...")
-                            view_file_path = generate_feature_aware_glb(local_file_path, raw_features)
+                            import subprocess
+                            logger.info(f"Triggering isolated 3D conversion for Design {design_id}...")
+                            
+                            # Run conversion in a separate process
+                            # This is the ONLY way to survive a C++ level SIGABRT/Hard Crash
+                            cmd = [sys.executable, 'occ_worker.py', local_file_path, str(design_id), 'glb']
+                            result = subprocess.run(cmd, capture_output=True, text=True, timeout=120)
+                            
+                            view_file_path = None
+                            if result.returncode == 0 and "SUCCESS:" in result.stdout:
+                                view_file_path = result.stdout.split("SUCCESS:")[1].strip().split('\n')[0]
+                            else:
+                                logger.warning(f"Isolated conversion failed (code {result.returncode}). Output: {result.stdout} {result.stderr}")
+                                
                             if not view_file_path or not os.path.exists(view_file_path):
-                                logger.warning("Advanced GLB generation failed, falling back to simple STL view.")
+                                logger.warning("Advanced GLB generation failed or crashed, falling back to simple STL view.")
                                 from OCC.Core.StlAPI import StlAPI_Writer
                                 view_file_path = local_file_path.rsplit('.', 1)[0] + '_fallback_view.stl'
                                 stl_writer = StlAPI_Writer()
@@ -815,23 +827,31 @@ def analyze_cad_file(self, design_id):
 
                                 logger.info(f"Successfully generated view file: {view_file_key}")
                         except Exception as view_err:
-                            logger.error(f"View file generation CRASHED (handled): {view_err}", exc_info=True)
-                            # Non-critical: allow analysis to continue so quote can be generated
+                            logger.error(f"View file generation process failed (handled): {view_err}", exc_info=True)
 
                     else:
                         error_message = f"Unsupported file type: {file_extension}."
 
-                    # --- Generate Snapshot (Isometric Image) ---
+                    # --- Generate Snapshot (Isometric Image) - ALSO isolated via Subprocess ---
                     try:
-                        thumb_path = local_file_path.rsplit('.', 1)[0] + '_thumb.png'
-                        if generate_snapshot(local_file_path, thumb_path):
+                        import subprocess
+                        logger.info(f"Triggering isolated snapshot generation for Design {design_id}...")
+                        cmd = [sys.executable, 'occ_worker.py', local_file_path, str(design_id), 'snapshot']
+                        result = subprocess.run(cmd, capture_output=True, text=True, timeout=60)
+                        
+                        if result.returncode == 0 and "SUCCESS:" in result.stdout:
                             thumb_key = design.s3_file_key.rsplit('.', 1)[0] + '_thumb.png'
                             geometric_data['thumbnail_key'] = thumb_key
+                            
                             if not settings.USE_LOCAL_STORAGE:
+                                thumb_path = result.stdout.split("SUCCESS:")[1].strip().split('\n')[0]
                                 s3_client.upload_file(thumb_path, settings.AWS_STORAGE_BUCKET_NAME, thumb_key)
+                            
                             logger.info(f"Successfully generated thumbnail: {thumb_key}")
+                        else:
+                            logger.warning(f"Isolated snapshot failed (code {result.returncode}). Output: {result.stdout} {result.stderr}")
                     except Exception as thumb_err:
-                        logger.warning(f"Thumbnail generation failed (non-critical): {thumb_err}")
+                        logger.warning(f"Thumbnail generation process failed (non-critical): {thumb_err}")
 
                     if analysis_successful:
                         design.geometric_data = geometric_data
