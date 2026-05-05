@@ -496,10 +496,10 @@ class FBMAnalysisView(APIView):
         design = get_object_or_404(Design, id=id)
         
         # Check permissions: allow staff, the customer who uploaded it, or manufacturers who have a quotation for it
-        from quotations.models import Quotation
+        from quotes.models import Quote
         has_quotation = False
         if request.user.role == 'manufacturer':
-            has_quotation = Quotation.objects.filter(design=design, manufacturer=request.user).exists()
+            has_quotation = Quote.objects.filter(design=design, manufacturer=request.user).exists()
             
         if not (request.user.is_staff or design.customer == request.user or has_quotation):
             return Response(
@@ -548,10 +548,10 @@ class FBMFeaturesView(APIView):
         design = get_object_or_404(Design, id=id)
         
         # Check permissions
-        from quotations.models import Quotation
+        from quotes.models import Quote
         has_quotation = False
         if request.user.role == 'manufacturer':
-            has_quotation = Quotation.objects.filter(design=design, manufacturer=request.user).exists()
+            has_quotation = Quote.objects.filter(design=design, manufacturer=request.user).exists()
             
         if not (request.user.is_staff or design.customer == request.user or has_quotation):
             return Response(
