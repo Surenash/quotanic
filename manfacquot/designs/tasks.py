@@ -790,7 +790,15 @@ def analyze_cad_file(self, design_id):
 
                         # Generate view file (GLB with STL fallback)
                         try:
+                            logger.info("Starting view file generation...")
                             view_file_path = generate_feature_aware_glb(local_file_path, raw_features)
+                            if not view_file_path or not os.path.exists(view_file_path):
+                                logger.warning("Advanced GLB generation failed, falling back to simple STL view.")
+                                from OCC.Core.StlAPI import StlAPI_Writer
+                                view_file_path = local_file_path.rsplit('.', 1)[0] + '_fallback_view.stl'
+                                stl_writer = StlAPI_Writer()
+                                stl_writer.Write(shape, view_file_path)
+                            
                             if view_file_path and os.path.exists(view_file_path):
                                 # Determine correct extension (could be .glb or .stl)
                                 view_ext = os.path.splitext(view_file_path)[1].lower()
@@ -807,7 +815,8 @@ def analyze_cad_file(self, design_id):
 
                                 logger.info(f"Successfully generated view file: {view_file_key}")
                         except Exception as view_err:
-                            logger.warning(f"View file generation failed (non-critical): {view_err}")
+                            logger.error(f"View file generation CRASHED (handled): {view_err}", exc_info=True)
+                            # Non-critical: allow analysis to continue so quote can be generated
 
                     else:
                         error_message = f"Unsupported file type: {file_extension}."
