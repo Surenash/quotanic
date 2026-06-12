@@ -3734,6 +3734,8 @@ export const CustomerDesignsPage = () => {
         }
     };
 
+    const { items: sortedDesigns, requestSort, sortConfig } = useSortableData(designs);
+
     if (loading) return <div>Loading designs...</div>;
     if (error) return <p style={styles.loginError}>{error}</p>;
 
