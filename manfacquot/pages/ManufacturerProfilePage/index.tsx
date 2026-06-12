@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { api } from '../../utils/api';
-import { styles } from '../../types/theme';
+import { styles, neon_cyan, neon_magenta, neon_orange, border_color } from '../../types/theme';
 import CtaButton from '../../components/CtaButton';
 import {
-    ArrowLeftIcon, LocationMarkerIcon, StarIcon, VideoCameraIcon
+    ArrowLeftIcon, LocationMarkerIcon, StarIcon, VideoCameraIcon, ShieldCheckIcon
 } from "../../components/icons";
 import { ALL_CAPABILITIES_GROUPS, MATERIALS_METALS, MATERIALS_PLASTICS, MATERIALS_COMPOSITES, MATERIALS_OTHERS } from '../../utils/constants';
 
