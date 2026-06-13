@@ -8,7 +8,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
-# from accounts.models import UserRole # If needed for role checks, though IsAuthenticated is primary here
+# from accounts.constants import UserRole # If needed for role checks, though IsAuthenticated is primary here
 
 logger = logging.getLogger(__name__)
 
@@ -95,7 +95,7 @@ class DesignUploadURLView(APIView):
 from rest_framework import generics
 from .models import Design
 from .serializers import DesignSerializer, DesignCreateSerializer
-from accounts.models import UserRole # For permission check
+from accounts.constants import UserRole # For permission check
 
 class IsOwnerOrAdmin(IsAuthenticated): # Or use DRF's IsAuthenticatedOrReadOnly for public GETs
     """

@@ -3,7 +3,7 @@ from django.db import models
 from django.conf import settings # For AUTH_USER_MODEL
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.utils.translation import gettext_lazy as _
-from accounts.models import UserRole # Assuming this is the correct path
+from accounts.constants import UserRole # Corrected path
 
 class Review(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)

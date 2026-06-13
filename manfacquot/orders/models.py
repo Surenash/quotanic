@@ -10,7 +10,7 @@ from datetime import timedelta # For calculating estimated_delivery_date
 # but be mindful of circular dependencies.
 # from designs.models import Design # Causes circular if Design imports Order for a related_name
 # from quotes.models import Quote   # Causes circular if Quote imports Order for a related_name
-from accounts.models import UserRole # To limit choices for customer/manufacturer
+from accounts.constants import UserRole # To limit choices for customer/manufacturer
 
 class OrderStatus(models.TextChoices):
     PENDING_MANUFACTURER_CONFIRMATION = 'pending_manuf_confirm', _('Pending Manufacturer Confirmation')

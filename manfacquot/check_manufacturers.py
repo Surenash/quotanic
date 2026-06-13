@@ -5,7 +5,8 @@ import django
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'gmqp_project.settings')
 django.setup()
 
-from accounts.models import Manufacturer, User, UserRole
+from accounts.models import Manufacturer, User
+from accounts.constants import UserRole
 
 count = Manufacturer.objects.count()
 print(f"Manufacturer count: {count}")

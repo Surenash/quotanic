@@ -9,7 +9,8 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'gmqp_project.settings')
 django.setup()
 
 from django.contrib.auth import get_user_model
-from accounts.models import Manufacturer, UserRole
+from accounts.models import Manufacturer
+from accounts.constants import UserRole
 
 User = get_user_model()
 

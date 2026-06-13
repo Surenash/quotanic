@@ -3,9 +3,7 @@ from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, Permis
 from django.db import models
 from django.utils import timezone
 
-class UserRole(models.TextChoices):
-    CUSTOMER = 'customer', 'Customer'
-    MANUFACTURER = 'manufacturer', 'Manufacturer'
+from .constants import UserRole
 
 class CustomerManager(BaseUserManager):
     def get_queryset(self):

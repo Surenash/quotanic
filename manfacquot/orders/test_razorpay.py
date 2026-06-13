@@ -3,7 +3,8 @@ from unittest.mock import patch, MagicMock
 from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APITestCase
-from accounts.models import User, UserRole
+from accounts.models import User
+from accounts.constants import UserRole
 from designs.models import Design, DesignStatus
 from quotes.models import Quote, QuoteStatus
 from orders.models import Order, OrderStatus

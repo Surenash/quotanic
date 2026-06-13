@@ -32,12 +32,47 @@ export const MEDIA_BASE_URL = 'https://api.quotanic.com';
 export const resolveMediaUrl = (path: string | null | undefined) => {
     if (!path) return null;
     if (path.startsWith('http')) return path;
-    
+
     const cleanPath = path.startsWith('/') ? path.substring(1) : path;
     const isMediaPath = cleanPath.startsWith('media/');
-    
+
     return `${MEDIA_BASE_URL}/${isMediaPath ? '' : 'media/'}${cleanPath}`;
 };
+
+/**
+ * Concurrency gate to limit parallel auto-capture operations.
+ * Prevents WebGL context exhaustion when multiple DesignThumbnail instances
+ * mount hidden Viewer components simultaneously.
+ */
+const autoCaptureGate = (() => {
+    const MAX_CONCURRENT = 2;
+    let runningCount = 0;
+    const queue: Array<() => void> = [];
+
+    const acquireAutoCapture = (): Promise<void> => {
+        return new Promise((resolve) => {
+            if (runningCount < MAX_CONCURRENT) {
+                runningCount++;
+                resolve();
+            } else {
+                queue.push(() => {
+                    runningCount++;
+                    resolve();
+                });
+            }
+        });
+    };
+
+    const releaseAutoCapture = (): void => {
+        runningCount--;
+        if (queue.length > 0) {
+            const next = queue.shift();
+            if (next) next();
+        }
+    };
+
+    return { acquireAutoCapture, releaseAutoCapture };
+})();
 
 import {
     PRODUCTION_VOLUMES, CERTIFICATIONS, MACHINING_PROCESSES, SHEET_METAL_PROCESSES, CASTING_PROCESSES, FORGING_PROCESSES,
@@ -1794,7 +1829,10 @@ export const DesignThumbnail = ({ modelUrl, thumbnailUrl, designId, designName }
     const [actualThumbUrl, setActualThumbUrl] = useState<string | null>(thumbnailUrl || null);
     const [loading, setLoading] = useState(!modelUrl && !thumbnailUrl);
     const [isHovered, setIsHovered] = useState(false);
+    const [isAutoCapturing, setIsAutoCapturing] = useState(false);
     const isCapturing = useRef(false);
+    const captureSlotAcquired = useRef(false);
+    const captureSlotRequested = useRef(false);
 
     useEffect(() => {
         if (modelUrl && thumbnailUrl) {
@@ -1825,6 +1863,38 @@ export const DesignThumbnail = ({ modelUrl, thumbnailUrl, designId, designName }
         return () => { isMounted = false; };
     }, [modelUrl, thumbnailUrl, designId]);
 
+    useEffect(() => {
+        // If we have an actualUrl (model is loaded) but no thumbnail, trigger auto-capture
+        if (actualUrl && !actualThumbUrl && !loading && !captureSlotRequested.current) {
+            captureSlotRequested.current = true;
+            let isMounted = true;
+
+            autoCaptureGate.acquireAutoCapture().then(() => {
+                if (isMounted) {
+                    captureSlotAcquired.current = true;
+                    setIsAutoCapturing(true);
+                } else {
+                    // Component unmounted while waiting - release the slot we just acquired
+                    autoCaptureGate.releaseAutoCapture();
+                }
+            });
+
+            return () => {
+                isMounted = false;
+            };
+        }
+    }, [actualUrl, actualThumbUrl, loading]);
+
+    useEffect(() => {
+        // Cleanup: release the gate if component unmounts while holding a slot
+        return () => {
+            if (captureSlotAcquired.current) {
+                autoCaptureGate.releaseAutoCapture();
+                captureSlotAcquired.current = false;
+            }
+        };
+    }, []);
+
     const handleLoadComplete = async () => {
         if (actualThumbUrl || isCapturing.current) return;
         isCapturing.current = true;
@@ -1845,11 +1915,11 @@ export const DesignThumbnail = ({ modelUrl, thumbnailUrl, designId, designName }
             console.log(`[DesignThumbnail] Canvas found, capture starting... Size: ${canvas.width}x${canvas.height}`);
             const dataUrl = canvas.toDataURL('image/png');
             console.log(`[DesignThumbnail] DataURL generated, length: ${dataUrl.length}`);
-            
+
             if (dataUrl.length < 1000) {
                 console.warn(`[DesignThumbnail] DataURL seems very short (${dataUrl.length} chars). Thumbnail might be blank.`);
             }
-            
+
             const blob = await (await fetch(dataUrl)).blob();
             const fileName = `thumb_${designId}.png`;
 
@@ -1857,10 +1927,10 @@ export const DesignThumbnail = ({ modelUrl, thumbnailUrl, designId, designName }
             const { uploadUrl, s3Key } = await api.getUploadUrl(fileName, 'image/png');
             console.log(`[DesignThumbnail] Uploading to S3: ${s3Key}`);
             await api.uploadFileToS3(uploadUrl, new File([blob], fileName, { type: 'image/png' }));
-            
+
             console.log(`[DesignThumbnail] Updating backend with key: ${s3Key}`);
             await api.updateDesignThumbnail(designId, s3Key);
-            
+
             // Re-fetch the design to get the proper presigned URL from the backend
             const updatedDesign = await api.getDesignById(designId);
             if (updatedDesign && updatedDesign.thumbnail_url) {
@@ -1872,6 +1942,11 @@ export const DesignThumbnail = ({ modelUrl, thumbnailUrl, designId, designName }
             console.error('[DesignThumbnail] ❌ Failed to auto-generate thumbnail', e);
         } finally {
             isCapturing.current = false;
+            setIsAutoCapturing(false);
+            if (captureSlotAcquired.current) {
+                autoCaptureGate.releaseAutoCapture();
+                captureSlotAcquired.current = false;
+            }
         }
     };
 
@@ -1902,11 +1977,45 @@ export const DesignThumbnail = ({ modelUrl, thumbnailUrl, designId, designName }
             onMouseLeave={() => setIsHovered(false)}
             title="Hover to rotate 3D Model"
         >
+            {/* Auto-capture hidden Viewer */}
+            {isAutoCapturing && actualUrl && !isHovered && (
+                <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', opacity: 0.01, pointerEvents: 'none', zIndex: 0 }}>
+                    <ErrorBoundary
+                        fallback={(error) => {
+                            console.error(`[DesignThumbnail] 💥 Error auto-capturing ${designName}:`, error);
+                            // Defer state update out of the render phase
+                            queueMicrotask(() => {
+                                setIsAutoCapturing(false);
+                                if (captureSlotAcquired.current) {
+                                    autoCaptureGate.releaseAutoCapture();
+                                    captureSlotAcquired.current = false;
+                                }
+                            });
+                            return null;
+                        }}
+                    >
+                        <Viewer
+                            modelUrl={actualUrl}
+                            fileExtension={fileExtension as any}
+                            view={ViewPreset.ISO}
+                            isViewLocked={true}
+                            hideToolbar={true}
+                            lowQuality={true}
+                            design={{ design_name: designName } as any}
+                            onUserInteraction={() => {}}
+                            onLoadComplete={handleLoadComplete}
+                        />
+                    </ErrorBoundary>
+                </div>
+            )}
+
             {!isHovered ? (
                 actualThumbUrl ? (
-                    <img src={actualThumbUrl} alt={designName} style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+                    <img src={actualThumbUrl} alt={designName} style={{ width: '100%', height: '100%', objectFit: 'contain', zIndex: 1, position: 'relative' }} />
                 ) : (
-                    <CubeIcon style={{ width: '24px', height: '24px' }} color="var(--neon-cyan)" />
+                    <div style={{ zIndex: 1, position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', height: '100%' }}>
+                        <CubeIcon style={{ width: '24px', height: '24px' }} color="var(--neon-cyan)" />
+                    </div>
                 )
             ) : (
                 actualUrl ? (

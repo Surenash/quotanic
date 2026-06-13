@@ -88,7 +88,8 @@ class CurrentUserView(generics.RetrieveUpdateAPIView):
 
 
 # --- Manufacturer Views ---
-from .models import Manufacturer, UserRole
+from .models import Manufacturer
+from .constants import UserRole
 from .serializers import ManufacturerProfileSerializer, ManufacturerPublicSerializer
 from rest_framework.permissions import BasePermission
 

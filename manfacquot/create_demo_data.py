@@ -9,7 +9,8 @@ from django.utils import timezone
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'gmqp_project.settings')
 django.setup()
 
-from accounts.models import User, Manufacturer, Customer, UserRole
+from accounts.models import User, Manufacturer, Customer
+from accounts.constants import UserRole
 from designs.models import Design
 from quotes.models import Quote, QuoteStatus
 from orders.models import Order, OrderStatus

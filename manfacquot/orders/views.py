@@ -1,7 +1,7 @@
 from rest_framework import generics, permissions
 from .models import Order, OrderStatus
 from .serializers import OrderSerializer
-from accounts.models import UserRole # To check user roles
+from accounts.constants import UserRole # To check user roles
 import razorpay
 from django.conf import settings
 from rest_framework.views import APIView

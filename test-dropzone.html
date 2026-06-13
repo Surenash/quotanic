@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+  .dropzone { width: 300px; height: 200px; border: 2px dashed #ccc; padding: 20px; font-family: sans-serif; cursor: pointer; position: relative;}
+  .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); border: 0; }
+  .overlay { position: absolute; top: 0; left: 0; bottom: 0; right: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
+</style>
+</head>
+<body>
+  <h2>Test 1: Native Overlay (our latest commit fix)</h2>
+  <div class="dropzone" id="d1">
+    <p>Click here</p>
+    <input type="file" class="overlay" id="f1">
+  </div>
+  <hr>
+  <h2>Test 2: JS Click</h2>
+  <div class="dropzone" id="d2" onclick="document.getElementById('f2').click()">
+    <p>Click here</p>
+    <input type="file" id="f2" class="sr-only">
+  </div>
+  <hr>
+  <h2>Test 3: Label Wrapper</h2>
+  <label class="dropzone" style="display:block">
+    <p>Click here</p>
+    <input type="file" class="sr-only" id="f3">
+  </label>
+</body>
+</html>
