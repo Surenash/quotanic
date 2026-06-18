@@ -32,19 +32,7 @@ import {
 
 import * as Components from '../../components';
 
-// Define Manufacturer type based on the data structure used
-interface Manufacturer {
-    id: number;
-    company_name: string;
-    location: string;
-    capabilities: string[];
-    certifications: string[];
-    logoUrl?: string;
-    rating?: string;
-}
-
 export const ManufacturerDirectoryPage = () => {
-    const navigate = useNavigate();
     const [manufacturers, setManufacturers] = useState<Manufacturer[]>([]);
     const [filteredManufacturers, setFilteredManufacturers] = useState<Manufacturer[]>([]);
     const [loading, setLoading] = useState(true);
@@ -128,7 +116,7 @@ export const ManufacturerDirectoryPage = () => {
                         <p style={{ color: 'red' }}>{error}</p>
                     ) : filteredManufacturers.length > 0 ? (
                         <div style={styles.mfgGrid}>
-                            {filteredManufacturers.map(mfg => <Components.ManufacturerCard key={mfg.id} manufacturer={mfg} navigate={navigate} />)}
+                            {filteredManufacturers.map(mfg => <Components.ManufacturerCard key={mfg.id} manufacturer={mfg} />)}
                         </div>
                     ) : (
                         <div style={{ textAlign: 'center', padding: '64px', border: '2px dashed var(--border-color)', borderRadius: '8px' }}>
